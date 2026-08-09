@@ -4,11 +4,13 @@ name: Release
 # mod's manifest.json, so nothing here needs updating when a ball is
 # added -- only the version-bump-and-push you already do.
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - "shop_events/**"
       - "example_balls/**"
+
 
 permissions:
   contents: write
