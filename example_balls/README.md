@@ -5,14 +5,55 @@ different mod-API pattern, and `main.lua` is commented to be copied.
 
 | Ball | Where | What it does | The pattern it teaches |
 | ---- | ----- | ------------ | ---------------------- |
-| PREMIER BALL | Free: buy 10+ balls in one purchase and the clerk throws one in per 10 (buy 20, get 2), with an in-shop announcement | Plain 1× odds | A ball with no catch code + listening to another mod's event (`shop.purchased`) |
+| PREMIER BALL | Free — see below | Plain 1× odds | A ball with no catch code + listening to another mod's event (`shop.purchased`) |
 | NEST BALL (¥1000) | Great/Ultra marts | 4× vs Lv ≤ 15, 3× ≤ 25, 2× ≤ 35 | `attempt(ctx)` reading battle state |
 | MOON BALL (¥1200) | Pewter Mart, before Mt. Moon | 4× vs species that evolve by Moon Stone | `attempt(ctx)` querying engine species data |
 | HEAL BALL (¥300) | Great/Ultra marts | Normal odds; the catch arrives fully healed (HP, status, PP) | No `attempt` at all — the `pokemon.caught` event |
 
-The clerk announces the bonus in the shop text box ("I'll throw in a
-PREMIER BALL, too!"). Purchases under 10 balls award nothing — it has to
-be one transaction.
+## The Premier Ball
+
+You can't buy a Premier Ball. The mart clerk throws them in free when
+you buy balls in bulk — **10 or more balls in a single purchase gets you
+one free Premier Ball, per 10.**
+
+Any kind of ball qualifies — Poké, Great, Ultra, or one of the balls
+added by this mod or others. But it has to be **10 of the same ball, in
+one go**: the mart rings up each item separately, so 5 Poké Balls plus 5
+Great Balls is two purchases of 5, not one of 10. Buying 5 now and 5
+later gets you nothing either.
+
+| You buy (one item, one purchase) | You get |
+| --- | --- |
+| 9 Poké Balls | nothing |
+| 10 Poké Balls | 1 Premier Ball |
+| 19 Great Balls | 1 Premier Ball |
+| 20 Ultra Balls | 2 Premier Balls |
+| 50 Poké Balls | 5 Premier Balls |
+
+The clerk tells you right in the shop, where the usual "Here you are!
+Thank you!" line would be:
+
+```
+I'll throw in a
+PREMIER BALL, too!
+```
+
+...or, for more than one:
+
+```
+I'll throw in 2
+PREMIER BALLS too!
+```
+
+Then check your bag's BALLS pocket. Premier Balls catch exactly like a
+Poké Ball — the point is the colour and the bragging rights, not the
+odds.
+
+**Not seeing them?** The bonus needs
+[shop_events](../shop_events/) installed and enabled — it's what detects
+the purchase. Its DEBUG option (default ON) logs each detected purchase
+to `[ERRS]` in the mod manager, which will confirm whether the buy was
+seen.
 
 ## Requirements
 
