@@ -1,0 +1,14 @@
+return {
+  summary = "Library: emits shop.purchased { id, qty, game } when the player buys at a mart. No visible behavior of its own -- install it because another mod needs it.",
+  author = "Mister Miracle",
+  tags = { "library", "events", "shop" },
+  differences = {
+    "Adds one mod-facing event, shop.purchased, fired once per confirmed mart purchase.",
+    "No gameplay, UI, item, or balance changes whatsoever.",
+  },
+  credits = {},
+  compat = {
+    "Publishes exports.owns = { shop_events = true } and exports.version.",
+    "Known consumer: example_balls (Premier Ball bonus).",
+  },
+}
