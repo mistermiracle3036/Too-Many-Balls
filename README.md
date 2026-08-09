@@ -42,8 +42,6 @@ either way.
   balls when Pokeball Colors is installed.
 - **[Custom Poké Balls](https://github.com/magalvao/custom-pokeballs)**
   by magalvao — coexists; both append to the same mart shelves.
-- **[Pokémon Snag](https://github.com/mistermiracle3036/Pokemon-Snag)** —
-  no direct interaction.
 
 ## Credits
 
