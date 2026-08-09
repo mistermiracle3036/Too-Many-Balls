@@ -5,7 +5,7 @@ Two gen1recomp mods, released together from one repo:
 | Mod | What it does |
 | --- | --- |
 | **[shop_events](shop_events/)** | Library mod. Emits `shop.purchased` whenever the player buys something at a mart — the engine has no purchase event of its own. No visible behavior by itself. |
-| **[example_balls](example_balls/)** | Four new balls, each demonstrating a different mod-API pattern (Premier, Nest, Moon, Heal). Requires shop_events. |
+| **[example_balls](example_balls/)** | Four new balls, each demonstrating a different mod-API pattern: **Premier** (free from the clerk when you buy 10+ of a ball at once), **Nest**, **Moon**, **Heal**. Requires shop_events. |
 
 Install shop_events even if you only want the balls — example_balls
 depends on it. Colors for all four balls register automatically if
