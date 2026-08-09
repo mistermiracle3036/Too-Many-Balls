@@ -1,0 +1,75 @@
+name: Release
+
+# Fires on every push to main. Reads the version straight out of each
+# mod's manifest.json, so nothing here needs updating when a ball is
+# added -- only the version-bump-and-push you already do.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "shop_events/**"
+      - "example_balls/**"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read versions and enforce lockstep
+        id: ver
+        run: |
+          SE=$(jq -r .version shop_events/manifest.json)
+          EB=$(jq -r .version example_balls/manifest.json)
+          echo "shop_events version: $SE"
+          echo "example_balls version: $EB"
+          if [ "$SE" != "$EB" ]; then
+            echo "::error::Version mismatch -- shop_events is $SE, example_balls is $EB. This repo shares one release stream: both manifests must carry the SAME version before pushing to main (see each mod's CHANGELOG preamble for why)."
+            exit 1
+          fi
+          echo "version=$SE" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if this version was already released
+        id: check
+        run: |
+          if gh release view "v${{ steps.ver.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Build release zips
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          V="${{ steps.ver.outputs.version }}"
+          zip -r "shop_events-$V.zip" shop_events
+          zip -r "example_balls-$V.zip" example_balls
+
+      - name: Build combined release notes
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          V="${{ steps.ver.outputs.version }}"
+          {
+            echo "## Shop Events $V"
+            awk "/^## $V/{flag=1;next}/^## /{flag=0}flag" shop_events/CHANGELOG.md
+            echo ""
+            echo "## Example Balls $V"
+            awk "/^## $V/{flag=1;next}/^## /{flag=0}flag" example_balls/CHANGELOG.md
+          } > notes.md
+
+      - name: Publish release
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          V="${{ steps.ver.outputs.version }}"
+          gh release create "v$V" \
+            "shop_events-$V.zip" \
+            "example_balls-$V.zip" \
+            --title "Shop Tools - Custom Balls $V" \
+            --notes-file notes.md
+        env:
+          GH_TOKEN: ${{ github.token }}
