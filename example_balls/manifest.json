@@ -1,0 +1,18 @@
+{
+  "id": "example_balls",
+  "name": "Example Balls",
+  "version": "0.1.5",
+  "api": 2,
+  "entry": "main.lua",
+  "profile": "content",
+  "category": "TEMPLATE",
+  "game_version": ">=0.1.38 <2.0.0",
+  "priority": 150,
+  "affects_link": false,
+  "permissions": ["engine_internals"],
+  "dependencies": ["shop_events"],
+  "optional_dependencies": ["pokeball_colors", "custom_pokeballs"],
+  "conflicts": [],
+  "github": "mistermiracle3036/Shop-Tools---Custom-Balls",
+  "description": "Template mod adding four balls, each demonstrating a different mod-API pattern: Premier (shop_events bonus, no catch code), Nest (rate multiplier from battle state), Moon (querying engine species data), Heal (pokemon.caught event). Colors register into Pokeball Colors when installed."
+}
