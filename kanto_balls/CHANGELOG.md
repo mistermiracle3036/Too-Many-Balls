@@ -8,6 +8,18 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.3.4
+- **Repo renamed from `Shop-Tools---Custom-Balls` to `Kanto-Balls`.** The
+  manifest's `github` field follows it, which is the only part that had to
+  change in code — it is what the launcher's update check and "other
+  versions" list read.
+- Nothing breaks for anyone already running this. GitHub permanently
+  redirects the old repository across web, git and API, and the launcher
+  fetches with `curl -sSL` (HostShell.lua), which follows redirects. Old
+  download links keep resolving too. The manifest is updated so the stored
+  string stops being a lie, not because anything depended on it.
+- README and FAQ retitled to match.
+
 ## 0.3.3
 - Documentation only. No code change.
 - The repo README led with "Example Balls — four new balls", which had

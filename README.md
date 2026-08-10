@@ -1,4 +1,4 @@
-# Shop Tools - Custom Balls
+# Kanto Balls
 
 **Seven new Poké Balls for gen1recomp** (Red / Blue / Yellow), sold across
 Kanto's marts — plus the small library mod that makes one of them possible.

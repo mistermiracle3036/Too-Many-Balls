@@ -8,6 +8,12 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.3.4
+- Repo renamed from `Shop-Tools---Custom-Balls` to `Kanto-Balls`; this
+  manifest's `github` field follows it. Existing installs are unaffected —
+  GitHub redirects the old name and the launcher follows redirects.
+- Lockstep release with Kanto Balls 0.3.4.
+
 ## 0.3.3
 - No code change. Lockstep release with Kanto Balls 0.3.3.
 

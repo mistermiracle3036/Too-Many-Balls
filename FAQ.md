@@ -1,4 +1,4 @@
-# Shop Tools - Custom Balls — FAQ
+# Kanto Balls — FAQ
 
 Every answer is collapsed. Tap only what you want revealed.
 
