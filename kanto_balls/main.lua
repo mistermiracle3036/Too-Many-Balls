@@ -32,7 +32,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.3.2"
+  local VERSION = "0.3.3"
   mod.exports.version = VERSION
 
   local ItemEffects = require("src.inventory.ItemEffects")

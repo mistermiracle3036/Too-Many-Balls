@@ -8,6 +8,21 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.3.3
+- Documentation only. No code change.
+- The repo README led with "Example Balls — four new balls", which had
+  been wrong since 0.2.0 and undersold the mod to anyone deciding whether
+  to download it. It now leads with the seven balls, what each one is
+  actually good for, and where to buy it.
+- Corrected the SILPH BALL fizzle rate in this README: it has been one
+  throw in **two** since 0.3.0, not one in four.
+- Documented that every catch is marked with `mon.caughtBall`, and that
+  the engine does not record this itself — it is what lets Kanto Ribbons
+  award a ribbon for how something was caught.
+- FAQ updated for the rename: `example_balls` had survived in five places.
+- Noted in the compatibility section that the mart shelves are verified
+  present in Yellow's data but have only been played on Red/Blue.
+
 ## 0.3.2
 - **BEAST BALL now SETS the catch rate on a legendary instead of
   multiplying it.** The 5x from 0.3.0 was very nearly a no-op, and the

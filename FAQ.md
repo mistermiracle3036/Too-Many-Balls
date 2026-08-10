@@ -7,7 +7,7 @@ Every answer is collapsed. Tap only what you want revealed.
 <details>
 <summary>Do I need shop_events if I only want the balls?</summary>
 
-Yes. example_balls hard-depends on it — the Premier Ball's bonus is
+Yes. kanto_balls hard-depends on it — the Premier Ball's bonus is
 implemented entirely as a shop_events listener. Install both zips from
 the same release.
 </details>
@@ -15,7 +15,7 @@ the same release.
 <details>
 <summary>Why are two mods in one repo?</summary>
 
-They ship together because example_balls needs shop_events, but they
+They ship together because kanto_balls needs shop_events, but they
 stay two separate installs/toggles/manifests — shop_events is a small
 reusable library other mod authors can depend on independent of the
 ball pack. See the main README for the one real consequence of sharing
@@ -43,7 +43,7 @@ visible on-device. Turn "Show purchase diagnostics" off in shop_events'
 OPTIONS once you've confirmed purchases are being detected.
 </details>
 
-## Example Balls
+## Kanto Balls
 
 <details>
 <summary>I bought 9 balls and got no Premier Ball. Bug?</summary>
@@ -66,9 +66,10 @@ BALLS pocket after.
 <details>
 <summary>Where do I buy Moon Ball / Nest Ball / Heal Ball?</summary>
 
-Moon Ball: Pewter Mart, before Mt. Moon. Nest and Heal: any mart that
-already carries Great or Ultra Balls (same shelves Custom Poké Balls
-uses). Premier Ball is never sold — see above.
+Moon Ball: Pewter Mart, before Mt. Moon. Nest, Heal, Fast and Mirror:
+any mart that already carries Great or Ultra Balls (the same shelves
+Custom Poké Balls uses). Silph Ball: Saffron Mart only. Premier Ball is
+never sold — see above.
 </details>
 
 <details>
@@ -82,7 +83,10 @@ restored.
 <details>
 <summary>Can I use this as a template for my own ball mod?</summary>
 
-Yes — that's the point. `example_balls/main.lua` is heavily commented;
-each of the four balls demonstrates one self-contained API pattern with
-the engine file/line it was verified against. Copy what you need.
+Yes — that's the point. `kanto_balls/main.lua` is heavily commented, and
+the seven balls are seven *different* techniques: no catch code at all,
+reacting to another mod's event, multiplying the rate from live battle
+state, querying species data, reading base stats, reading your own side
+of the battle, and replacing the catch roll outright. Each is marked with
+the engine file and line it was verified against. Copy what you need.
 </details>
