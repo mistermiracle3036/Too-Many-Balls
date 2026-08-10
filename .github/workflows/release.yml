@@ -77,7 +77,7 @@ jobs:
           gh release create "v$V" \
             "shop_events-$V.zip" \
             "kanto_balls-$V.zip" \
-            --title "Shop Tools - Custom Balls $V" \
+            --title "Kanto Balls $V" \
             --notes-file notes.md
         env:
           GH_TOKEN: ${{ github.token }}
