@@ -8,6 +8,45 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.3.0
+- **SILPH BALL now fizzles 1 throw in 2**, up from 1 in 4. Partly tuning,
+  partly diagnostic: ~6-8 throws on 0.2.3 never broke, which is a ~10%
+  outcome at 25% odds -- suspicious but not proof. At 50% the same result
+  would be ~1.6%, which would be proof the failure path never fires. The
+  path itself was verified against engine source first, so a repeat is
+  evidence about the roll and nothing else.
+- **New: GS BALL and BEAST BALL**, both behind a new `[DEV] CHEAP BALLS`
+  option (default OFF).
+  - GS BALL has no `attempt()` at all and catches like a Poke Ball. The
+    reward is the persisted mark -- `mon.caughtBall` -- which kanto_ribbons
+    will read. No ribbon logic lives here.
+  - BEAST BALL is 5x against a legendary and 0.2x against everything else.
+    "Legendary" is read from live species data (`catchRate <= 3`) rather
+    than a hardcoded list, so a mod that adds legendaries is covered for
+    free. **Measured on device, not assumed:** with Kanto Ascendant's
+    Johto species loaded, `catchRate <= 3` matched exactly ten species, all
+    legendary, no false positives -- a hardcoded Kanto list would have
+    silently ignored the six new ones.
+  - **MEW is a documented exception.** Gen 1 gives Mew catch rate 45, so a
+    pure rate test would have the Beast Ball actively *hurt* the most
+    famous legendary in the game. One named exception, not a list.
+- **New option `[DEV] CHEAP BALLS`** (default OFF): drops every Kanto Balls
+  price to 1 and puts GS and BEAST on the ball shelves. With it off, the
+  two are never registered at all -- they cannot appear in a bag, a mart or
+  the item list. **Toggling it requires a full quit and relaunch**: the
+  option is read during the mod's entry chunk and folded into the merged
+  registries afterwards, and nothing re-reads it later.
+- **Declares `example_balls` in `conflicts`**, and reports a one-line
+  notice to [ERRS] if the old mod is still installed. A rename cannot be
+  redirected -- the mod id is the identity, and `installZip` refuses a zip
+  whose manifest id differs -- so nothing stops both being installed at
+  once and registering overlapping balls. This is the guard against that.
+- Removes the temporary 0.2.4/0.2.5 diagnostic; it has served its purpose.
+- No change to NEST, MOON, HEAL, PREMIER, FAST or MIRROR. FAST and MIRROR
+  were verified correct against engine source rather than altered:
+  `targetDef.baseStats.speed` and `battle.player.mon.species` are both the
+  right paths, and `ctx.targetDef` is populated in wild battles.
+
 ## 0.2.5
 - Same diagnostic as 0.2.4, reformatted to fit the [ERRS] screen. No
   gameplay change.

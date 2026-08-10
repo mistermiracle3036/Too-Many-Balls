@@ -14,6 +14,14 @@
 --   MIRROR   an attempt() reading YOUR side of the battle, not theirs
 --   SILPH    an attempt() that replaces the roll outright, and can fail
 --
+-- Two more exist only behind the [DEV] CHEAP BALLS option, which also
+-- drops every price to 1.  They are not earned content yet:
+--
+--   GS       no attempt() at all -- the reward is the persisted MARK
+--            (mon.caughtBall), which kanto_ribbons reads
+--   BEAST    an attempt() that reads live species data to decide what
+--            counts as legendary, instead of a hardcoded list
+--
 -- A ball needs three registrations to exist (see registerBall below):
 --   1. mod.content.balls:register(id, record)   -- the catch behavior
 --   2. mod.content.items:register(id, record)   -- the bag/mart item
@@ -24,12 +32,42 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.2.5"
+  local VERSION = "0.3.0"
   mod.exports.version = VERSION
 
   local ItemEffects = require("src.inventory.ItemEffects")
   local Bag = require("src.inventory.Bag")
   local Pokemon = require("src.pokemon.Pokemon")
+  local Runtime = require("src.mods.Runtime")
+
+  ----------------------------------------------------------------------
+  -- OPTIONS -- read at LOAD time, which is only legal because of the
+  -- order in src/mods/Loader.lua: Loader:load calls _loadState() (which
+  -- fills loader.modOptions from the persisted options file) at line 940,
+  -- BEFORE the loop at 963 that runs each mod's entry chunk.  So a get()
+  -- here returns the player's stored value, not a default.
+  --
+  -- define() MUST come before get(): options.get falls back to a row's
+  -- `default` by looking it up in loader.optionSchemas[modId], and that
+  -- table is empty until define() populates it.  Get first and a
+  -- first-run player -- who has nothing stored -- reads nil instead of
+  -- the default.  (nil is falsy so this one would happen to work, but
+  -- the next option with a true default would not.)
+  --
+  -- Row shape verified against ManagerState:buildOptionRows: a toggle is
+  -- { key, type = "toggle", label, default } and renders ON/OFF.
+  ----------------------------------------------------------------------
+  mod.options:define({
+    { key = "cheap_balls", type = "toggle",
+      label = "[DEV] CHEAP BALLS", default = false },
+  })
+
+  -- Everything this flag changes -- prices, which balls exist, which
+  -- shelves carry them -- is decided during THIS entry chunk and folded
+  -- into the merged registries afterwards (the merge loop runs after
+  -- every entry chunk in Loader:load).  Nothing re-reads it later, so
+  -- toggling the option takes effect only after a full quit and relaunch.
+  local CHEAP = mod.options:get("cheap_balls") == true
 
   -- Ownership, declared so other mods (notably pokeball_colors) can
   -- check at runtime instead of via a handoff note.  This mod owns
@@ -40,6 +78,14 @@ return function(mod)
     "PREMIER_BALL", "NEST_BALL", "MOON_BALL", "HEAL_BALL",
     "FAST_BALL", "MIRROR_BALL", "SILPH_BALL",
   }
+  -- GS and BEAST exist only under the dev flag, so they are appended to
+  -- the owned set rather than baked into it -- pokeball_colors warns
+  -- about a registered ball with no colour, and would otherwise warn
+  -- about two balls that do not exist.
+  if CHEAP then
+    BALL_IDS[#BALL_IDS + 1] = "GS_BALL"
+    BALL_IDS[#BALL_IDS + 1] = "BEAST_BALL"
+  end
   local OWNED = {}
   for _, id in ipairs(BALL_IDS) do OWNED[id] = true end
   mod.exports.owns = { kanto_balls = true, balls = OWNED }
@@ -49,6 +95,9 @@ return function(mod)
   -- shared helper: the three registrations every ball needs
   ----------------------------------------------------------------------
   local function registerBall(id, name, price, ballRecord)
+    -- [DEV] CHEAP BALLS: every ball this mod sells costs 1, so a shelf
+    -- can be cleared for testing without grinding money first.
+    if CHEAP then price = 1 end
     -- poke-ball-tier stock numbers; attempt (if any) supersedes them
     ballRecord.randMax = ballRecord.randMax or 255
     ballRecord.hpFactor = ballRecord.hpFactor or 12
@@ -242,6 +291,63 @@ return function(mod)
   })
 
   ----------------------------------------------------------------------
+  -- GS BALL and BEAST BALL -- [DEV] CHEAP BALLS only.
+  --
+  -- Both are gated on the option because they are not earned content yet:
+  -- with the flag off they are never registered, so they cannot appear in
+  -- a bag, a mart or the item list at all.
+  ----------------------------------------------------------------------
+  if CHEAP then
+    -- GS BALL -- deliberately the most boring ball in the mod: no
+    -- attempt() at all, so it catches exactly like a Poke Ball.  The
+    -- point is the MARK, not the mechanics.  mon.caughtBall persists, so
+    -- kanto_ribbons can award a ribbon for a GS BALL catch.  That ribbon
+    -- logic belongs in kanto_ribbons; this mod's whole job is to exist
+    -- and be catchable with.
+    registerBall("GS_BALL", "GS BALL", 200, {})
+
+    -- BEAST BALL -- 5x on a legendary, 0.2x on everything else.
+    --
+    -- "Legendary" is read from live species data rather than a hardcoded
+    -- list, so a mod that adds legendaries is covered for free.  This was
+    -- MEASURED on device, not assumed: with Kanto Ascendant's Johto
+    -- species loaded, catchRate <= 3 returned exactly ten species, all
+    -- legendary, no false positives -- the three birds, Mewtwo, and
+    -- Johto's Raikou/Entei/Suicune/Lugia/Ho-Oh/Celebi.  A hardcoded Kanto
+    -- list would have silently ignored the six new ones.
+    --
+    -- MEW is the one documented exception.  Gen 1 gives Mew catch rate
+    -- 45, so it does NOT qualify on rate, and a pure rate test would have
+    -- the Beast Ball actively HURT the most famous legendary in the game.
+    -- One named exception, not a species list.
+    local LEGENDARY_RATE = 3
+
+    -- boost() above only ever multiplies up, so it can leave the rate
+    -- fractional when handed a value below 1.  A penalty needs its own
+    -- helper: floor it, and never below 1, because a rate of 0 is not
+    -- "very hard", it is a ball that can never work.
+    local function scaleRate(ctx, mult)
+      local rate = ctx.rateOverride or ctx.targetDef.catchRate or 45
+      ctx.rateOverride = math.max(1, math.min(255, math.floor(rate * mult)))
+    end
+
+    registerBall("BEAST_BALL", "BEAST BALL", 1000, {
+      tossAnim = "ULTRATOSS_ANIM",
+      attempt = function(ctx)
+        local def = ctx.targetDef
+        local rate = def and def.catchRate or 255
+        local species = ctx.targetMon and ctx.targetMon.species
+        if rate <= LEGENDARY_RATE or species == "MEW" then
+          scaleRate(ctx, 5)
+        else
+          scaleRate(ctx, 0.2)
+        end
+        return ctx.vanillaAttempt()
+      end,
+    })
+  end
+
+  ----------------------------------------------------------------------
   -- SILPH PROTOTYPE -- an attempt() that replaces the roll outright.
   -- Silph Co's abandoned first pass at the Master Ball: when it works it
   -- is a Master Ball, and one throw in four it simply does not work.
@@ -260,7 +366,20 @@ return function(mod)
   -- a Silph Co. employee handing you exactly one after the takeover --
   -- when that giver exists, this shelf entry comes off.
   ----------------------------------------------------------------------
-  local SILPH_FAILURE_IN = 4   -- 1 throw in 4 is a dud
+  -- 1 throw in 2 is a dud (was 1 in 4 through 0.2.x).
+  --
+  -- This is a diagnostic as much as a tuning change.  Roughly 6-8 Silph
+  -- throws on 0.2.3 never produced a break: at 25% that is about a 10%
+  -- outcome -- suspicious, not proof.  At 50% the same run of luck is
+  -- about 1.6%, which WOULD be proof that the failure path never fires.
+  --
+  -- The path itself was verified against source first, so a repeat is
+  -- evidence about the roll and nothing else: BattleState.throwBall sets
+  -- self.lastBall BEFORE calling catchAttempt (BattleState.lua:4610-4611),
+  -- and a false result falls straight through to
+  -- sayNext(self:ballMissMessage(shakes)) at 4629 with no early return.
+  -- ctx.rng is love.math.random(a, b), inclusive, at BattleState.lua:560.
+  local SILPH_FAILURE_IN = 2
 
   -- set by the attempt below, consumed by the message wrap right after
   local silphFizzled = false
@@ -323,6 +442,14 @@ return function(mod)
   -- a wrong constant fails SILENTLY (vanilla shelf, no error).
   ----------------------------------------------------------------------
   local SHELF = { "NEST_BALL", "HEAL_BALL", "FAST_BALL", "MIRROR_BALL" }
+
+  -- [DEV] CHEAP BALLS puts the two dev balls on every ball shelf. With
+  -- the flag off they were never registered above, so there is nothing to
+  -- append and no shelf mentions them.
+  if CHEAP then
+    SHELF[#SHELF + 1] = "GS_BALL"
+    SHELF[#SHELF + 1] = "BEAST_BALL"
+  end
 
   local function shelfPlus(extra)
     local out = {}
@@ -394,6 +521,16 @@ return function(mod)
     SILPH_BALL   = { body = { 120,  88, 168 }, accent = {  96, 216, 200 } },
   }
 
+  -- Only for balls that actually got registered: Pokeball Colors 0.1.13+
+  -- warns about a registered ball carrying no colour, and registering a
+  -- colour for a ball that does not exist is the mirror of that mistake.
+  if CHEAP then
+    -- GS: the gold-and-silver ball, so gold body against a silver band.
+    COLORS.GS_BALL = { body = { 224, 188,  76 }, accent = { 216, 220, 228 } }
+    -- BEAST: Ultra Beast livery -- deep blue with the yellow flash.
+    COLORS.BEAST_BALL = { body = {  44,  72, 148 }, accent = { 244, 216,  72 } }
+  end
+
   mod.events:on("game.ready", function()
     local pbc = mod.find("pokeball_colors")
     if not (pbc and pbc.exports) then return end
@@ -411,69 +548,26 @@ return function(mod)
   end)
 
   ----------------------------------------------------------------------
-  -- TEMPORARY DIAGNOSTIC (0.2.5 only -- delete before 0.3.0 ships).
+  -- Superseded-mod notice.  example_balls was renamed to kanto_balls at
+  -- 0.2.0, and a rename is not something the engine can redirect: the id
+  -- IS the identity.  LauncherMods.installFromRelease passes
+  -- expectId = modId and installZip refuses a zip whose manifest id
+  -- differs (LauncherMods.lua:689), so an example_balls listing can never
+  -- serve a kanto_balls download.
   --
-  -- Base stats and catch rates are extracted from the ROM at import time
-  -- (src/import/RomExtractor.lua), so they cannot be read from the engine
-  -- repo -- it ships only a three-species test fixture. The question still
-  -- open is whether catchRate <= 3 is exactly the legendaries, which
-  -- decides the 0.3.0 Beast Ball discriminator.
-  --
-  -- Written for the [ERRS] screen's real geometry (src/mods/ManagerState
-  -- .lua): entries are WORD-wrapped at 16 columns by errorLines() into an
-  -- 11-row window (LIST_ROWS), and reportError prepends "kanto_balls: ",
-  -- which eats the first row by itself. So: few messages, each packing
-  -- many SHORT words. One long sentence per fact costs five rows; a dozen
-  -- packed names cost about four.
+  -- Worse, nothing stops both being installed: different ids install to
+  -- different folders ("mods/" .. manifest.id), so a player who never
+  -- removed the old one is silently running two mods that register
+  -- overlapping balls.  The manifest now declares example_balls in
+  -- `conflicts`, which the launcher surfaces in the install confirmation
+  -- -- but that only helps someone installing today.  This catches the
+  -- ones who already have both, and reportError is the only channel that
+  -- exists on iOS.
   ----------------------------------------------------------------------
-  local Runtime = require("src.mods.Runtime")
-  local diagDone = false
-
-  local function report(fmt, ...)
-    Runtime.reportError("kanto_balls", string.format(fmt, ...))
+  if mod.find("example_balls") then
+    Runtime.reportError("kanto_balls",
+      "OLD EXAMPLE BALLS INSTALLED - REMOVE IT")
   end
-
-  mod.events:on("game.ready", function(p)
-    if diagDone then return end
-    local dex = p and p.game and p.game.data and p.game.data.pokemon
-    if not dex then
-      report("NO DEX DATA")
-      diagDone = true
-      return
-    end
-    diagDone = true
-
-    -- 1. the Fast Ball pair, already confirmed on device (95 / 120); kept
-    --    so a re-run on another save still shows it in one line.
-    local function spd(id)
-      local r = dex[id]
-      return r and r.baseStats and r.baseStats.speed or 0
-    end
-    report("SPD DIG%d DUG%d", spd("DIGLETT"), spd("DUGTRIO"))
-
-    -- 2. how many species the Fast Ball actually boosts
-    local fast, total = 0, 0
-    for _, rec in pairs(dex) do
-      total = total + 1
-      local s = rec.baseStats and rec.baseStats.speed
-      if s and s >= FAST_THRESHOLD then fast = fast + 1 end
-    end
-    report("FAST %d/%d", fast, total)
-
-    -- 3. THE open question: which species have catchRate <= 3.  Names are
-    --    packed into a single message on purpose -- word wrap fits two per
-    --    row, so a dozen names cost four rows instead of a dozen messages.
-    local rare, n = {}, 0
-    for id, rec in pairs(dex) do
-      if (rec.catchRate or 255) <= 3 then
-        n = n + 1
-        if n <= 12 then rare[#rare + 1] = id end
-      end
-    end
-    table.sort(rare)
-    report("CR3 N=%d", n)
-    report("CR3 %s", n > 0 and table.concat(rare, " ") or "NONE")
-  end)
 
   mod.log:info("kanto_balls %s loaded", VERSION)
 end
