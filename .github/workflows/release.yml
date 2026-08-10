@@ -49,8 +49,14 @@ jobs:
         if: steps.check.outputs.exists == 'false'
         run: |
           V="${{ steps.ver.outputs.version }}"
-          zip -r "shop_events-$V.zip" shop_events
-          zip -r "example_balls-$V.zip" example_balls
+          # Flat archives: manifest.json at the root of each zip rather than
+          # inside a "<mod>/" folder. LauncherMods.locateRoot accepts either
+          # shape and names the install folder from manifest.id regardless,
+          # but the community mod index requires files at the archive root.
+          (cd shop_events   && zip -qr "../shop_events-$V.zip"   . -x '*.DS_Store')
+          (cd example_balls && zip -qr "../example_balls-$V.zip" . -x '*.DS_Store')
+          unzip -l "shop_events-$V.zip"
+          unzip -l "example_balls-$V.zip"
 
       - name: Build combined release notes
         if: steps.check.outputs.exists == 'false'
