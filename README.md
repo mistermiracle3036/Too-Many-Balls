@@ -16,6 +16,24 @@ Kanto's marts — plus the small library mod that makes one of them possible.
 Every ball is a real item on a real shelf — no cheats, no menu, no new
 currency. Buy them and throw them.
 
+<img src="docs/mart-shelf.png" width="360" alt="A Kanto mart's ball shelf listing NEST, HEAL, FAST, MIRROR and SILPH BALLs with prices">
+
+*(The SNAG BALL on that shelf is from [Pokemon Snag](https://github.com/mistermiracle3036/Pokemon-Snag),
+a separate mod of mine — it is not part of Kanto Balls.)*
+
+### The Premier Ball pays for itself
+
+Buy ten or more of any ball in **one** purchase and the clerk hands them
+over free, and says so in his own text box:
+
+<img src="docs/premier-bonus.png" width="360" alt="A mart clerk saying: I'll throw in 2 PREMIER BALLS too!">
+
+### The Silph Ball tells you when it breaks
+
+A failed throw is not a miss, and it does not pretend to be one:
+
+<img src="docs/silph-broke.png" width="360" alt="Battle text reading: The PROTOTYPE broke apart!">
+
 ## Two mods, one download page
 
 | Mod | What it does |
@@ -69,7 +87,13 @@ actually changed. See each mod's CHANGELOG for why.
 
 - **[Pokeball Colors](https://github.com/mistermiracle3036/Pokeball-Colors)** —
   optional. All seven balls register their own colors when it is
-  installed, so each one has its own look during the throw.
+  installed, so each one has its own look during the throw:
+
+  <img src="docs/ball-colors.png" width="520" alt="All nine Kanto Balls in their own colors: Premier, Nest, Moon, Heal, Fast, Mirror, Silph, GS and Beast">
+
+  *Requires Pokeball Colors with **COLORS** set to ADVANCED — without it
+  every ball throws in the default palette. GS and BEAST are the two
+  behind `[DEV] CHEAP BALLS`.*
 - **[Custom Poké Balls](https://github.com/magalvao/custom-pokeballs)**
   by magalvao — coexists. Both append to the same mart shelves and no
   ball is duplicated between them.
