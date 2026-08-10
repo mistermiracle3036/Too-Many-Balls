@@ -32,7 +32,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.3.4"
+  local VERSION = "0.3.5"
   mod.exports.version = VERSION
 
   local ItemEffects = require("src.inventory.ItemEffects")
@@ -259,12 +259,41 @@ return function(mod)
   -- persists mon.snagged / mon.snagFrom, and kanto_ribbons already reads
   -- those, so the mechanism is proven on this engine rather than assumed.
   --
+  -- BUT WE ARE NOT THE OWNER.  pokeball_colors declares
+  -- `exports.owns.caughtBallField = "mon.caughtBall"` and writes it from
+  -- its own pokemon.caught listener -- it needs the field for the heal
+  -- machine's per-ball colours.  Its ownership note says other mods may
+  -- read it freely and must NOT write it.  0.3.1-0.3.4 here wrote it
+  -- unconditionally, duplicating that write: harmless in practice, since
+  -- both sides guard on nil and store the same value from the same
+  -- payload, but a contract breach and a divergence waiting to happen.
+  --
+  -- So this is a FALLBACK only, for the setup pokeball_colors cannot
+  -- cover: Kanto Balls installed without it.  Otherwise the GS BALL's
+  -- mark -- and the kanto_ribbons ribbon that reads it -- would silently
+  -- depend on an optional cosmetic mod being installed.
+  --
+  -- The test is "does pokeball_colors CLAIM the field", not "is it
+  -- installed": versions before 0.1.12 have no writer, and a bare
+  -- presence check would leave the mark missing on those setups.
+  --
+  -- Checked at catch time, not load time: mod.find cannot see a mod that
+  -- has not loaded yet, and load order between two independent mods is
+  -- not guaranteed either way.
+  --
   -- Recorded for EVERY ball, not just GS: it is one field either way, and
   -- a ribbon for "caught in a MOON BALL" then costs no new plumbing.
   -- Never overwritten -- a Pokemon is caught once, and a later trade or
   -- evolution must not relabel it.
   ----------------------------------------------------------------------
+  local function markIsOwnedElsewhere()
+    local pbc = mod.find("pokeball_colors")
+    local owns = pbc and pbc.exports and pbc.exports.owns
+    return owns ~= nil and owns.caughtBallField ~= nil
+  end
+
   mod.events:on("pokemon.caught", function(p)
+    if markIsOwnedElsewhere() then return end
     if p.mon and p.ball and p.mon.caughtBall == nil then
       p.mon.caughtBall = p.ball
     end
@@ -554,7 +583,9 @@ return function(mod)
   ----------------------------------------------------------------------
   local COLORS = {
     PREMIER_BALL = { body = { 240, 240, 240 }, accent = { 200,  48,  48 } },
-    NEST_BALL    = { body = { 132, 172,  84 }, accent = { 228, 204, 100 } },
+    -- bright spring green, NOT the olive it used to be: at 132,172,84 it
+    -- sat 5.9 dE from the native SAFARI BALL, which every player has
+    NEST_BALL    = { body = {  80, 200, 128 }, accent = { 228, 204, 100 } },
     MOON_BALL    = { body = {  60,  68, 128 }, accent = { 232, 208,  96 } },
     HEAL_BALL    = { body = { 232, 160, 196 }, accent = { 248, 238, 244 } },
     FAST_BALL    = { body = { 232, 148,  48 }, accent = { 248, 232, 152 } },
@@ -567,9 +598,16 @@ return function(mod)
   -- colour for a ball that does not exist is the mirror of that mistake.
   if CHEAP then
     -- GS: the gold-and-silver ball, so gold body against a silver band.
-    COLORS.GS_BALL = { body = { 224, 188,  76 }, accent = { 216, 220, 228 } }
+    -- pale gold against silver.  The old 224,188,76 was 2.2 dE from
+    -- Custom Poke Balls' LEVEL BALL and 14.6 from the native ULTRA --
+    -- lifting the value clears both, and reads more "gold AND silver".
+    COLORS.GS_BALL = { body = { 248, 224, 160 }, accent = { 216, 220, 228 } }
     -- BEAST: Ultra Beast livery -- deep blue with the yellow flash.
-    COLORS.BEAST_BALL = { body = {  44,  72, 148 }, accent = { 244, 216,  72 } }
+    -- near-black navy under the yellow flash.  At 44,72,148 it was 10.2
+    -- dE from our own MOON BALL and crowded GREAT and SILPH too; dropping
+    -- the value clears all three at once, because value contrast is what
+    -- survives at this sprite size.
+    COLORS.BEAST_BALL = { body = {  16,  24,  56 }, accent = { 244, 216,  72 } }
   end
 
   mod.events:on("game.ready", function()

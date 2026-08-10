@@ -8,6 +8,36 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.3.5
+- **Three ball colours retuned so they stop looking like other balls.**
+  Measured rather than eyeballed: every ball a player could have installed
+  was converted to CIE Lab and compared by perceptual distance, weighting
+  the body colour since at this sprite size the body is most of the pixels.
+  - **NEST** `132,172,84` → `80,200,128`. It sat **5.9 dE** from the
+    native SAFARI BALL — the worst clash in the set, and one every player
+    saw, since Safari is vanilla. Now 25.8.
+  - **BEAST** `44,72,148` → `16,24,56`. It was **10.2 dE** from our own
+    MOON BALL, and crowded GREAT and SILPH too. Dropping the value clears
+    all three at once, because value contrast is what survives at 8px —
+    and near-black under a yellow flash is Ultra Beast livery anyway.
+  - **GS** `224,188,76` → `248,224,160`. It was **2.2 dE** from Custom
+    Poke Balls' LEVEL BALL — effectively the same ball — and 14.6 from the
+    native ULTRA. Pale gold clears both and reads more "gold *and*
+    silver".
+  - Result: always-present collisions drop from six pairs to one.
+- **PREMIER and HEAL deliberately left alone.** Premier is close to Custom
+  Poke Balls' TIMER, and Heal to its DREAM, but both pairs are close
+  because both balls are canonically that colour. Moving ours would cost
+  more identity than it buys, and neither clash exists without that mod.
+- **`mon.caughtBall` is now written only as a fallback.** pokeball_colors
+  owns that field — it declares `exports.owns.caughtBallField` and writes
+  it for the heal machine's per-ball colours — and its ownership note says
+  other mods must not write it. 0.3.1–0.3.4 wrote it unconditionally,
+  which duplicated that write. Harmless in practice (both sides guard on
+  nil and store the same value) but a contract breach. This mod now writes
+  it only when nothing else claims it, so the GS BALL's mark still exists
+  for someone running Kanto Balls without pokeball_colors.
+
 ## 0.3.4
 - **Repo renamed from `Shop-Tools---Custom-Balls` to `Kanto-Balls`.** The
   manifest's `github` field follows it, which is the only part that had to
