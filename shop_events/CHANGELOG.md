@@ -8,6 +8,9 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.3.1
+- No code change. Lockstep release with Kanto Balls 0.3.1.
+
 ## 0.3.0
 - No code change. Lockstep release with Kanto Balls 0.3.0.
 

@@ -8,6 +8,20 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.3.1
+- **Records which ball caught each Pokemon** as `mon.caughtBall`, on the
+  Pokemon itself, for every ball this mod adds.
+- This turned out to be necessary rather than optional: **the engine does
+  not record it.** `caughtBall` appears nowhere in engine 0.1.75 --
+  `storeCaughtMon` puts the ball in the `pokemon.caught` payload and then
+  discards it. So through 0.3.0 the GS BALL left no mark at all, and its
+  entire purpose is the mark.
+- Writing an extra field onto the mon table is the same mechanism
+  snag_quest already uses for `mon.snagged`, which kanto_ribbons already
+  reads, so it is proven on this engine rather than assumed.
+- Written once and never overwritten: a Pokemon is caught once, and a
+  later trade or evolution must not relabel it.
+
 ## 0.3.0
 - **SILPH BALL now fizzles 1 throw in 2**, up from 1 in 4. Partly tuning,
   partly diagnostic: ~6-8 throws on 0.2.3 never broke, which is a ~10%

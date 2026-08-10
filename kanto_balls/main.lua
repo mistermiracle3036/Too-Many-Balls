@@ -32,7 +32,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.3.0"
+  local VERSION = "0.3.1"
   mod.exports.version = VERSION
 
   local ItemEffects = require("src.inventory.ItemEffects")
@@ -243,6 +243,30 @@ return function(mod)
     if p.ball == "HEAL_BALL" and p.mon then
       Pokemon.heal(p.mon)
       mod.log:info("HEAL BALL: %s caught fully healed", tostring(p.species))
+    end
+  end)
+
+  ----------------------------------------------------------------------
+  -- THE MARK -- which ball caught this Pokemon, recorded on the Pokemon.
+  --
+  -- The engine does NOT do this.  `caughtBall` appears nowhere in engine
+  -- 0.1.75: storeCaughtMon puts the ball in the pokemon.caught payload
+  -- (BattleState.lua:4500) and then drops it, so nothing anywhere
+  -- remembers what you threw.  Without this listener the GS BALL is
+  -- pointless -- its whole reward is the mark.
+  --
+  -- Writing an extra field onto the mon table is how snag_quest already
+  -- persists mon.snagged / mon.snagFrom, and kanto_ribbons already reads
+  -- those, so the mechanism is proven on this engine rather than assumed.
+  --
+  -- Recorded for EVERY ball, not just GS: it is one field either way, and
+  -- a ribbon for "caught in a MOON BALL" then costs no new plumbing.
+  -- Never overwritten -- a Pokemon is caught once, and a later trade or
+  -- evolution must not relabel it.
+  ----------------------------------------------------------------------
+  mod.events:on("pokemon.caught", function(p)
+    if p.mon and p.ball and p.mon.caughtBall == nil then
+      p.mon.caughtBall = p.ball
     end
   end)
 
