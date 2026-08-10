@@ -32,7 +32,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.3.1"
+  local VERSION = "0.3.2"
   mod.exports.version = VERSION
 
   local ItemEffects = require("src.inventory.ItemEffects")
@@ -346,6 +346,23 @@ return function(mod)
     -- One named exception, not a species list.
     local LEGENDARY_RATE = 3
 
+    -- SET, do not multiply.  0.3.0/0.3.1 used 5x and it did almost
+    -- nothing, which the stock formula explains exactly
+    -- (Catching.lua stockAttempt): the first gate is
+    --     rng(0, randMax) > rate  ->  outright fail
+    -- With randMax 255, a legendary's catchRate of 3 multiplied by 5 is
+    -- 15, so that gate passes 16 times in 256 -- about 6%.  Five times
+    -- almost nothing is still almost nothing.  Measured on device
+    -- against Entei and Mewtwo: many balls, no catch, mostly zero
+    -- shakes, which is that gate failing.
+    --
+    -- 255 makes the first gate certain, leaving the HP term as the only
+    -- barrier: the second gate is rng(0,255) <= f, where f rises as the
+    -- target weakens.  So a legendary at full HP still resists (roughly
+    -- a third per throw) and a weakened one is near-certain -- the ball
+    -- ignores the catch RATE, not the fight.
+    local LEGENDARY_SET = 255
+
     -- boost() above only ever multiplies up, so it can leave the rate
     -- fractional when handed a value below 1.  A penalty needs its own
     -- helper: floor it, and never below 1, because a rate of 0 is not
@@ -362,7 +379,7 @@ return function(mod)
         local rate = def and def.catchRate or 255
         local species = ctx.targetMon and ctx.targetMon.species
         if rate <= LEGENDARY_RATE or species == "MEW" then
-          scaleRate(ctx, 5)
+          ctx.rateOverride = LEGENDARY_SET
         else
           scaleRate(ctx, 0.2)
         end

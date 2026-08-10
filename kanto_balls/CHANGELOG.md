@@ -8,6 +8,23 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.3.2
+- **BEAST BALL now SETS the catch rate on a legendary instead of
+  multiplying it.** The 5x from 0.3.0 was very nearly a no-op, and the
+  stock formula says exactly why: `stockAttempt` fails outright when
+  `rng(0, randMax) > rate`. With `randMax` 255, a legendary's catch rate
+  of 3 multiplied by 5 is 15, so that gate passes about 6% of the time.
+  Five times almost nothing is still almost nothing.
+- Measured, not theorised: many Beast Balls against Entei and Mewtwo,
+  neither caught, and *mostly zero shakes* — the signature of that first
+  gate failing.
+- It now sets the rate to 255 for legendaries, which makes that gate
+  certain and leaves the HP term as the only barrier. A legendary at full
+  HP still resists roughly two throws in three; a weakened one is close to
+  certain. The ball ignores the catch RATE, not the fight.
+- The 0.2x penalty against non-legendaries is unchanged, and was confirmed
+  working on device.
+
 ## 0.3.1
 - **Records which ball caught each Pokemon** as `mon.caughtBall`, on the
   Pokemon itself, for every ball this mod adds.
