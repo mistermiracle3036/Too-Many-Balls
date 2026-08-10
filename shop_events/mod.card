@@ -9,6 +9,6 @@ return {
   credits = {},
   compat = {
     "Publishes exports.owns = { shop_events = true } and exports.version.",
-    "Known consumer: example_balls (Premier Ball bonus).",
+    "Known consumer: kanto_balls (Premier Ball bonus).",
   },
 }

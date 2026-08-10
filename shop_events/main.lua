@@ -34,7 +34,7 @@
 -- They are notices, not failures.
 
 return function(mod)
-  local VERSION = "0.1.5"
+  local VERSION = "0.3.2"
   mod.exports.version = VERSION
   mod.exports.owns = { shop_events = true }
 
