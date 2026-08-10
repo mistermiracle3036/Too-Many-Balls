@@ -20,6 +20,34 @@
 
 Add-Type -AssemblyName System.Drawing
 
+# Is this pixel UI ink (the black HUD lines, borders and text)?
+#
+# Threshold picked from measured pixels, after two wrong guesses:
+#
+#   "all channels < 60"        called BEAST's whole body ink once its colour
+#                              became 16,24,56 at 0.3.5. Fill refused to
+#                              start; the grid rendered BEAST at 0x0.
+#   "< 60 AND spread < 20"     fixed that but stopped the downward walk on
+#                              anti-aliasing INSIDE the ball -- the navy/
+#                              yellow boundary rows in beast-ball.png are
+#                              (21,24,39) and (28,25,16), dark and nearly
+#                              neutral. BEAST came out clipped in half.
+#
+# What actually separates them is plain darkness:
+#
+#   HUD ledge (beast-ball.png y=788+)  (0,0,0) .. (0,2,5)     max <= 5
+#   HUD ledge top row (fast-ball.png)  (21,0,0)               max = 21
+#   Darkest pixel inside a ball        (28,25,16)             max = 28
+#   BEAST body                         (18,23,53)             max = 53
+#
+# 25 sits in the gap between the ledge's anti-aliased top row and the
+# darkest pixel any ball actually contains. Saturation is not consulted at
+# all -- it was a red herring.
+function Test-IsInk($p) {
+  $max = [Math]::Max($p.R, [Math]::Max($p.G, $p.B))
+  return ($max -lt 25)
+}
+
 $root = Split-Path -Parent $PSScriptRoot
 $docs = Join-Path $root "docs"
 $out  = Join-Path $docs "ball-colors.png"
@@ -68,8 +96,7 @@ function Get-BallCentre($bmp, $seedX, $seedY) {
     if ($x -lt $x0 -or $x -gt $x1 -or $y -lt $y0 -or $y -gt $y1) { return $false }
     $p = $bmp.GetPixel($x, $y)
     $bg = ($p.R -gt 250 -and $p.G -gt 250 -and $p.B -gt 250)
-    $ink = ($p.R -lt 60 -and $p.G -lt 60 -and $p.B -lt 60)
-    return (-not $bg -and -not $ink)
+    return (-not $bg -and -not (Test-IsInk $p))
   }
 
   if (-not (TestFillable $bmp $seedX $seedY $x0 $x1 $y0 $y1)) {
@@ -133,8 +160,7 @@ function Get-BallCentre($bmp, $seedX, $seedY) {
 function Get-BallBottom($bmp, $cx, $startY, $fallback) {
   $limit = [Math]::Min($bmp.Height - 1, $startY + 70)
   for ($y = $startY; $y -le $limit; $y++) {
-    $p = $bmp.GetPixel($cx, $y)
-    if ($p.R -lt 60 -and $p.G -lt 60 -and $p.B -lt 60) { return ($y - 1) }
+    if (Test-IsInk $bmp.GetPixel($cx, $y)) { return ($y - 1) }
   }
   return ($fallback - 3)
 }
