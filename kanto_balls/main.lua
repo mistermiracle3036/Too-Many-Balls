@@ -24,7 +24,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.2.3"
+  local VERSION = "0.2.4"
   mod.exports.version = VERSION
 
   local ItemEffects = require("src.inventory.ItemEffects")
@@ -408,6 +408,101 @@ return function(mod)
         pbc.exports.colors[id] = c
       end
     end
+  end)
+
+  ----------------------------------------------------------------------
+  -- TEMPORARY DIAGNOSTIC (0.2.4 only -- delete before 0.3.0 ships).
+  --
+  -- Base stats and catch rates are extracted from the ROM at import time
+  -- (src/import/RomExtractor.lua), so they cannot be read from the engine
+  -- repo -- there is only a three-species test fixture. That leaves two
+  -- questions about balls we are tuning answerable ONLY on a real device:
+  --
+  --   1. FAST BALL: which species clear the base-speed 100 threshold, and
+  --      is there a single map holding one species either side of it (a
+  --      clean A/B with no travel)?
+  --   2. BEAST BALL (0.3.0): is catchRate <= 3 exactly the legendaries?
+  --
+  -- Output goes through Runtime.reportError, not mod.log, because the log
+  -- console does not exist on iOS -- [ERRS] in the mod manager is the only
+  -- channel the developer can actually read.
+  ----------------------------------------------------------------------
+  local Runtime = require("src.mods.Runtime")
+  local diagDone = false
+
+  local function report(fmt, ...)
+    Runtime.reportError("kanto_balls", string.format(fmt, ...))
+  end
+
+  mod.events:on("game.ready", function(p)
+    if diagDone then return end
+    local game = p and p.game
+    local data = game and game.data
+    local dex = data and data.pokemon
+    if not dex then
+      report("DIAG: no species data at game.ready")
+      diagDone = true
+      return
+    end
+    diagDone = true
+
+    local function speedOf(id)
+      local rec = dex[id]
+      return rec and rec.baseStats and rec.baseStats.speed or nil
+    end
+
+    -- 1. the pair the brief proposed, answered directly
+    local dig, dug = speedOf("DIGLETT"), speedOf("DUGTRIO")
+    report("DIAG spd DIGLETT=%s DUGTRIO=%s (need <100 and >=100)",
+      tostring(dig), tostring(dug))
+
+    -- 2. how many species the Fast Ball actually boosts
+    local fast, total = 0, 0
+    for _, rec in pairs(dex) do
+      total = total + 1
+      local s = rec.baseStats and rec.baseStats.speed
+      if s and s >= FAST_THRESHOLD then fast = fast + 1 end
+    end
+    report("DIAG fast(spd>=%d): %d of %d species", FAST_THRESHOLD, fast, total)
+
+    -- 3. a real single-map A/B: one species each side of the threshold in
+    --    the same encounter table, so the test needs no travel. Reading
+    --    encounters rather than assuming Diglett's Cave qualifies.
+    local shown = 0
+    for mapId, enc in pairs(data.encounters or {}) do
+      if shown >= 3 then break end
+      local slow, quick
+      for _, group in pairs({ enc.grass, enc.water }) do
+        for _, slot in ipairs((group and group.slots) or {}) do
+          local s = speedOf(slot.species)
+          if s then
+            if s >= FAST_THRESHOLD then
+              quick = quick or (slot.species .. "/" .. s)
+            else
+              slow = slow or (slot.species .. "/" .. s)
+            end
+          end
+        end
+      end
+      if slow and quick then
+        report("DIAG A/B %s: slow %s | fast %s", tostring(mapId), slow, quick)
+        shown = shown + 1
+      end
+    end
+    if shown == 0 then
+      report("DIAG A/B: no single map holds both sides of the threshold")
+    end
+
+    -- 4. free while we are here: the Beast Ball discriminator for 0.3.0
+    local rare, n = {}, 0
+    for id, rec in pairs(dex) do
+      if (rec.catchRate or 255) <= 3 then
+        n = n + 1
+        if n <= 8 then rare[#rare + 1] = id .. "/" .. tostring(rec.catchRate) end
+      end
+    end
+    report("DIAG catchRate<=3 (%d): %s", n,
+      n > 0 and table.concat(rare, " ") or "none")
   end)
 
   mod.log:info("kanto_balls %s loaded", VERSION)

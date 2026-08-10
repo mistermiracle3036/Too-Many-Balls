@@ -8,6 +8,22 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.2.4
+- **Test build. Adds a temporary diagnostic and nothing else** -- no ball
+  behavior changes at all. Remove before 0.3.0 ships.
+- Reports four lines to the mod manager's [ERRS] screen on the first
+  `game.ready` of a session: DIGLETT and DUGTRIO base speeds, how many
+  species clear the Fast Ball's speed-100 threshold, up to three maps
+  whose encounter table holds a species on BOTH sides of that threshold
+  (a single-location A/B test), and which species have `catchRate <= 3`.
+- Why it exists: base stats and catch rates are extracted from the ROM at
+  import time, so they are not readable from the engine repo -- it ships
+  only a three-species test fixture. These numbers can only be observed on
+  a real device with a real dataset, and both the Fast Ball threshold and
+  the planned Beast Ball discriminator depend on them.
+- Output goes through `Runtime.reportError`, not `mod.log`, because the
+  log console does not exist on iOS.
+
 ## 0.2.3
 - Confirmed against pokeball_colors 0.1.13: comments now cite that
   version specifically. No behavior change -- 0.2.2 already called
