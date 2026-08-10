@@ -8,6 +8,20 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.2.5
+- Same diagnostic as 0.2.4, reformatted to fit the [ERRS] screen. No
+  gameplay change.
+- 0.2.4 printed sentences, which ran off the screen. [ERRS] word-wraps
+  every entry at 16 columns into an 11-row window
+  (`ManagerState.errorLines` / `LIST_ROWS`) and `reportError` prepends
+  "kanto_balls: ", which costs a whole row by itself -- so each fact took
+  about five rows. Output is now short packed tokens: `SPD DIG95 DUG120`,
+  `FAST n/total`, `CR3 N=n`, then the qualifying species names packed into
+  a single message, since word wrap fits two names per row.
+- Drops the per-map A/B search. DIGLETT 95 / DUGTRIO 120 was confirmed on
+  device, so Diglett's Cave is a valid single-location A/B for the Fast
+  Ball and the search is no longer worth the rows it costs.
+
 ## 0.2.4
 - **Test build. Adds a temporary diagnostic and nothing else** -- no ball
   behavior changes at all. Remove before 0.3.0 ships.
