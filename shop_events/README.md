@@ -17,7 +17,7 @@ end)
 Fired once per confirmed purchase, after payment. Selling, PC
 withdrawals, and script item gifts never fire it.
 
-Known consumer: **[Example Balls](../example_balls/)** (the free
+Known consumer: **[Kanto Balls](../kanto_balls/)** (the free
 Premier Ball for 10+ balls bought in one purchase), in this same repo.
 
 ## Installation

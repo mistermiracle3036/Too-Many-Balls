@@ -1,0 +1,18 @@
+{
+  "id": "kanto_balls",
+  "name": "Kanto Balls",
+  "version": "0.2.3",
+  "api": 2,
+  "entry": "main.lua",
+  "profile": "content",
+  "category": "ITEMS",
+  "game_version": ">=0.1.38 <2.0.0",
+  "priority": 150,
+  "affects_link": false,
+  "permissions": ["engine_internals"],
+  "dependencies": ["shop_events"],
+  "optional_dependencies": ["pokeball_colors", "custom_pokeballs"],
+  "conflicts": [],
+  "github": "mistermiracle3036/Shop-Tools---Custom-Balls",
+  "description": "Seven new Poke Balls for Kanto: Premier (free with bulk ball purchases), Nest, Moon, Heal, Fast, Mirror and the Silph prototype. Each one is written to be readable as a template for your own ball. Colors register into Pokeball Colors when installed."
+}

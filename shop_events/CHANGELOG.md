@@ -2,11 +2,25 @@
 
 All notable changes to Shop Events are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com); the top heading always
-matches the version in `manifest.json`. Shop Events and Example Balls
+matches the version in `manifest.json`. Shop Events and Kanto Balls
 share this repo and release IN LOCKSTEP -- every release retags both to
 the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
+
+## 0.2.3
+- No code change. Lockstep release with Kanto Balls 0.2.3.
+
+## 0.2.2
+- No code change. Lockstep release with Kanto Balls 0.2.2.
+
+## 0.2.1
+- No code change. Lockstep release with Kanto Balls 0.2.1.
+
+## 0.2.0
+- No code change. Lockstep release with Kanto Balls 0.2.0, which is the
+  rename of Example Balls (mod id `example_balls` -> `kanto_balls`) plus
+  three new balls. Documentation updated to name the new consumer.
 
 ## 0.1.5
 - Repo renamed to Shop Tools - Custom Balls for clarity; manifest
