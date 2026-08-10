@@ -1,47 +1,80 @@
 # Shop Tools - Custom Balls
 
-Two gen1recomp mods, released together from one repo:
+**Seven new Poké Balls for gen1recomp** (Red / Blue / Yellow), sold across
+Kanto's marts — plus the small library mod that makes one of them possible.
+
+| Ball | Where you get it | What makes it worth carrying |
+| ---- | ---------------- | ---------------------------- |
+| **PREMIER BALL** | **Free.** Buy 10+ balls in one purchase and the clerk throws one in per 10 | Plain Poké Ball odds — but you never pay for one, and the clerk says so in his own text box |
+| **NEST BALL** | Ball marts, ₽1000 | **4×** on anything level 15 or under, tapering off up to 35 |
+| **MOON BALL** | Pewter Mart — the last mart before Mt. Moon | **4×** on anything that evolves by Moon Stone |
+| **HEAL BALL** | Ball marts, ₽300 | Normal odds, but what you catch arrives **fully healed** — HP, status and PP |
+| **FAST BALL** | Ball marts, ₽1000 | **4×** on anything with base Speed 100+ — the birds, Dugtrio, Electrode, Tauros, Jolteon |
+| **MIRROR BALL** | Ball marts, ₽1200 | **4×** when the wild Pokémon is the same species as the one you have out. Send out your own Pidgey to catch a better Pidgey |
+| **SILPH BALL** | Saffron Mart, ₽9800 | Silph Co's abandoned first pass at the Master Ball. When it works, it **is** a Master Ball. One throw in two, it just breaks |
+
+Every ball is a real item on a real shelf — no cheats, no menu, no new
+currency. Buy them and throw them.
+
+## Two mods, one download page
 
 | Mod | What it does |
 | --- | --- |
-| **[shop_events](shop_events/)** | Library mod. Emits `shop.purchased` whenever the player buys something at a mart — the engine has no purchase event of its own. No visible behavior by itself. |
-| **[example_balls](example_balls/)** | Four new balls, each demonstrating a different mod-API pattern: **Premier** (free from the clerk when you buy 10+ of a ball at once), **Nest**, **Moon**, **Heal**. Requires shop_events. |
+| **[kanto_balls](kanto_balls/)** | The seven balls above. **Requires shop_events.** |
+| **[shop_events](shop_events/)** | Library mod. Emits `shop.purchased` whenever you buy something at a mart, because the engine has no purchase event of its own. Does nothing visible by itself. |
 
-Install shop_events even if you only want the balls — example_balls
-depends on it. Colors for all four balls register automatically if
-[Pokeball Colors](https://github.com/mistermiracle3036/Pokeball-Colors)
-is also installed; neither mod here requires it.
+**Install both**, even if you only want the balls — the Premier Ball's
+bonus is built entirely on shop_events.
 
 > **Development Preview:** both mods are in active development. Bug
 > reports and ideas are welcome in [Issues](../../issues) — say which
-> mod, include the version from your load log, and list your other
-> mods.
+> mod, include the version from your load log, and list your other mods.
 
-## Why one repo, two mods
+## Also for mod authors
 
-They're released here together, but they're **not one mod** — each has
-its own manifest, its own id, and its own on/off toggle in the F10 mod
-browser. shop_events is meant to be reusable by other authors' mods
-independent of the ball pack, so keeping it a separate install matters.
+`kanto_balls/main.lua` is written to be read and copied. The seven balls
+are seven *different* techniques, deliberately: no catch code at all,
+reacting to another mod's event, multiplying the rate from live battle
+state, querying species data, reading base stats, reading your own side of
+the battle, and replacing the catch roll outright. Each one is commented
+with the engine file and line it was verified against.
 
-The one consequence of sharing a repo: **every release retags and
-re-zips both mods to the same version number**, even when only one of
-them actually changed. See each mod's CHANGELOG for why.
+Between them they cover most of what the ball API can do, which is why
+this started life as **Example Balls**.
 
 ## Installation
 
-See each mod's own README (linked above) for its specific steps —
-short version: download the release zip(s) for what you want, Import
-mod .zip, quit and relaunch. shop_events is required by example_balls
-either way.
+1. Download **both** zips from the [latest release](../../releases/latest):
+   `kanto_balls-X.Y.Z.zip` and `shop_events-X.Y.Z.zip`.
+2. Launcher → **MODS** → **Import mod .zip**, once per zip.
+3. Fully quit and relaunch.
+
+Already have **Example Balls** (`example_balls`) installed? Remove it
+first. It was renamed to Kanto Balls at 0.2.0, and because a new id
+installs to its own folder, nothing stops both running at once and
+registering overlapping balls.
+
+## Why one repo, two mods
+
+They're released together, but they're **not one mod** — each has its own
+manifest, its own id, and its own on/off toggle in the mod browser.
+shop_events is meant to be reusable by other authors independent of the
+ball pack, so keeping it a separate install matters.
+
+The one consequence of sharing a repo: **every release retags and re-zips
+both mods to the same version number**, even when only one of them
+actually changed. See each mod's CHANGELOG for why.
 
 ## Compatibility
 
 - **[Pokeball Colors](https://github.com/mistermiracle3036/Pokeball-Colors)** —
-  optional. example_balls registers canon colors for all four of its
-  balls when Pokeball Colors is installed.
+  optional. All seven balls register their own colors when it is
+  installed, so each one has its own look during the throw.
 - **[Custom Poké Balls](https://github.com/magalvao/custom-pokeballs)**
-  by magalvao — coexists; both append to the same mart shelves.
+  by magalvao — coexists. Both append to the same mart shelves and no
+  ball is duplicated between them.
+- Mart shelves are verified present in Red, Blue **and** Yellow's data,
+  but have only been played on Red/Blue so far.
 
 ## Credits
 

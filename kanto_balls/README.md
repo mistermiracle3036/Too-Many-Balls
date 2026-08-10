@@ -15,7 +15,7 @@ file and line it was verified against.
 | HEAL BALL (¥300) | Great/Ultra marts | Normal odds; the catch arrives fully healed (HP, status, PP) |
 | FAST BALL (¥1000) | Great/Ultra marts | 4× vs species with base Speed ≥ 100 |
 | MIRROR BALL (¥1200) | Great/Ultra marts | 4× when the wild Pokémon is the same species as the one you have out |
-| SILPH BALL (¥9800) | Saffron Mart | Guaranteed catch — except one throw in four fizzles, and the ball is spent either way |
+| SILPH BALL (¥9800) | Saffron Mart | Guaranteed catch — except one throw in **two** fizzles, and the ball is spent either way |
 
 The clerk announces the Premier bonus in the shop text box ("I'll throw
 in a PREMIER BALL, too!"). Purchases under 10 balls award nothing — it
@@ -23,9 +23,16 @@ has to be one transaction.
 
 **About the SILPH BALL.** It is Silph Co's abandoned first pass at the
 Master Ball: when it works it is a Master Ball, and it doesn't always
-work. The Saffron Mart shelf is temporary — it's there so the ball can
-be tested. The intent is that a Silph employee hands you exactly one
-after the takeover.
+work. A failed throw says so — "The PROTOTYPE broke apart!" — rather than
+pretending you missed. The Saffron Mart shelf is temporary; it's there so
+the ball can be tested. The intent is that a Silph employee hands you
+exactly one after the takeover.
+
+**Every catch is marked.** Whichever of these balls you use, the Pokémon
+remembers it (`mon.caughtBall`). The engine itself does not record this,
+so the mod does — it is what lets [Kanto
+Ribbons](https://github.com/mistermiracle3036/kanto_ribbons) award a
+ribbon for how something was caught.
 
 ## Requirements
 
