@@ -5,12 +5,12 @@
   API 2) and reach engine internals under the `engine_internals`
   permission.
 - **Custom Poké Balls** by magalvao
-  (https://github.com/magalvao/custom-pokeballs) — example_balls' mart
+  (https://github.com/magalvao/custom-pokeballs) — kanto_balls' mart
   shelf mechanism (`text_pointers:patch` on clerk TEXT entries) follows
   the pattern that mod established. No code or assets from it are
   included.
 - **Pokeball Colors** (https://github.com/mistermiracle3036/Pokeball-Colors)
-  — optional integration. example_balls registers its own color values
+  — optional integration. kanto_balls registers its own color values
   into that mod's public table when both are installed; no code is
   shared or duplicated.
 - Pokémon and all related names are trademarks of Nintendo / Creatures
