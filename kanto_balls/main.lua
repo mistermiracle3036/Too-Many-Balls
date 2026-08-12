@@ -20,8 +20,12 @@
 --   MIRROR   an attempt() reading YOUR side of the battle, not theirs
 --   SILPH    an attempt() that replaces the roll outright, and can fail
 --
--- Two more exist only behind the [DEV] CHEAP BALLS option, which also
--- drops every price to 1.  They are not earned content yet:
+-- Two more are registered but never sold without the [DEV] CHEAP BALLS
+-- option, which also drops every price to 1.  They are not earned
+-- content yet -- but they DO exist on every boot, so one obtained under
+-- the flag keeps its pocket, its name and its behaviour after the flag
+-- goes off (0.4.9; before that, gating the registration orphaned them
+-- into the ITEMS pocket):
 --
 --   GS       no attempt() at all -- the reward is the persisted MARK
 --            (mon.caughtBall), which kanto_ribbons reads
@@ -37,8 +41,9 @@
 -- and a text_pointers mart patch to be obtainable.
 --
 -- On Gold none of those seams carry the behavior:
---   * The throw site (src/ui/gen2/BattleState.lua:2578) hands
---     Catching.attempt a FLAT opts table with no `data` key, so a
+--   * The throw site (src/ui/gen2/BattleState.lua:2684 on engine
+--     0.1.79; :2578 on 0.1.78) hands Catching.attempt a FLAT opts table
+--     with no `data` key -- re-verified on both -- so a
 --     record in the merged `balls` registry never reaches the roll.
 --     What IS live is the `catch.rate` hook -- its own comment
 --     (src/battle/gen2/Catching.lua:344-348) says a mod that edits
@@ -72,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.8"
+  local VERSION = "0.4.9"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -149,14 +154,21 @@ return function(mod)
     BALL_IDS[#BALL_IDS + 1] = "MOON_BALL"
     BALL_IDS[#BALL_IDS + 1] = "FAST_BALL"
   end
-  -- GS and BEAST exist only under the dev flag, so they are appended to
-  -- the owned set rather than baked into it -- pokeball_colors warns
-  -- about a registered ball with no colour, and would otherwise warn
-  -- about two balls that do not exist.
-  if CHEAP then
-    BALL_IDS[#BALL_IDS + 1] = "GS_BALL"
-    BALL_IDS[#BALL_IDS + 1] = "BEAST_BALL"
-  end
+  -- GS and BEAST are ALWAYS registered, and only their SHELVES are gated
+  -- on the dev flag.  Through 0.4.8 the registration itself was gated,
+  -- which had a bug the developer hit on device: a player who obtained
+  -- one under [DEV] CHEAP BALLS and then turned the flag off still had
+  -- the item in the save, but with no record registered `Bag.pocketOf`
+  -- found no `pocket` and fell back to "ITEM" -- so the ball moved to
+  -- the ITEMS pocket, under its raw id, and could not be thrown at all.
+  --
+  -- Existing and obtainable are different things.  A registration costs
+  -- nothing visible on its own: no mart sells these without the flag,
+  -- and nothing in the game enumerates the item catalogue at a player.
+  -- So they exist, keep their pocket and their name, and stay
+  -- unobtainable.
+  BALL_IDS[#BALL_IDS + 1] = "GS_BALL"
+  BALL_IDS[#BALL_IDS + 1] = "BEAST_BALL"
   local OWNED = {}
   for _, id in ipairs(BALL_IDS) do OWNED[id] = true end
   mod.exports.owns = { kanto_balls = true, balls = OWNED }
@@ -690,40 +702,43 @@ return function(mod)
   local LEGENDARY_SET = 255
   local BEAST_PENALTY = 0.2
 
-  if CHEAP then
-    -- GS BALL -- deliberately the most boring ball in the mod: no
-    -- attempt() at all, so it catches exactly like a Poke Ball.  The
-    -- point is the MARK, not the mechanics.  mon.caughtBall persists, so
-    -- kanto_ribbons can award a ribbon for a GS BALL catch.  That ribbon
-    -- logic belongs in kanto_ribbons; this mod's whole job is to exist
-    -- and be catchable with.  (And yes, taking the GS BALL to Gold is
-    -- the joke finally landing.)
-    registerBall("GS_BALL", "GS BALL", 200, {})
+  -- Registered unconditionally; only the mart shelves below are gated on
+  -- the dev flag (see the BALL_IDS note above for the pocket bug that
+  -- gating the registration caused).  Under the flag `registerBall` also
+  -- drops the price to 1, so "cheap" still means cheap.
+  --
+  -- GS BALL -- deliberately the most boring ball in the mod: no
+  -- attempt() at all, so it catches exactly like a Poke Ball.  The
+  -- point is the MARK, not the mechanics.  mon.caughtBall persists, so
+  -- kanto_ribbons can award a ribbon for a GS BALL catch.  That ribbon
+  -- logic belongs in kanto_ribbons; this mod's whole job is to exist
+  -- and be catchable with.  (And yes, taking the GS BALL to Gold is
+  -- the joke finally landing.)
+  registerBall("GS_BALL", "GS BALL", 200, {})
 
-    -- boost() above only ever multiplies up, so it can leave the rate
-    -- fractional when handed a value below 1.  A penalty needs its own
-    -- helper: floor it, and never below 1, because a rate of 0 is not
-    -- "very hard", it is a ball that can never work.
-    local function scaleRate(ctx, mult)
-      local rate = ctx.rateOverride or ctx.targetDef.catchRate or 45
-      ctx.rateOverride = math.max(1, math.min(255, math.floor(rate * mult)))
-    end
-
-    registerBall("BEAST_BALL", "BEAST BALL", 1000, {
-      tossAnim = "ULTRATOSS_ANIM",
-      attempt = function(ctx)
-        local def = ctx.targetDef
-        local rate = def and def.catchRate or 255
-        local species = ctx.targetMon and ctx.targetMon.species
-        if rate <= LEGENDARY_RATE or BEAST_EXCEPTIONS[species] then
-          ctx.rateOverride = LEGENDARY_SET
-        else
-          scaleRate(ctx, BEAST_PENALTY)
-        end
-        return ctx.vanillaAttempt()
-      end,
-    })
+  -- boost() above only ever multiplies up, so it can leave the rate
+  -- fractional when handed a value below 1.  A penalty needs its own
+  -- helper: floor it, and never below 1, because a rate of 0 is not
+  -- "very hard", it is a ball that can never work.
+  local function scaleRate(ctx, mult)
+    local rate = ctx.rateOverride or ctx.targetDef.catchRate or 45
+    ctx.rateOverride = math.max(1, math.min(255, math.floor(rate * mult)))
   end
+
+  registerBall("BEAST_BALL", "BEAST BALL", 1000, {
+    tossAnim = "ULTRATOSS_ANIM",
+    attempt = function(ctx)
+      local def = ctx.targetDef
+      local rate = def and def.catchRate or 255
+      local species = ctx.targetMon and ctx.targetMon.species
+      if rate <= LEGENDARY_RATE or BEAST_EXCEPTIONS[species] then
+        ctx.rateOverride = LEGENDARY_SET
+      else
+        scaleRate(ctx, BEAST_PENALTY)
+      end
+      return ctx.vanillaAttempt()
+    end,
+  })
 
   ----------------------------------------------------------------------
   -- SILPH PROTOTYPE -- an attempt() that replaces the roll outright.
@@ -870,7 +885,7 @@ return function(mod)
         if oneIn(o, SILPH_FAILURE_IN) then return false, 1 end
         return true, 255
 
-      elseif ball == "BEAST_BALL" then          -- only registered if CHEAP
+      elseif ball == "BEAST_BALL" then          -- sold only under CHEAP
         local rate = o.catchRate or 255
         if rate <= LEGENDARY_RATE or BEAST_EXCEPTIONS[o.species] then
           o.catchRate = LEGENDARY_SET
@@ -950,9 +965,12 @@ return function(mod)
   end
 
   ----------------------------------------------------------------------
-  -- GEN 2 shelves + pockets, at game.ready (data is merged and
-  -- gen2Marts populated by then -- Game2:load fills it at line 904 and
-  -- emits game.ready at 1024).
+  -- GEN 2 shelves + pockets, at game.ready.  What this depends on is an
+  -- ORDERING, not a line number: Game2:load populates data.gen2Marts and
+  -- merges mod data BEFORE it emits game.ready.  (Cited as lines 904 and
+  -- 1024 through 0.4.8; game.ready moved to 1006 in engine 0.1.79 with
+  -- the ordering unchanged, which is exactly why the ordering is the
+  -- thing to state.)
   --
   -- gen2Marts has NO registry yet ("new API surface rather than a
   -- routing change" -- docs/mod-api-gen2-compat.md), so this is a
@@ -1074,10 +1092,11 @@ return function(mod)
     COLORS.FAST_BALL = { body = { 232, 148,  48 }, accent = { 248, 232, 152 } }
   end
 
-  -- Only for balls that actually got registered: Pokeball Colors 0.1.13+
-  -- warns about a registered ball carrying no colour, and registering a
-  -- colour for a ball that does not exist is the mirror of that mistake.
-  if CHEAP then
+  -- GS and BEAST are registered on every boot now, so their colours are
+  -- too: Pokeball Colors 0.1.13+ warns about a registered ball carrying
+  -- no colour, and a ball held from an earlier dev session should look
+  -- like itself whether or not the flag is on today.
+  do
     -- GS: the gold-and-silver ball, so gold body against a silver band.
     -- pale gold against silver.  The old 224,188,76 was 2.2 dE from
     -- Custom Poke Balls' LEVEL BALL and 14.6 from the native ULTRA --
@@ -1181,7 +1200,7 @@ return function(mod)
     MIRROR_BALL  = "PAL_KB_MIRROR",
     SILPH_BALL   = "PAL_KB_SILPH",
   }
-  if CHEAP then
+  do
     -- GS: the pale cream carried over from Gen 1 did not read as GOLD on
     -- device (0.4.2 report), because on Gen 1 the pale value was there to
     -- clear a collision with the native ULTRA BALL -- a constraint Gold's

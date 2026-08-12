@@ -8,6 +8,20 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.9
+
+- **Fixed: a GS or Beast Ball you already owned moved to the ITEMS pocket
+  when `[DEV] CHEAP BALLS` was switched off**, showing as a raw name and
+  refusing to be thrown. Those two balls are now always *registered* —
+  they keep their pocket, their name, their colour and their behaviour
+  whatever the flag says. What the flag still controls is whether they are
+  **sold**, which was always the point. Longstanding; not caused by the
+  bag change in 0.4.8.
+- Verified against engine **v0.1.79**: every seam this mod depends on —
+  the catch hook, the mart shelves, the clerk's line, ball colours, the
+  ball pocket — behaves the same as on 0.1.78. Engine line numbers moved;
+  the comments citing them now cite the behaviour instead.
+
 ## 0.4.8
 
 - **Your bag now has room for these balls.** Gold's ball pocket only holds

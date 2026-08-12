@@ -8,6 +8,11 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.9
+- No code change. Lockstep release with Too Many Balls 0.4.9.
+- Verified against engine v0.1.79: the shared till sound and `Bag.add`
+  path this mod listens to are unchanged on both generations.
+
 ## 0.4.8
 - No code change. Lockstep release with Too Many Balls 0.4.8.
 
