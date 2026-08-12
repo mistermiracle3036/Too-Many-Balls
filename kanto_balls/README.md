@@ -59,6 +59,11 @@ Since 0.4.0 the mod loads on a Gold boot too. What's different there:
 - **The Premier bonus pays out silently** — the free balls arrive in
   your BALLS pocket, but Gold's clerk has no text box we can borrow for
   the announcement yet.
+- **Each ball has its own colour when thrown.** Gold colours balls
+  itself, but only knows the ones the cart ships, so custom balls would
+  otherwise all throw grey. Kanto Balls supplies its own palettes and
+  leaves Gold's native Moon and Fast Balls exactly as they are. *(These
+  colours are a first pass and will likely be retuned.)*
 
 ## Requirements
 
@@ -86,11 +91,15 @@ automatically for each. Update both together when either shows
 
 ## Plays well with
 
-- **Pokeball Colors** — all the balls register their own colors on
-  load. This mod owns those records and their colors; Pokeball Colors
-  deliberately carries no entries for them, the same arrangement it has
-  with Snag Quest's SNAG BALL. (Gen 1 only — Gold draws its own ball
-  throw.)
+- **Pokeball Colors** — on Red/Blue/Yellow, all the balls register their
+  own colors on load. This mod owns those records and their colors;
+  Pokeball Colors deliberately carries no entries for them, the same
+  arrangement it has with Snag Quest's SNAG BALL. Pokeball Colors is a
+  Gen 1-only mod, so **on Gold this mod owns ball colour itself** —
+  including the ball → palette wrap. Other ball mods should claim a
+  colour through `exports.registerBallPalette(ballId, paletteName, row)`
+  rather than wrapping `ballPalette` a second time; two wraps means load
+  order decides the colour, silently.
 - **Custom Poké Balls** by magalvao — coexists; both mods append to the
   same mart shelves, and no ball is duplicated between them.
 

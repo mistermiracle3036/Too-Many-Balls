@@ -18,6 +18,7 @@ return {
     "Requires: shop_events (the Premier bonus listens to its shop.purchased event).",
     "Runs on Gen 1 (Red/Blue/Yellow) and Gen 2 (Gold) since 0.4.0.",
     "Optional: pokeball_colors (Gen 1) -- this mod owns its ball records AND their colors, and registers them on game.ready. Pokeball Colors must not carry entries for these ids.",
+    "On Gold this mod owns ball colour itself (pokeball_colors is Gen 1-only): it supplies its own battleObjects palettes and wraps BattleState:ballPalette. Other ball mods should call exports.registerBallPalette(ballId, paletteName, row) instead of adding a second wrap. Gold's native MOON and FAST BALL colours are left alone.",
     "Optional: coexists with Custom Poke Balls; both append to the same mart shelves.",
     "Publishes exports.owns = { kanto_balls = true, balls = { ...ids... } } and exports.balls.",
   },

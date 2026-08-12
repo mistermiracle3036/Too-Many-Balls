@@ -70,7 +70,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.1"
+  local VERSION = "0.4.2"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -150,6 +150,13 @@ return function(mod)
   for _, id in ipairs(BALL_IDS) do OWNED[id] = true end
   mod.exports.owns = { kanto_balls = true, balls = OWNED }
   mod.exports.balls = BALL_IDS
+  -- On Gold this mod also owns the ball -> palette wrap for EVERY ball,
+  -- not just its own: exactly one mod may wrap BattleState:ballPalette
+  -- or load order silently decides the colour.  Other ball mods call
+  -- exports.registerBallPalette (defined near the colour block below)
+  -- instead of installing their own.  Absent on Gen 1, where
+  -- pokeball_colors owns colour.
+  if GEN2 then mod.exports.owns.ballPalettesGen2 = true end
 
   ----------------------------------------------------------------------
   -- shared helper: every registration a ball needs, per generation.
@@ -891,6 +898,122 @@ return function(mod)
     -- the value clears all three at once, because value contrast is what
     -- survives at this sprite size.
     COLORS.BEAST_BALL = { body = {  16,  24,  56 }, accent = { 244, 216,  72 } }
+  end
+
+  ----------------------------------------------------------------------
+  -- GOLD BALL COLOURS -- ours to own, because nobody else will.
+  --
+  -- Gen 1's colour problem does not exist on Gold: the engine resolves a
+  -- per-ball palette from the cart's own data/battle_anims/ball_colors.asm
+  -- (src/ui/gen2/BattleState.lua:2101 ballPalette -> startBallAnim's
+  -- opts.ballPalette -> AnimObjects ballPal -> BattleAnimView:objPalette).
+  -- That table (BALL_COLORS, :2041) is module-local and covers the eleven
+  -- cart balls; anything else falls to PAL_BATTLE_OB_GRAY (:2054).  So on
+  -- Gold our balls would all throw GREY without this block.
+  --
+  -- Pokeball Colors withdrew from Gen 2 at its 0.1.21 and is Gen 1-only by
+  -- decision, so this mod owns its own Gold colours.  Declared in
+  -- exports.owns.ballPalettesGen2, and registerBallPalette below is the
+  -- door other ball mods use instead of installing a SECOND wrap on the
+  -- same method -- chained wrappers would make load order decide the
+  -- colour, and silently.  If Pokeball Colors ever returns to Gold, hand
+  -- the wrap over rather than running both.
+  --
+  -- TWO HALVES, and only one of them has a registry:
+  --   values  `palettes` routes to gen2Palettes and `battleObjects` is a
+  --           first-class Gen 2 key (Schemas.lua:1660), so the rows go in
+  --           through the normal registry with no wrap and no internals.
+  --   mapping ball id -> palette NAME has no registry at all, so the
+  --           method wrap below is the only route.  Watch for the engine
+  --           routing a registry at BALL_COLORS, or reading a `color`
+  --           field off the ball's own record -- either deletes this wrap.
+  --
+  -- ROW SHAPE, verified rather than assumed (the one thing the incoming
+  -- brief could not confirm): a battleObjects row is FOUR colours, not
+  -- two.  RomExtractorGen2:battleObjectPals reads 8 bytes = 4 colours per
+  -- row (:492), and the shader takes pal0..pal3 indexed by the sprite's
+  -- own shade, lightest to darkest (GbcPalette.lua:47-65).  The
+  -- "OBJ rows carry two colours" note at Schemas.lua:729 is about sprite
+  -- and mon-pic rows, not these.
+  --
+  -- So each row below is { highlight, light, main, outline }.  These are
+  -- a FIRST PASS carried over from the Gen 1 body/accent pairs and they
+  -- are NOT tuned against Gold's own ball palettes -- Gold's are the
+  -- cart's six fixed rows, a different set from anything the Gen 1 strip
+  -- tool measured, so tuning starts over and has to happen on device.
+  -- TODO/CONFIRM every value here against a real Gold throw.
+  ----------------------------------------------------------------------
+  local BALL_PALETTE_ROWS = {
+    -- white body, red band: the light tone IS the body here
+    PAL_KB_PREMIER = { {255,255,255}, {240,240,240}, {200, 48, 48}, {24,24,24} },
+    PAL_KB_NEST    = { {255,255,255}, {140,230,170}, { 80,200,128}, {24,24,24} },
+    PAL_KB_HEAL    = { {255,255,255}, {248,238,244}, {232,160,196}, {24,24,24} },
+    PAL_KB_MIRROR  = { {255,255,255}, {244,250,255}, {168,180,200}, {24,24,24} },
+    -- the prototype: Master-ball purple over its teal flash
+    PAL_KB_SILPH   = { {255,255,255}, { 96,216,200}, {120, 88,168}, {24,24,24} },
+  }
+  -- ball id -> palette name.  MOON and FAST are deliberately ABSENT: they
+  -- are the cart's own Kurt balls on Gold and already get real colours
+  -- there, which is what a Gold player expects them to look like.  We do
+  -- not register those ids on Gold at all, and must not paint over them.
+  local BALL_PALETTES = {
+    PREMIER_BALL = "PAL_KB_PREMIER",
+    NEST_BALL    = "PAL_KB_NEST",
+    HEAL_BALL    = "PAL_KB_HEAL",
+    MIRROR_BALL  = "PAL_KB_MIRROR",
+    SILPH_BALL   = "PAL_KB_SILPH",
+  }
+  if CHEAP then
+    BALL_PALETTE_ROWS.PAL_KB_GS =
+      { {255,255,255}, {248,224,160}, {216,220,228}, {24,24,24} }
+    BALL_PALETTE_ROWS.PAL_KB_BEAST =
+      { {255,255,255}, {244,216, 72}, { 16, 24, 56}, {24,24,24} }
+    BALL_PALETTES.GS_BALL = "PAL_KB_GS"
+    BALL_PALETTES.BEAST_BALL = "PAL_KB_BEAST"
+  end
+
+  if GEN2 then
+    -- The values half: the documented Gen 2 shape for this registry is
+    -- exactly patch(<context>, { <name> = <row> }) (Schemas.lua:1666).
+    mod.content.palettes:patch("battleObjects", BALL_PALETTE_ROWS)
+
+    -- The mapping half.  Stash-originals, never a sentinel: engine module
+    -- tables live for the process, so a sentinel would keep an old
+    -- wrapper live across a reload and make this version look inert.
+    local BattleState2 = require("src.ui.gen2.BattleState")
+    BattleState2._kbOriginals = BattleState2._kbOriginals
+      or { ballPalette = BattleState2.ballPalette }
+    local vanillaBallPalette = BattleState2._kbOriginals.ballPalette
+
+    BattleState2.ballPalette = function(self, itemId)
+      local name = BALL_PALETTES[itemId]
+      if name then return name end
+      return vanillaBallPalette(self, itemId)
+    end
+
+    -- The door for other ball mods (Custom Poke Balls, snag_quest's SNAG
+    -- BALL): claim a colour without a second wrap.  Call it at
+    -- game.ready.  `row` is optional -- pass one to define a new palette
+    -- name, omit it to point at a name that already exists (one of the
+    -- cart's six, or one of ours).  Refuses to overwrite a ball this mod
+    -- owns, and refuses to redefine a row someone else already defined,
+    -- so the failure mode is "your call did nothing" rather than "your
+    -- call silently recoloured someone else's ball".
+    mod.exports.registerBallPalette = function(ballId, paletteName, row)
+      if type(ballId) ~= "string" or type(paletteName) ~= "string" then
+        return false
+      end
+      if OWNED[ballId] then return false end
+      if row then
+        local game = mod.game
+        local set = game and game.data and game.data.gen2Palettes
+          and game.data.gen2Palettes.battleObjects
+        if not set then return false end
+        if set[paletteName] == nil then set[paletteName] = row end
+      end
+      BALL_PALETTES[ballId] = paletteName
+      return true
+    end
   end
 
   mod.events:on("game.ready", function()

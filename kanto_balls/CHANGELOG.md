@@ -8,6 +8,37 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.2
+
+**Updating from 0.3.4?** Everything since then: the mod now runs on
+**Pokemon Gold** as well as Red/Blue/Yellow (0.4.0 — five balls travel,
+MOON and FAST stay home since Gold has its own, shelves at Great/Ultra
+marts, the prototype is labelled PROTO BALL there), those Gold balls now
+have their **own colours** instead of throwing grey (this version), the
+dev flag can stock every Johto mart (0.4.1), three ball colours were
+retuned so no two look alike (0.3.5), and the repo carries an MIT licence
+with credits in every download (0.4.0). Red is unchanged throughout.
+
+- **The Gold balls have colours now.** Gold picks a thrown ball's colour
+  from the cart's own table, which only knows the eleven balls the cart
+  ships — so ours all threw **grey**. Each one now has its own palette:
+  Premier white-and-red, Nest green, Heal pink, Mirror pale silver, the
+  prototype purple with its teal flash (plus GS and Beast under the dev
+  flag).
+- **These colours are a first pass and will need tuning.** They are
+  carried over from the Gen 1 palette and have not been compared against
+  Gold's own ball colours, which are a different set — expect at least
+  one round of adjustment once they can be seen on a real throw.
+- **MOON and FAST are left exactly as Gold draws them.** They are Kurt's
+  balls there, and they should look like Kurt's balls.
+- **Kanto Balls now owns ball colour on Gold**, because Pokeball Colors
+  is a Gen 1-only mod by its author's decision and won't be colouring
+  anything in Johto. Other ball mods can claim a colour through
+  `exports.registerBallPalette(ballId, paletteName, row)` rather than
+  installing a competing wrap — two mods wrapping the same method means
+  load order decides the colour, silently. On Red nothing changes:
+  Pokeball Colors still owns colour there.
+
 ## 0.4.1
 
 **Updating from 0.3.4?** Everything since then, in one place: the mod now
