@@ -3,11 +3,21 @@
 -- The engine has no "player bought something" event: ShopMenu's buy()
 -- is a local function (src/ui/ShopMenu.lua), so nothing can hook it.
 --
--- WHAT THIS DETECTS FROM (verified against engine 0.1.75):
---   The one and only Sound.play(data, "Purchase") call site in the whole
---   engine is the mart buy path (ShopMenu.lua:75), fired after the money
---   check and AFTER the item has landed in the bag.  So that sound alone
---   proves "a purchase just completed".
+-- WHAT THIS DETECTS FROM (verified against engine 0.1.75; Gold half
+-- against 0.1.78):
+--   Gen 1: the one and only Sound.play(data, "Purchase") call site in
+--   the whole engine is the mart buy path (ShopMenu.lua:75), fired
+--   after the money check and AFTER the item has landed in the bag.
+--   So that sound alone proves "a purchase just completed".
+--   Gen 2 (Gold): the mart is a different screen entirely
+--   (src/ui/gen2/MartMenu.lua) but the shape holds -- completePurchase
+--   runs the same shared Bag.add(save, id, qty, data) (line 682), then
+--   playTransaction rings Sound.play(data, "Sfx_Transaction") through
+--   the same shared Sound module (line 670).  So both wraps below work
+--   unchanged on Gold; the only difference is the sound's NAME, and
+--   that Gold's till rings for SELLS too (PlayTransactionSound is the
+--   money changing hands, either direction) -- which is why an empty
+--   inventory diff on Gen 2 is a sell, not a failure (see below).
 --
 -- WHAT IT BUYS -- inventory diffing, not a Bag.add wrap:
 --   0.1.0-0.1.2 learned the item/qty by wrapping Bag.add.  On the user's
@@ -34,9 +44,20 @@
 -- They are notices, not failures.
 
 return function(mod)
-  local VERSION = "0.3.5"
+  local VERSION = "0.4.0"
   mod.exports.version = VERSION
   mod.exports.owns = { shop_events = true }
+
+  -- Fixed for the whole run (the loader's own call, Loader.lua:242);
+  -- only used to keep a Gold sell from reading as a broken purchase.
+  local GEN2 = require("src.core.GameVersion").generation() == 2
+
+  -- The two till sounds, one per generation.  "Purchase" is Gen 1's
+  -- (ShopMenu.lua:75); "Sfx_Transaction" is Gold's (MartMenu.lua:670,
+  -- PlayTransactionSound).  Sound.GEN2_ALIASES maps "Purchase" onto the
+  -- Gold label for CALLERS, but a wrap sees the literal name each call
+  -- site passed, so both spellings must match here.
+  local PURCHASE_SOUNDS = { Purchase = true, Sfx_Transaction = true }
 
   local Bag = require("src.inventory.Bag")
   local Sound = require("src.core.Sound")
@@ -115,7 +136,7 @@ return function(mod)
   Sound._seOriginals = Sound._seOriginals or { play = Sound.play }
   local vanillaPlay = Sound._seOriginals.play
   Sound.play = function(data, name)
-    if name == "Purchase" then
+    if PURCHASE_SOUNDS[name] then
       local before = state.snapshot
       local p = state.pending
       state.pending = nil
@@ -127,6 +148,10 @@ return function(mod)
           for _, g in ipairs(gained) do
             emitPurchase(g.id, g.qty, nil, nil, "inventory diff")
           end
+        elseif gained and GEN2 then
+          -- Gold's till rings on SELLS too, and a sell gains nothing --
+          -- expected, not a broken snapshot.  Stay silent so the [ERRS]
+          -- screen does not fill up every time the player sells a berry.
         else
           dbg("purchase seen but nothing gained -- no snapshot?")
         end
@@ -134,7 +159,15 @@ return function(mod)
       state.snapshot = snapshot()
     elseif not state.emitting then
       -- every other sound refreshes the pre-purchase baseline; menu
-      -- confirms fire Press_AB, so this is always fresh
+      -- confirms fire Press_AB, so this is always fresh.  It also
+      -- CLEARS the fast-path pending: a Bag.add that was a real mart
+      -- buy is followed by the till in the SAME callback with no sound
+      -- between (ShopMenu.lua:75; MartMenu completePurchase), so a
+      -- pending that survives to another sound was a script gift or a
+      -- pickup -- and on Gold, where the till also rings on sells,
+      -- letting it linger would emit that gift as a "purchase" the
+      -- next time the player sold something.
+      state.pending = nil
       state.snapshot = snapshot()
     end
     return vanillaPlay(data, name)
@@ -146,5 +179,6 @@ return function(mod)
     state.snapshot = snapshot()
   end)
 
-  dbg("loaded %s; Bag.add and Sound.play wrapped", VERSION)
+  dbg("loaded %s (gen %d); Bag.add and Sound.play wrapped",
+    VERSION, GEN2 and 2 or 1)
 end

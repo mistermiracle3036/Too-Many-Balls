@@ -8,6 +8,51 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.0
+
+**Updating from 0.3.4?** Everything since then, in one place: the mod now
+runs on **Pokemon Gold** as well as Red/Blue/Yellow (this version), three
+ball colours were retuned so no two balls look alike (0.3.5), and the
+repo now carries a proper MIT licence with credits in every download
+(this version). On Red nothing about how the balls play has changed.
+
+- **Pokemon Gold support.** Both mods now declare `games: ["gen1",
+  "gen2"]` and load on a Gold boot.
+  - **Five balls come to Johto:** PREMIER, NEST, HEAL, MIRROR and the
+    prototype ball, with the same behaviour as on Red. They are sold at
+    the marts that already stock GREAT or ULTRA BALLs (the prototype
+    only where ULTRA BALLs are sold), and sort into the BALLS pocket.
+  - **MOON and FAST stay home.** Gold has its own native Moon Ball and
+    Fast Ball under the same ids — ours step aside there rather than
+    fight them. On Red both are unchanged.
+  - **The SILPH BALL is called "PROTO BALL" on Gold** (display name
+    only — same item, same id, same 1-in-2 fizzle). Silph Co doesn't
+    exist in Johto, so the Kanto branding went. Its long-term Johto
+    story (Kurt?) is still to be decided.
+  - **The Premier bonus works on Gold** (10+ balls in one purchase, one
+    free per 10) — but the clerk doesn't announce it yet; the balls
+    arrive in the pocket silently. Gold's mart text has no seam for the
+    announcement.
+  - A Gold dud from the prototype shows the normal break-out text
+    rather than "The PROTOTYPE broke apart!" — Gold picks its failure
+    line inside the throw animation, which mods can't reach yet.
+  - Every catch on Gold gets the `mon.caughtBall` mark from this mod
+    (on Red, pokeball_colors owns the mark when installed).
+  - Under the hood, for other mod authors: Gold's catch behaviour is
+    ONE `catch.rate` wrap on the flat opts table (the throw site passes
+    no registry data, so ball records don't reach the roll); shelves
+    are a presence-checked append to `data.gen2Marts` (no registry
+    exists yet); the BALLS pocket comes from stamping `pocket` onto the
+    merged item records at game.ready. Each block in `main.lua` says
+    which engine seam it uses and why.
+- **MIT licence and visible credits.** `LICENSE` (MIT) at the repo root,
+  and a Credits section in each mod's own README — the README is the one
+  file that actually ships inside the zip, and until now the downloads
+  carried no attribution at all. MIT covers our code; it claims nothing
+  over ROM-derived material or Nintendo trademarks.
+- This mod's README now shows the ball line-up and screenshots, and both
+  screenshots and the ball grid ship on the repo.
+
 ## 0.3.5
 - **Three ball colours retuned so they stop looking like other balls.**
   Measured rather than eyeballed: every ball a player could have installed

@@ -4,6 +4,7 @@ return {
   tags = { "library", "events", "shop" },
   differences = {
     "Adds one mod-facing event, shop.purchased, fired once per confirmed mart purchase.",
+    "Works on Red/Blue/Yellow and, since 0.4.0, Pokemon Gold.",
     "No gameplay, UI, item, or balance changes whatsoever.",
   },
   credits = {},

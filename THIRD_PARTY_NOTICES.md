@@ -1,5 +1,11 @@
 # Third-party notices
 
+Both mods in this repo are released under the MIT licence (see
+`LICENSE` at the repo root). That licence covers **our code and our
+original content only** — it makes no claim over ROM-derived material,
+over the gen1recomp engine, or over Nintendo / Creatures / GAME FREAK
+trademarks.
+
 - **gen1recomp** — both mods target the
   [gen1recomp](https://github.com/bryanthaboi/gen1recomp) engine (mod
   API 2) and reach engine internals under the `engine_internals`

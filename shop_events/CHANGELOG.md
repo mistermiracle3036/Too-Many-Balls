@@ -8,6 +8,27 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.0
+
+**Updating from 0.3.4?** This mod gained Pokemon Gold support in this
+version; 0.3.5 between was a no-change lockstep release.
+
+- **Pokemon Gold support** (`games: ["gen1", "gen2"]`). Gold's mart is a
+  different screen but buys land through the same shared `Bag.add` and
+  ring the till through the same shared `Sound.play` — the event now
+  recognises Gold's till sound (`Sfx_Transaction`) alongside Gen 1's
+  (`Purchase`), so `shop.purchased` fires on Gold buys unchanged.
+- **Gold sells stay silent.** Gold rings the same till when the player
+  SELLS (Gen 1 doesn't); a sell gains nothing in the bag and emits no
+  event, and no longer triggers the "nothing gained" diagnostic.
+- **A stale fast-path entry can no longer leak.** A scripted item gift
+  looks like a purchase to the `Bag.add` fast path; any unrelated sound
+  now clears it, so a gift followed by a Gold sell can't be mis-reported
+  as a purchase. The inventory diff remains the source of truth.
+- MIT licence at the repo root and a Credits section in this README —
+  the README is the one file that ships inside the zip.
+- Lockstep release with Kanto Balls 0.4.0.
+
 ## 0.3.5
 - No code change. Lockstep release with Kanto Balls 0.3.5.
 
