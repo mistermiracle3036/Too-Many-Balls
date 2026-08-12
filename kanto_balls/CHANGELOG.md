@@ -8,6 +8,15 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.13
+- **Dev build.** Adds a script-key probe: with `[DEV] CHEAP BALLS` on,
+  talking to any NPC on Gold prints that character's script id to the mod
+  manager's [ERRS] screen, once each. It's how we find Kurt's, which is
+  the last unknown before he can teach ball-making and hand over the case.
+- The Ball Case list lines up properly now — the "can't make this yet"
+  dash sits in its own column instead of shifting the row.
+- Removed before the public release, like the other dev tools.
+
 ## 0.4.12
 
 Both 0.4.11 crafting bugs, reported from device.

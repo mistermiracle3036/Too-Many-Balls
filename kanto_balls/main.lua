@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.12"
+  local VERSION = "0.4.13"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -1277,12 +1277,17 @@ return function(mod)
       Chrome.print("BALL CASE", 1, 1)
       local y = 3
       for i, recipe in ipairs(rows) do
-        local mark = canCraft(self.save, recipe) and " " or "-"
-        Chrome.print(mark .. recipe.label, 2, y)
+        -- The mark sits in its OWN column and the label always starts at
+        -- the same one.  0.4.12 printed mark .. label from column 2, so a
+        -- craftable row (mark " ") sat one column right of CANCEL and an
+        -- uncraftable one ("-") lined up -- the ragged left edge the
+        -- developer spotted on device.
+        if not canCraft(self.save, recipe) then Chrome.print("-", 2, y) end
+        Chrome.print(recipe.label, 3, y)
         if i == self.index then Chrome.cursor(1, y) end
         y = y + 2
       end
-      Chrome.print("CANCEL", 2, y)
+      Chrome.print("CANCEL", 3, y)
       if self.index > #rows then Chrome.cursor(1, y) end
       if self.message then
         Chrome.box(0, 12, 20, 6)
@@ -1348,6 +1353,48 @@ return function(mod)
       end
     end
   end
+
+  --====================================================================
+  -- ###  DEV SCAFFOLDING -- SCRIPT KEY PROBE  ###
+  --
+  -- Finds the scriptKey of any NPC you talk to on Gold, which is the one
+  -- thing standing between us and Kurt teaching ball-making.
+  --
+  -- WHY A PROBE AND NOT A LOOKUP: a scriptKey is "<bank>:<addr>" out of
+  -- the ROM walk (src/script/gen2/Vm.lua:2213).  It is ROM-derived, it
+  -- is not in any manifest we can read, and guessing ROM-derived ids is
+  -- the mistake this project's CLAUDE.md opens by warning about.  So we
+  -- read it off the running game, exactly the way npc_inspector reads
+  -- TEXT constants on Gen 1.
+  --
+  -- HOW TO USE: dev flag on, walk into Kurt's house, talk to him.  His
+  -- line appears in the mod manager's [ERRS] screen as
+  --     KB <mapId> o<object> <scriptKey>
+  --
+  -- NOISE CONTROL, because [ERRS] is eleven rows of sixteen columns:
+  --   * `kind == "script"` only -- map callbacks fire on every load.
+  --   * `object` must be set -- that means the player TALKED to
+  --     something, rather than a script running at them.
+  --   * each scriptKey is reported ONCE per boot, so standing there
+  --     mashing A does not push the answer off the screen.
+  ----------------------------------------------------------------------
+  if GEN2 and CHEAP then
+    local seenScripts = {}
+    mod.events:on("script.started", function(p)
+      local ctx = p and p.ctx
+      if not ctx then return end
+      if ctx.kind ~= "script" then return end
+      if ctx.object == nil then return end
+      local key = ctx.scriptKey
+      if type(key) ~= "string" or seenScripts[key] then return end
+      seenScripts[key] = true
+      Runtime.reportError("kanto_balls",
+        ("KB %s o%s %s"):format(tostring(ctx.mapId),
+          tostring(ctx.object), key))
+    end)
+  end
+  -- ###  END DEV SCAFFOLDING  ###
+  --====================================================================
 
   --====================================================================
   -- ###  DEV SCAFFOLDING -- APRICORNS ON EVERY GOLD SHELF  ###
