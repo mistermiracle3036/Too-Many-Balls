@@ -70,7 +70,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.0"
+  local VERSION = "0.4.1"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -781,6 +781,12 @@ return function(mod)
   -- CONTENT rather than by mart id because the numeric mart ids come
   -- from the ROM's mart_constants order, which is not in the manifest
   -- to verify -- matching on what a shelf sells cannot mis-target.
+  --
+  -- [DEV] CHEAP BALLS widens that to EVERY mart on Gold (Violet,
+  -- Cherrygrove, all of them), prototype included -- so a fresh Gold
+  -- save can test the full set at the first counter it reaches,
+  -- without playing to a Great-tier mart first.  Same flag, same
+  -- rules: prices are already 1, and it takes a full quit + relaunch.
   ----------------------------------------------------------------------
   if GEN2 then
     mod.events:on("game.ready", function(p)
@@ -811,14 +817,14 @@ return function(mod)
         if type(list) == "table" then
           local has = {}
           for _, id in ipairs(list) do has[id] = true end
-          if has.GREAT_BALL or has.ULTRA_BALL then
+          if CHEAP or has.GREAT_BALL or has.ULTRA_BALL then
             for _, id in ipairs(SHELF) do
               if not has[id] then
                 list[#list + 1] = id
                 has[id] = true
               end
             end
-            if has.ULTRA_BALL and not has.SILPH_BALL then
+            if (CHEAP or has.ULTRA_BALL) and not has.SILPH_BALL then
               list[#list + 1] = "SILPH_BALL"
             end
             stocked = true

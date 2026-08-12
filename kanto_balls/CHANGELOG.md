@@ -8,13 +8,26 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
-## 0.4.0
+## 0.4.1
 
 **Updating from 0.3.4?** Everything since then, in one place: the mod now
-runs on **Pokemon Gold** as well as Red/Blue/Yellow (this version), three
-ball colours were retuned so no two balls look alike (0.3.5), and the
-repo now carries a proper MIT licence with credits in every download
-(this version). On Red nothing about how the balls play has changed.
+runs on **Pokemon Gold** as well as Red/Blue/Yellow (0.4.0 — five balls
+travel, MOON and FAST stay home since Gold has its own, shelves at
+Great/Ultra-tier marts, the prototype is labelled PROTO BALL there),
+three ball colours were retuned so no two balls look alike (0.3.5), and
+the repo now carries a proper MIT licence with credits in every download
+(0.4.0). On Red nothing about how the balls play has changed. The full
+Gold details are under 0.4.0 below.
+
+- **[DEV] CHEAP BALLS now stocks every Gold mart.** With the dev flag on,
+  the balls (prototype included) appear at every mart in Johto — Violet,
+  Cherrygrove, all of them — instead of only the Great/Ultra-tier ones,
+  so a fresh Gold save can test the full set at the first counter it
+  reaches. Prices are already 1 under the flag. Flag off: nothing
+  changes, shelves stay Great/Ultra-tier. As ever, toggling it needs a
+  full quit and relaunch.
+
+## 0.4.0
 
 - **Pokemon Gold support.** Both mods now declare `games: ["gen1",
   "gen2"]` and load on a Gold boot.
