@@ -72,7 +72,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.7"
+  local VERSION = "0.4.8"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -112,6 +112,15 @@ return function(mod)
   mod.options:define({
     { key = "cheap_balls", type = "toggle",
       label = "[DEV] CHEAP BALLS", default = false },
+    -- The faithfulness escape hatch for the bag headroom below.  It
+    -- defaults to the GENEROUS direction on purpose: mod options do not
+    -- persist on a Gold boot (engine bug -- the manager writes Gold's
+    -- nested options block, the loader reads the top-level one), so a
+    -- Gold-only player cannot change this, and the one state nobody
+    -- should be stuck in is the one where the mod's own balls will not
+    -- fit in the bag.
+    { key = "vanilla_bag_limits", type = "toggle",
+      label = "VANILLA BAG LIMITS", default = false },
   })
 
   -- Everything this flag changes -- prices, which balls exist, which
@@ -152,6 +161,91 @@ return function(mod)
   for _, id in ipairs(BALL_IDS) do OWNED[id] = true end
   mod.exports.owns = { kanto_balls = true, balls = OWNED }
   mod.exports.balls = BALL_IDS
+
+  ----------------------------------------------------------------------
+  -- BAG HEADROOM -- room for the balls we brought, and no more.
+  --
+  -- THE PROBLEM.  Gold's BALL pocket holds TWELVE distinct item ids
+  -- (src/inventory/Bag.lua:15-20; a distinct id takes a slot whatever
+  -- the quantity), and Gold's own in-bag balls already number eleven --
+  -- POKE/GREAT/ULTRA/MASTER plus Kurt's seven.  Add ours and sixteen ids
+  -- compete for twelve slots.  Gen 1 has no pockets at all: one flat bag
+  -- of twenty, shared with every potion and TM, so eleven balls is a
+  -- third of it.
+  --
+  -- WHAT THE CAP ACTUALLY DOES, checked rather than feared:
+  -- Bag.capacity's only caller is Bag.add (:107) and the check fires
+  -- only for an id NOT already held.  So a full pocket refuses a NEW
+  -- ball, existing stacks still grow to 99, nothing is lost, and no UI
+  -- reads capacity -- there is no "12/12" to break.  An over-cap pocket
+  -- is a stable state, which is what makes this safe to change AND safe
+  -- to change back: uninstall this mod holding sixteen ball ids and you
+  -- simply cannot gain a seventeenth until you drop under the cap.
+  --
+  -- WHY +N RATHER THAN A BIG NUMBER.  We ask for exactly one slot per
+  -- ball this mod registered.  A player without us is unaffected; the
+  -- vanilla economy survives (choosing which of Kurt's seven to carry is
+  -- a real Gold decision, and a blanket +18 would erase it); and it
+  -- scales itself as the roster grows, which is the whole point.  Under
+  -- [DEV] CHEAP BALLS the two dev balls are counted for free, because N
+  -- is read off what was actually registered.
+  --
+  -- ONE WRAP SERVES BOTH GENERATIONS: src/inventory/Bag.lua is shared,
+  -- and it is ADDITIVE rather than a replacement, so it can never shrink
+  -- a bag another mod grew through the supported `constants.bagSize`
+  -- route.  (That route exists and works on Gen 1 -- but it is a scalar
+  -- registry write, so two mods setting it means last-writer-wins and we
+  -- could silently shrink someone else's bag.  Adding to whatever the
+  -- engine answers avoids that entirely.)
+  --
+  -- Which pocket gets the headroom differs: on Gold our balls live in
+  -- BALL, on Gen 1 everything lives in the one ITEM bag.
+  --
+  -- TEMPORARY, in the same sense as the gen2Marts append: if the engine
+  -- grows a per-pocket override (a `ballPocketSize` beside `bagSize`, or
+  -- per-pocket keys under `constants`), this wrap should be deleted in
+  -- favour of it.  Bag.capacity honours `bagSize` for the ITEM pocket
+  -- only today (:43-45), which is why Gold has no supported route.
+  ----------------------------------------------------------------------
+  local ballSlots = #BALL_IDS
+
+  do
+    local Bag_ = Bag
+    Bag_._kbOriginals = Bag_._kbOriginals or { capacity = Bag_.capacity }
+    local vanillaCapacity = Bag_._kbOriginals.capacity
+
+    if mod.options:get("vanilla_bag_limits") == true then
+      -- Restore rather than skip: module tables live for the whole
+      -- process, so a reload with the option newly ON would otherwise
+      -- leave the OLD wrapper installed and look like it did nothing.
+      Bag_.capacity = vanillaCapacity
+    else
+      Bag_.capacity = function(data, pocket)
+        local base = vanillaCapacity(data, pocket)
+        if type(base) ~= "number" then return base end
+        local ours
+        if GEN2 then
+          ours = pocket == "BALL"
+        else
+          -- Gen 1 passes nil or "ITEM" for its single bag
+          ours = pocket == nil or pocket == "ITEM"
+        end
+        if not ours then return base end
+        return base + ballSlots
+      end
+    end
+  end
+
+  -- Other ball mods claim their own headroom here instead of installing
+  -- a SECOND wrap on Bag.capacity -- same reason as registerBallPalette:
+  -- two wrappers on one function means load order decides the answer,
+  -- silently.  Read live, so a call at game.ready takes effect at once.
+  mod.exports.requestBallSlots = function(n)
+    if type(n) ~= "number" or n < 1 then return false end
+    ballSlots = ballSlots + math.floor(n)
+    return true
+  end
+  mod.exports.owns.ballPocketCapacity = true
   -- On Gold this mod also owns the ball -> palette wrap for EVERY ball,
   -- not just its own: exactly one mod may wrap BattleState:ballPalette
   -- or load order silently decides the colour.  Other ball mods call

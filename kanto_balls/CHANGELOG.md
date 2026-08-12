@@ -8,6 +8,24 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.8
+
+- **Your bag now has room for these balls.** Gold's ball pocket only holds
+  twelve different kinds of ball, and the game's own balls — including all
+  seven of Kurt's — already take eleven of those slots. Adding this mod's
+  balls used to mean running out of room and being told you can't carry
+  any more. The pocket now gains **one extra slot per ball this mod adds**,
+  so ours fit alongside the game's instead of competing with them.
+- The same applies on Red/Blue/Yellow, where the bag is one shared list
+  rather than pockets.
+- **Nothing else gets more room**, and nothing you already own is touched.
+  Uninstall the mod and the bag simply goes back to normal — anything over
+  the limit stays in your bag, you just can't add a new *kind* of ball
+  until you're back under it.
+- If you'd rather keep the original limits, there's a **VANILLA BAG
+  LIMITS** option. (Note: mod options can currently only be changed from a
+  Red/Blue/Yellow boot — that's an engine issue, not this mod's.)
+
 ## 0.4.7
 
 **This mod now works on Pokémon Gold, and it has a new name.** Everything
