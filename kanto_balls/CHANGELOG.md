@@ -8,6 +8,21 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.12
+
+Both 0.4.11 crafting bugs, reported from device.
+
+- **The BALL CASE now goes to KEY ITEMS**, not the ITEMS pocket. A
+  one-word ordering mistake in the code meant the instruction that files
+  it was reading an empty name and quietly doing nothing.
+- **Using the case now actually opens it.** The bag closes itself the
+  instant an item is used, and closing it tore down the case along with
+  it — so the screen was being built and destroyed in the same breath.
+  The case now opens a frame later, over the overworld, once the bag has
+  finished closing.
+- If the screen ever fails to open now, it says so on the mod manager's
+  [ERRS] screen instead of doing nothing.
+
 ## 0.4.11
 
 **First crafting build — Gold only, and a dev build.** Everything here is

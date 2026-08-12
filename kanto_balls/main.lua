@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.11"
+  local VERSION = "0.4.12"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -177,6 +177,16 @@ return function(mod)
   -- unobtainable.
   BALL_IDS[#BALL_IDS + 1] = "GS_BALL"
   BALL_IDS[#BALL_IDS + 1] = "BEAST_BALL"
+  -- Declared HERE, not down beside the Ball Case block that uses it most:
+  -- the game.ready pocket stamp below runs earlier in the file, and a
+  -- `local` declared after its use compiles that use as a GLOBAL -- nil at
+  -- runtime, silently.  That is exactly what shipped in 0.4.11: the stamp
+  -- read data.items[nil], found nothing, and the case sat in the ITEMS
+  -- pocket.  Indexing a table with a nil KEY is legal in Lua, so there was
+  -- no error to see -- which is the whole reason this trap keeps costing
+  -- rounds.
+  local CASE_ID = "BALL_CASE"
+
   local OWNED = {}
   for _, id in ipairs(BALL_IDS) do OWNED[id] = true end
   mod.exports.owns = { kanto_balls = true, balls = OWNED }
@@ -1129,7 +1139,7 @@ return function(mod)
   -- registered and inert.  TODO/CONFIRM the Gen 1 route when the Gen 1
   -- acquisition design is settled.
   ----------------------------------------------------------------------
-  local CASE_ID = "BALL_CASE"
+  -- (CASE_ID is declared up beside BALL_IDS -- see the note there.)
 
   -- Recipes are DATA, deliberately: adding one is a row, and the whole
   -- table is what a future Kurt tutorial, a recipe-discovery gate or a
@@ -1289,6 +1299,25 @@ return function(mod)
     -- tables live for the process, so a reload would otherwise keep an
     -- old wrapper live and make this version look inert.
     ------------------------------------------------------------------
+    -- THE PUSH MUST BE DEFERRED BY A FRAME, and 0.4.11 learned why the
+    -- hard way: it pushed inline and nothing happened at all.
+    --
+    -- PackMenu:useSelected takes a truthy result from useFieldItem and
+    -- calls self:exitToField (src/ui/gen2/PackMenu.lua:353), which is
+    -- `stack:clear()` -- and StateStack:clear is `while self:top() do
+    -- self:pop() end` (src/core/StateStack.lua:56).  It empties the
+    -- WHOLE stack, so a screen pushed during the call is torn down a
+    -- moment later along with the pack.  Not a pop we could out-order:
+    -- a loop that runs until the stack is empty cannot be beaten by
+    -- pushing harder.
+    --
+    -- So: flag it here, and push after the frame's update has finished
+    -- (Game2:update at src/core/Game2.lua:1081 drives the fixed step
+    -- that runs the stack).  Pushing after vanilla's update also means
+    -- the A press that opened the case is already consumed, so the case
+    -- cannot immediately eat it as a selection.
+    local pendingCase = false
+
     local World = require("src.world.gen2.World")
     World._kbOriginals = World._kbOriginals
       or { useFieldItem = World.useFieldItem }
@@ -1298,19 +1327,25 @@ return function(mod)
       if itemId ~= CASE_ID then
         return vanillaUseFieldItem(self, itemId)
       end
-      local game = self.game
-      if not game then return nil end
-      -- TODO/CONFIRM on device: the PACK closes itself (exitToField)
-      -- AFTER this returns truthy, so the push here may land under the
-      -- closing pack.  If the case does not appear, defer the push by a
-      -- tick rather than pushing inline -- that is a which-frame
-      -- problem, not a can-it-be-done one.
-      local ok = pcall(Screens.push, game, "KbBallCase")
-      if not ok then
-        Runtime.reportError("kanto_balls", "CASE: screen failed")
-        return nil
-      end
+      if not self.game then return nil end
+      pendingCase = true
+      -- Truthy: the PACK closes, which is what we want -- the case
+      -- opens over the overworld rather than on top of the bag.
       return "kb_ball_case"
+    end
+
+    local Game2 = require("src.core.Game2")
+    Game2._kbOriginals = Game2._kbOriginals or { update = Game2.update }
+    local vanillaGameUpdate = Game2._kbOriginals.update
+
+    Game2.update = function(self, dt)
+      vanillaGameUpdate(self, dt)
+      if not pendingCase then return end
+      pendingCase = false
+      local ok, err = pcall(Screens.push, self, "KbBallCase")
+      if not ok then
+        Runtime.reportError("kanto_balls", "CASE FAIL " .. tostring(err))
+      end
     end
   end
 
