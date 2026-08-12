@@ -17,8 +17,13 @@ end)
 Fired once per confirmed purchase, after payment. Selling, PC
 withdrawals, and script item gifts never fire it.
 
-Known consumer: **[Kanto Balls](../kanto_balls/)** (the free
-Premier Ball for 10+ balls bought in one purchase), in this same repo.
+Works on **Red/Blue/Yellow and, since 0.4.0, Pokémon Gold** — Gold's
+mart is a different screen, but its buys ring through the same shared
+till this mod listens to.
+
+Known consumer: **[Too Many Balls](../kanto_balls/)** (the free
+Premier Ball for 10+ balls bought in one purchase), in this same repo —
+called Kanto Balls before 0.4.3.
 
 ## Installation
 
@@ -37,3 +42,13 @@ automatically -- the entry shows "vX.Y.Z available", tap it, then
 **Update**, then fully quit and relaunch.
 
 Publishes `exports.owns = { shop_events = true }` and `exports.version`.
+
+## Credits
+
+- **Mister Miracle** — design and code.
+- Built for the **gen1recomp** engine
+  (https://github.com/bryanthaboi/gen1recomp).
+- Pokémon and all related names are trademarks of Nintendo / Creatures
+  Inc. / GAME FREAK inc. This mod contains no ROM data or copyrighted
+  assets and requires your own game copy via gen1recomp. Code is MIT
+  licensed (see `LICENSE` in the repo).

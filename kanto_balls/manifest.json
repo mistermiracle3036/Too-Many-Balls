@@ -1,18 +1,19 @@
 {
   "id": "kanto_balls",
-  "name": "Kanto Balls",
-  "version": "0.3.4",
+  "name": "Too Many Balls",
+  "version": "0.4.7",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
   "category": "ITEMS",
   "game_version": ">=0.1.38 <2.0.0",
+  "games": ["gen1", "gen2"],
   "priority": 150,
   "affects_link": false,
   "permissions": ["engine_internals"],
   "dependencies": ["shop_events"],
   "optional_dependencies": ["pokeball_colors", "custom_pokeballs"],
   "conflicts": ["example_balls"],
-  "github": "mistermiracle3036/Kanto-Balls",
-  "description": "Seven new Poke Balls for Kanto: Premier (free with bulk ball purchases), Nest, Moon, Heal, Fast, Mirror and the Silph prototype. Each one is written to be readable as a template for your own ball. Colors register into Pokeball Colors when installed."
+  "github": "mistermiracle3036/Too-Many-Balls",
+  "description": "Custom Poke Balls for Red/Blue/Yellow AND Gold: Premier (free with bulk ball purchases), Nest, Heal, Mirror and the prototype ball, plus Moon and Fast on Gen 1 (Gold has its own). Each one is written to be readable as a template for your own ball. Colors register into Pokeball Colors when installed."
 }

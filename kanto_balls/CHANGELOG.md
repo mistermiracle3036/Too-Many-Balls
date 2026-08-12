@@ -8,6 +8,249 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.7
+
+**This mod now works on Pokémon Gold, and it has a new name.** Everything
+below has landed since the last release (v0.3.4).
+
+### Too Many Balls (was Kanto Balls)
+
+The balls are sold in Johto now, so "Kanto" had stopped being true.
+**Nothing to do when you update** — only the name changed. Your bag keeps
+its balls, anything you've caught keeps its record of which ball caught
+it, and the mod updates in place.
+
+### Pokémon Gold support
+
+Five balls make the trip, with the same behaviour they have in Kanto:
+
+| Ball | What it does on Gold |
+| ---- | -------------------- |
+| **PREMIER** | Still free — buy 10+ balls in one purchase, one free per 10, and the clerk says so |
+| **NEST** | 4× on anything Lv 15 or under, tapering off up to 35 |
+| **HEAL** | What you catch arrives fully healed |
+| **MIRROR** | 4× when the wild Pokémon matches the one you have out |
+| **PROTO BALL** | The prototype, renamed for Johto — a guaranteed catch, except one throw in two just breaks |
+
+- **They're sold at marts that already stock Great or Ultra Balls**, sort
+  into the **BALLS pocket**, and each has **its own colour** when thrown.
+- **Pokeball Colors is worth installing on Gold too.** It's optional on
+  both games now. In Johto it colours the **Pokémon Center heal machine**,
+  giving each party slot the ball its Pokémon was actually caught in —
+  using the same colours this mod registers, so they match with no setup.
+- **MOON and FAST stay in Kanto.** Gold has its own — Kurt makes them from
+  Apricorns — and his are left exactly as they are, colours included.
+- **The prototype is called PROTO BALL on Gold**, since Silph Co doesn't
+  exist in Johto. Same item, same odds. A dud there shows the normal
+  break-out message rather than "The PROTOTYPE broke apart!"
+- **Red, Blue and Yellow are unaffected.** Nothing about how the balls
+  play in Kanto has changed.
+
+### Also since v0.3.4
+
+- **Three ball colours retuned so no two balls look alike** — NEST was
+  nearly indistinguishable from the Safari Ball, and BEAST from our own
+  Moon Ball. Measured rather than eyeballed.
+- **An MIT licence and proper credits**, and the credits now ship *inside*
+  the downloads rather than only living on the repo page.
+
+### Known gaps
+
+- The Yellow mart shelves have never been tested on a real Yellow save.
+- On Gold, mod options only save correctly when changed from a Red boot —
+  an engine-side issue, not this mod's. It affects the `[DEV] CHEAP BALLS`
+  toggle.
+
+## 0.4.5
+- **Dev build. No player-visible change.** Adds a second developer
+  toggle, `[DEV] KURT BALLS`, which puts Gold's own Apricorn balls (Fast,
+  Friend, Heavy, Level, Love, Lure, Moon) on every mart at ¥1 so they can
+  be tested back-to-back against this mod's. It exists only to check that
+  the natives still behave and look like vanilla alongside us.
+- **This toggle is removed before the public release** — it is scaffolding,
+  and it temporarily rewrites the price on records this mod does not own.
+  With it off, nothing it touches runs at all.
+
+## 0.4.4
+
+**Updating from 0.3.4?** Everything since then: the mod is now called
+**Too Many Balls** (0.4.3), it runs on **Pokemon Gold** as well as
+Red/Blue/Yellow (0.4.0 — five balls travel, MOON and FAST stay home since
+Gold has its own, shelves at Great/Ultra marts, the prototype is labelled
+PROTO BALL there), those Gold balls have their **own colours** (0.4.2),
+the dev flag can stock every Johto mart (0.4.1), three ball colours were
+retuned so no two look alike (0.3.5), and the repo carries an MIT licence
+with credits in every download (0.4.0). How the balls play on Red is
+unchanged throughout. Details under each version below.
+
+- **The clerk announces the free Premier Ball on Gold now**, the way he
+  always has on Red — "I'll throw in a PREMIER BALL, too!" as a second
+  page of his thank-you. Previously the balls arrived silently, and the
+  bonus was easy to miss entirely. (Earlier notes said Gold had no way to
+  do this. It does; I had not looked hard enough.)
+
+## 0.4.3
+
+**Updating from 0.3.4?** Everything since then: the mod is now called
+**Too Many Balls** (this version), it runs on **Pokemon Gold** as well as
+Red/Blue/Yellow (0.4.0 — five balls travel, MOON and FAST stay home since
+Gold has its own, shelves at Great/Ultra marts, the prototype is labelled
+PROTO BALL there), those Gold balls have their **own colours** rather than
+throwing grey (0.4.2), the dev flag can stock every Johto mart (0.4.1),
+three ball colours were retuned so no two look alike (0.3.5), and the repo
+carries an MIT licence with credits in every download (0.4.0). How the
+balls play on Red is unchanged throughout. Details under each version
+below.
+
+- **Renamed from "Kanto Balls" to "Too Many Balls."** The balls reach
+  Johto now, so "Kanto" had stopped being true.
+- **Nothing to do when you update, and nothing in your save changes.**
+  Only the display name changed. The mod id is still `kanto_balls`, the
+  download is still `kanto_balls-X.Y.Z.zip`, and every ball keeps the id
+  it always had — so the mod browser updates it in place, your bag keeps
+  its balls, and anything already caught keeps its record of which ball
+  caught it. (Contrast the 0.2.0 rename from Example Balls, which *was* an
+  id change and did need the old copy removed.)
+- The GitHub repo moved to `Too-Many-Balls` to match. GitHub redirects the
+  old address, so existing installs keep updating and old links keep
+  working; both manifests now point at the new one.
+
+**Fixes from the Gold test round:**
+
+- **The free Premier Ball now works when you buy Gold's own balls.** Buying
+  ten POKE BALLs awarded nothing, while ten of this mod's balls worked —
+  the check was looking for a marker only our own items carry. It now asks
+  what pocket the item lives in, which is how Gold itself decides what a
+  ball is.
+- **Seven bogus error lines are gone from the mod manager's [ERRS] screen.**
+  Each ball reported "unresolved reference to balls" on a Gold boot. Purely
+  cosmetic, but seven lines of noise is enough to bury a real error, which
+  is the only thing that screen is for.
+- **PREMIER BALL is now plain white when thrown**, instead of reading as an
+  ordinary red-and-white Poké Ball.
+- **GS BALL is a proper gold** rather than pale cream, with the silver as
+  its highlight. Its old colour came from Gen 1, where the paleness existed
+  only to avoid clashing with the Ultra Ball — a problem Gold doesn't have.
+
+## 0.4.2
+
+**Updating from 0.3.4?** Everything since then: the mod now runs on
+**Pokemon Gold** as well as Red/Blue/Yellow (0.4.0 — five balls travel,
+MOON and FAST stay home since Gold has its own, shelves at Great/Ultra
+marts, the prototype is labelled PROTO BALL there), those Gold balls now
+have their **own colours** instead of throwing grey (this version), the
+dev flag can stock every Johto mart (0.4.1), three ball colours were
+retuned so no two look alike (0.3.5), and the repo carries an MIT licence
+with credits in every download (0.4.0). Red is unchanged throughout.
+
+- **The Gold balls have colours now.** Gold picks a thrown ball's colour
+  from the cart's own table, which only knows the eleven balls the cart
+  ships — so ours all threw **grey**. Each one now has its own palette:
+  Premier white-and-red, Nest green, Heal pink, Mirror pale silver, the
+  prototype purple with its teal flash (plus GS and Beast under the dev
+  flag).
+- **These colours are a first pass and will need tuning.** They are
+  carried over from the Gen 1 palette and have not been compared against
+  Gold's own ball colours, which are a different set — expect at least
+  one round of adjustment once they can be seen on a real throw.
+- **MOON and FAST are left exactly as Gold draws them.** They are Kurt's
+  balls there, and they should look like Kurt's balls.
+- **Kanto Balls now owns ball colour on Gold**, because Pokeball Colors
+  is a Gen 1-only mod by its author's decision and won't be colouring
+  anything in Johto. Other ball mods can claim a colour through
+  `exports.registerBallPalette(ballId, paletteName, row)` rather than
+  installing a competing wrap — two mods wrapping the same method means
+  load order decides the colour, silently. On Red nothing changes:
+  Pokeball Colors still owns colour there.
+
+## 0.4.1
+
+**Updating from 0.3.4?** Everything since then, in one place: the mod now
+runs on **Pokemon Gold** as well as Red/Blue/Yellow (0.4.0 — five balls
+travel, MOON and FAST stay home since Gold has its own, shelves at
+Great/Ultra-tier marts, the prototype is labelled PROTO BALL there),
+three ball colours were retuned so no two balls look alike (0.3.5), and
+the repo now carries a proper MIT licence with credits in every download
+(0.4.0). On Red nothing about how the balls play has changed. The full
+Gold details are under 0.4.0 below.
+
+- **[DEV] CHEAP BALLS now stocks every Gold mart.** With the dev flag on,
+  the balls (prototype included) appear at every mart in Johto — Violet,
+  Cherrygrove, all of them — instead of only the Great/Ultra-tier ones,
+  so a fresh Gold save can test the full set at the first counter it
+  reaches. Prices are already 1 under the flag. Flag off: nothing
+  changes, shelves stay Great/Ultra-tier. As ever, toggling it needs a
+  full quit and relaunch.
+
+## 0.4.0
+
+- **Pokemon Gold support.** Both mods now declare `games: ["gen1",
+  "gen2"]` and load on a Gold boot.
+  - **Five balls come to Johto:** PREMIER, NEST, HEAL, MIRROR and the
+    prototype ball, with the same behaviour as on Red. They are sold at
+    the marts that already stock GREAT or ULTRA BALLs (the prototype
+    only where ULTRA BALLs are sold), and sort into the BALLS pocket.
+  - **MOON and FAST stay home.** Gold has its own native Moon Ball and
+    Fast Ball under the same ids — ours step aside there rather than
+    fight them. On Red both are unchanged.
+  - **The SILPH BALL is called "PROTO BALL" on Gold** (display name
+    only — same item, same id, same 1-in-2 fizzle). Silph Co doesn't
+    exist in Johto, so the Kanto branding went. Its long-term Johto
+    story (Kurt?) is still to be decided.
+  - **The Premier bonus works on Gold** (10+ balls in one purchase, one
+    free per 10) — but the clerk doesn't announce it yet; the balls
+    arrive in the pocket silently. Gold's mart text has no seam for the
+    announcement.
+  - A Gold dud from the prototype shows the normal break-out text
+    rather than "The PROTOTYPE broke apart!" — Gold picks its failure
+    line inside the throw animation, which mods can't reach yet.
+  - Every catch on Gold gets the `mon.caughtBall` mark from this mod
+    (on Red, pokeball_colors owns the mark when installed).
+  - Under the hood, for other mod authors: Gold's catch behaviour is
+    ONE `catch.rate` wrap on the flat opts table (the throw site passes
+    no registry data, so ball records don't reach the roll); shelves
+    are a presence-checked append to `data.gen2Marts` (no registry
+    exists yet); the BALLS pocket comes from stamping `pocket` onto the
+    merged item records at game.ready. Each block in `main.lua` says
+    which engine seam it uses and why.
+- **MIT licence and visible credits.** `LICENSE` (MIT) at the repo root,
+  and a Credits section in each mod's own README — the README is the one
+  file that actually ships inside the zip, and until now the downloads
+  carried no attribution at all. MIT covers our code; it claims nothing
+  over ROM-derived material or Nintendo trademarks.
+- This mod's README now shows the ball line-up and screenshots, and both
+  screenshots and the ball grid ship on the repo.
+
+## 0.3.5
+- **Three ball colours retuned so they stop looking like other balls.**
+  Measured rather than eyeballed: every ball a player could have installed
+  was converted to CIE Lab and compared by perceptual distance, weighting
+  the body colour since at this sprite size the body is most of the pixels.
+  - **NEST** `132,172,84` → `80,200,128`. It sat **5.9 dE** from the
+    native SAFARI BALL — the worst clash in the set, and one every player
+    saw, since Safari is vanilla. Now 25.8.
+  - **BEAST** `44,72,148` → `16,24,56`. It was **10.2 dE** from our own
+    MOON BALL, and crowded GREAT and SILPH too. Dropping the value clears
+    all three at once, because value contrast is what survives at 8px —
+    and near-black under a yellow flash is Ultra Beast livery anyway.
+  - **GS** `224,188,76` → `248,224,160`. It was **2.2 dE** from Custom
+    Poke Balls' LEVEL BALL — effectively the same ball — and 14.6 from the
+    native ULTRA. Pale gold clears both and reads more "gold *and*
+    silver".
+  - Result: always-present collisions drop from six pairs to one.
+- **PREMIER and HEAL deliberately left alone.** Premier is close to Custom
+  Poke Balls' TIMER, and Heal to its DREAM, but both pairs are close
+  because both balls are canonically that colour. Moving ours would cost
+  more identity than it buys, and neither clash exists without that mod.
+- **`mon.caughtBall` is now written only as a fallback.** pokeball_colors
+  owns that field — it declares `exports.owns.caughtBallField` and writes
+  it for the heal machine's per-ball colours — and its ownership note says
+  other mods must not write it. 0.3.1–0.3.4 wrote it unconditionally,
+  which duplicated that write. Harmless in practice (both sides guard on
+  nil and store the same value) but a contract breach. This mod now writes
+  it only when nothing else claims it, so the GS BALL's mark still exists
+  for someone running Kanto Balls without pokeball_colors.
+
 ## 0.3.4
 - **Repo renamed from `Shop-Tools---Custom-Balls` to `Kanto-Balls`.** The
   manifest's `github` field follows it, which is the only part that had to

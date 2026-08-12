@@ -1,8 +1,22 @@
-# Kanto Balls — FAQ
+# Too Many Balls — FAQ
 
 Every answer is collapsed. Tap only what you want revealed.
 
 ## General
+
+<details>
+<summary>Wasn't this called Kanto Balls?</summary>
+
+Yes — it was renamed at 0.4.3, once the balls started appearing in Johto
+on Pokémon Gold and "Kanto" stopped being accurate.
+
+Only the display name changed. The mod id is still `kanto_balls`, the
+download is still `kanto_balls-X.Y.Z.zip`, and the balls themselves keep
+the ids they always had — so the mod browser updates it in place, your
+bag keeps its balls, and anything already caught keeps its record of
+which ball caught it.
+
+</details>
 
 <details>
 <summary>Do I need shop_events if I only want the balls?</summary>
@@ -43,7 +57,7 @@ visible on-device. Turn "Show purchase diagnostics" off in shop_events'
 OPTIONS once you've confirmed purchases are being detected.
 </details>
 
-## Kanto Balls
+## The balls
 
 <details>
 <summary>I bought 9 balls and got no Premier Ball. Bug?</summary>

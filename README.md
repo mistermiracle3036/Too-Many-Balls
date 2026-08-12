@@ -1,7 +1,12 @@
-# Kanto Balls
+# Too Many Balls
 
-**Seven new Poké Balls for gen1recomp** (Red / Blue / Yellow), sold across
-Kanto's marts — plus the small library mod that makes one of them possible.
+**New Poké Balls for gen1recomp** — on Red / Blue / Yellow **and Pokémon
+Gold** since 0.4.0 — sold on real mart shelves, plus the small library mod
+that makes one of them possible.
+
+*(Called **Kanto Balls** until 0.4.3. Renamed once the balls reached
+Johto and "Kanto" stopped being true. Same mod, same ids, same downloads —
+see [Installation](#installation).)*
 
 | Ball | Where you get it | What makes it worth carrying |
 | ---- | ---------------- | ---------------------------- |
@@ -15,6 +20,30 @@ Kanto's marts — plus the small library mod that makes one of them possible.
 
 Every ball is a real item on a real shelf — no cheats, no menu, no new
 currency. Buy them and throw them.
+
+**On Pokémon Gold**, five of them travel: Premier, Nest, Heal, Mirror and
+the prototype (labelled **PROTO BALL** there, since Silph Co doesn't exist
+in Johto). They're sold at marts that already stock Great or Ultra Balls,
+sort into the BALLS pocket, and each has its own colour when thrown. Moon
+and Fast stay behind — Gold already has its own, made by Kurt.
+
+<img src="docs/mart-shelf.png" width="360" alt="A Kanto mart's ball shelf listing NEST, HEAL, FAST, MIRROR and SILPH BALLs with prices">
+
+*(The SNAG BALL on that shelf is from [Pokemon Snag](https://github.com/mistermiracle3036/Pokemon-Snag),
+a separate mod of mine — it is not part of this one.)*
+
+### The Premier Ball pays for itself
+
+Buy ten or more of any ball in **one** purchase and the clerk hands them
+over free, and says so in his own text box:
+
+<img src="docs/premier-bonus.png" width="360" alt="A mart clerk saying: I'll throw in 2 PREMIER BALLS too!">
+
+### The Silph Ball tells you when it breaks
+
+A failed throw is not a miss, and it does not pretend to be one:
+
+<img src="docs/silph-broke.png" width="360" alt="Battle text reading: The PROTOTYPE broke apart!">
 
 ## Two mods, one download page
 
@@ -49,8 +78,12 @@ this started life as **Example Balls**.
 2. Launcher → **MODS** → **Import mod .zip**, once per zip.
 3. Fully quit and relaunch.
 
+**Upgrading from Kanto Balls?** Nothing to do — that was this mod's old
+display name (changed at 0.4.3). The id never changed, so the mod browser
+updates it in place and your saved balls are untouched.
+
 Already have **Example Balls** (`example_balls`) installed? Remove it
-first. It was renamed to Kanto Balls at 0.2.0, and because a new id
+first. That one was a real id change back at 0.2.0, and because a new id
 installs to its own folder, nothing stops both running at once and
 registering overlapping balls.
 
@@ -68,8 +101,17 @@ actually changed. See each mod's CHANGELOG for why.
 ## Compatibility
 
 - **[Pokeball Colors](https://github.com/mistermiracle3036/Pokeball-Colors)** —
-  optional. All seven balls register their own colors when it is
-  installed, so each one has its own look during the throw.
+  optional, and it works on **both** games. On Red/Blue/Yellow every ball
+  registers its own colors, so each has its own look during the throw. On
+  Gold the throw is already coloured by this mod, and Colors adds the
+  **Pokémon Center heal machine**: each party slot shows the ball its
+  Pokémon was caught in, taken from the same palettes registered here.
+
+  <img src="docs/ball-colors.png" width="520" alt="All nine balls in their own colors: Premier, Nest, Moon, Heal, Fast, Mirror, Silph, GS and Beast">
+
+  *Requires Pokeball Colors with **COLORS** set to ADVANCED — without it
+  every ball throws in the default palette. GS and BEAST are the two
+  behind `[DEV] CHEAP BALLS`.*
 - **[Custom Poké Balls](https://github.com/magalvao/custom-pokeballs)**
   by magalvao — coexists. Both append to the same mart shelves and no
   ball is duplicated between them.

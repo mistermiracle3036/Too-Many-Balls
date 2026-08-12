@@ -8,6 +8,77 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.7
+
+**Now works on Pokémon Gold.** Everything below has landed since the last
+release (v0.3.4).
+
+- **Gold support.** Gold's mart is a different screen from Kanto's, but
+  purchases ring the same till this mod listens to — so `shop.purchased`
+  fires on Gold buys exactly as it does on Red. Selling still never fires
+  it, on either game.
+- **A scripted item gift can no longer be mis-reported as a purchase.**
+  Gold rings the same sound when you *sell*, which made a stale entry
+  possible; it's now cleared before it can be misread.
+- **An MIT licence and a credits section**, which ship inside the download.
+- The ball mod this pairs with is now called **Too Many Balls** (was Kanto
+  Balls) and the repo moved to `Too-Many-Balls`. Shop Events keeps its own
+  name and id; existing installs keep updating, and old links redirect.
+
+## 0.4.5
+- No code change. Lockstep release with Too Many Balls 0.4.5.
+
+## 0.4.4
+- No code change. Lockstep release with Too Many Balls 0.4.4.
+
+## 0.4.3
+- No code change. Lockstep release with Too Many Balls 0.4.3.
+- The ball mod this pairs with was renamed from **Kanto Balls** to **Too
+  Many Balls**, and the repo moved to `Too-Many-Balls`; this manifest's
+  `github` field follows it. Shop Events itself is unchanged, keeps its
+  name and its `shop_events` id, and existing installs keep updating —
+  GitHub redirects the old repo address.
+
+**Updating from 0.3.4?** This mod gained Pokemon Gold support in 0.4.0
+(details below); 0.3.5, 0.4.1, 0.4.2 and 0.4.3 were no-change lockstep
+releases.
+
+## 0.4.2
+- No code change. Lockstep release with Kanto Balls 0.4.2.
+
+**Updating from 0.3.4?** This mod gained Pokemon Gold support in 0.4.0
+(details below); 0.3.5, 0.4.1 and 0.4.2 were no-change lockstep releases.
+
+## 0.4.1
+- No code change. Lockstep release with Kanto Balls 0.4.1.
+
+**Updating from 0.3.4?** This mod gained Pokemon Gold support in 0.4.0
+(details below); 0.3.5 was a no-change lockstep release.
+
+## 0.4.0
+
+**Updating from 0.3.4?** This mod gained Pokemon Gold support in this
+version; 0.3.5 between was a no-change lockstep release.
+
+- **Pokemon Gold support** (`games: ["gen1", "gen2"]`). Gold's mart is a
+  different screen but buys land through the same shared `Bag.add` and
+  ring the till through the same shared `Sound.play` — the event now
+  recognises Gold's till sound (`Sfx_Transaction`) alongside Gen 1's
+  (`Purchase`), so `shop.purchased` fires on Gold buys unchanged.
+- **Gold sells stay silent.** Gold rings the same till when the player
+  SELLS (Gen 1 doesn't); a sell gains nothing in the bag and emits no
+  event, and no longer triggers the "nothing gained" diagnostic.
+- **A stale fast-path entry can no longer leak.** A scripted item gift
+  looks like a purchase to the `Bag.add` fast path; any unrelated sound
+  now clears it, so a gift followed by a Gold sell can't be mis-reported
+  as a purchase. The inventory diff remains the source of truth.
+- MIT licence at the repo root and a Credits section in this README —
+  the README is the one file that ships inside the zip.
+- Lockstep release with Kanto Balls 0.4.0.
+
+## 0.3.5
+- No code change. Lockstep release with Kanto Balls 0.3.5.
+
 ## 0.3.4
 - Repo renamed from `Shop-Tools---Custom-Balls` to `Kanto-Balls`; this
   manifest's `github` field follows it. Existing installs are unaffected —
