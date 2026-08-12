@@ -8,6 +8,29 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.11
+
+**First crafting build — Gold only, and a dev build.** Everything here is
+behind `[DEV] CHEAP BALLS` until it has an earned source.
+
+- **The BALL CASE.** A key item that opens the mod's own screen. It lists
+  what you can make, marks what you have the apricorns for, and makes one
+  at a time. Key items have their own pocket, so it costs nothing from
+  your ball slots.
+- **The SNARE BALL, the first craftable ball.** Two BLACK APRICORNS. It's
+  a finisher: a **guaranteed** catch on a sleeping or frozen target, and a
+  **dud** on anything else. The dud is the point — it rewards setting the
+  status up rather than being a better ball outright.
+- **Kurt is untouched, and stays that way.** His seven recipes work
+  exactly as before; the case is a second, separate way to make balls, so
+  nothing canon is taken away.
+- **Your apricorns are never eaten on a failed craft.** The ball is added
+  to your bag first, and the apricorns only come out once that worked —
+  so a full pocket costs you nothing.
+- Crafting is Gold-only for now, because apricorns are: Red/Blue/Yellow
+  have none. The Snare Ball itself exists on both, and how you'd earn one
+  in Kanto is still an open question.
+
 ## 0.4.10
 - **Dev build. No player-visible change.** With `[DEV] CHEAP BALLS` on,
   all seven apricorns are sold at every Gold mart for ¥1, so the upcoming
