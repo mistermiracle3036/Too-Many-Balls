@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.9"
+  local VERSION = "0.4.10"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -1042,6 +1042,79 @@ return function(mod)
       end
     end)
   end
+
+  --====================================================================
+  -- ###  DEV SCAFFOLDING -- APRICORNS ON EVERY GOLD SHELF  ###
+  --
+  -- Gated on [DEV] CHEAP BALLS rather than a toggle of its own, and
+  -- deliberately: mod options do not persist on a Gold boot, so every
+  -- extra toggle is another trip to a Red save to flip it.  One dev
+  -- switch, everything dev.  Trivially separable later if the crafting
+  -- work wants apricorns without cheap balls.
+  --
+  -- WHY: the craft tier (briefs/BALL_CRAFT_TIER.md) spends apricorns,
+  -- and the honest way to get one is to give Kurt a fruit and wait a
+  -- real day -- per apricorn.  That is not a test loop.  This puts all
+  -- seven on every Gold mart at 1 each.
+  --
+  -- Gold only: apricorns are Gen 2 items and Gen 1 has none at all,
+  -- which is also the reason the craft tier is Gold-first.
+  --
+  -- Same discipline as the mart shelf append above: presence-checked,
+  -- append-only, and it never touches a list it did not find an entry
+  -- to add to.  The price write mutates vanilla item records for the
+  -- session, which is exactly why this is fenced and dev-gated.
+  --
+  -- Ids read from tools/rom_manifest_gold.json, not guessed -- note the
+  -- cart's abbreviations (BLU/YLW/WHT/BLK/PNK, not BLUE/YELLOW/...).
+  ----------------------------------------------------------------------
+  if GEN2 and CHEAP then
+    local APRICORNS = {
+      "RED_APRICORN", "BLU_APRICORN", "YLW_APRICORN", "GRN_APRICORN",
+      "WHT_APRICORN", "BLK_APRICORN", "PNK_APRICORN",
+    }
+
+    mod.events:on("game.ready", function(p)
+      local data = p.game and p.game.data
+      if not data then return end
+
+      local priced = 0
+      for _, id in ipairs(APRICORNS) do
+        local def = data.items and data.items[id]
+        if def then
+          def.price = 1
+          priced = priced + 1
+        end
+      end
+
+      local marts = data.gen2Marts
+      local lists = marts and (marts.lists or marts)
+      if type(lists) ~= "table" then
+        Runtime.reportError("kanto_balls", "DEV APRI: no marts")
+        return
+      end
+      local shelves = 0
+      for _, list in ipairs(lists) do
+        if type(list) == "table" then
+          local has = {}
+          for _, id in ipairs(list) do has[id] = true end
+          for _, id in ipairs(APRICORNS) do
+            if not has[id] and data.items and data.items[id] then
+              list[#list + 1] = id
+              has[id] = true
+            end
+          end
+          shelves = shelves + 1
+        end
+      end
+      -- Names what it did: "the shelf looks the same" must be
+      -- distinguishable from "the option has not taken effect yet".
+      Runtime.reportError("kanto_balls",
+        ("DEV APRI %d/7 %dsh"):format(priced, shelves))
+    end)
+  end
+  -- ###  END DEV SCAFFOLDING  ###
+  --====================================================================
 
   ----------------------------------------------------------------------
   -- Colors -- registered via pokeball_colors' registerColors(colors)

@@ -8,6 +8,16 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.10
+- **Dev build. No player-visible change.** With `[DEV] CHEAP BALLS` on,
+  all seven apricorns are sold at every Gold mart for ¥1, so the upcoming
+  apricorn-crafted balls can be tested without giving Kurt a fruit and
+  waiting a real day per ball.
+- Folded into the existing dev toggle rather than adding a second one:
+  mod options can only be changed from a Red boot, so every extra switch
+  is another trip to a Red save.
+- **Removed before the public release**, like the Kurt-ball tool before it.
+
 ## 0.4.9
 
 - **Fixed: a GS or Beast Ball you already owned moved to the ITEMS pocket
