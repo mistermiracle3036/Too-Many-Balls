@@ -8,6 +8,24 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.4
+
+**Updating from 0.3.4?** Everything since then: the mod is now called
+**Too Many Balls** (0.4.3), it runs on **Pokemon Gold** as well as
+Red/Blue/Yellow (0.4.0 — five balls travel, MOON and FAST stay home since
+Gold has its own, shelves at Great/Ultra marts, the prototype is labelled
+PROTO BALL there), those Gold balls have their **own colours** (0.4.2),
+the dev flag can stock every Johto mart (0.4.1), three ball colours were
+retuned so no two look alike (0.3.5), and the repo carries an MIT licence
+with credits in every download (0.4.0). How the balls play on Red is
+unchanged throughout. Details under each version below.
+
+- **The clerk announces the free Premier Ball on Gold now**, the way he
+  always has on Red — "I'll throw in a PREMIER BALL, too!" as a second
+  page of his thank-you. Previously the balls arrived silently, and the
+  bonus was easy to miss entirely. (Earlier notes said Gold had no way to
+  do this. It does; I had not looked hard enough.)
+
 ## 0.4.3
 
 **Updating from 0.3.4?** Everything since then: the mod is now called

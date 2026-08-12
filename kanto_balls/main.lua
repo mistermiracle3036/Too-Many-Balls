@@ -72,7 +72,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.3"
+  local VERSION = "0.4.4"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -223,15 +223,18 @@ return function(mod)
   -- and restore it at the top of the next purchase.  Non-destructive;
   -- the original is stashed once per loaded game.
   --
-  -- On Gold the award itself works unchanged (shop_events 0.4.0 hears
-  -- Gold's till), but the clerk line does not: Gold's mart text comes
-  -- from the ROM text walker via MartMenu, not from a data.text slot we
-  -- can swap.  The balls arrive silently in the BALLS pocket.  A
-  -- visible announcement needs a MartMenu seam that does not exist yet.
+  -- Gold announces it too, since 0.4.4 -- by a different route, because
+  -- Gold's mart text is the ROM walker's rather than a data.text slot
+  -- we can swap.  See the MartMenu wrap below the listener.
   ----------------------------------------------------------------------
   registerBall("PREMIER_BALL", "PREMIER BALL", 200, {})
 
   local boughtText = { original = nil, swapped = false }
+  -- How many Premier Balls the listener below just awarded, read by the
+  -- Gold clerk-line wrap further down.  Declared HERE, before the
+  -- listener that assigns it: a `local` declared after its first use
+  -- compiles that use as a GLOBAL, which is nil at runtime and silent.
+  local premierAward = 0
 
   local function restoreBoughtText(game)
     if boughtText.swapped and game and game.data and game.data.text then
@@ -281,6 +284,7 @@ return function(mod)
       mod.log:warn("bag full -- PREMIER BALL award skipped")
       return
     end
+    premierAward = award
 
     -- clerk line, GB text box: max 2 rows, max 18 chars per row
     if not GEN2 and game and game.data and game.data.text then
@@ -298,6 +302,60 @@ return function(mod)
     end
     mod.log:info("awarded %d free PREMIER BALL(s)", award)
   end)
+
+  ----------------------------------------------------------------------
+  -- The clerk's line on GOLD.
+  --
+  -- 0.4.0-0.4.3 paid the bonus silently here and this comment claimed
+  -- Gold had no seam for the announcement.  That was wrong: Gold's mart
+  -- ends a successful purchase with `self:say(self.text.thanks)`
+  -- (src/ui/gen2/MartMenu.lua:704), and `say` takes a LIST OF PAGES it
+  -- then holds on self.message, advancing a page per button press
+  -- (:469-482).  So the clerk can be given a second page.
+  --
+  -- The order inside completePurchase is what makes this safe:
+  -- playTransaction (:701) rings the till, shop_events emits
+  -- shop.purchased from its Sound.play wrap, our listener above awards
+  -- and sets premierAward -- and only THEN does say() run (:704).  So by
+  -- the time we look, the message exists and the award is known.
+  --
+  -- A page is a list of up to two lines (`page(...)` at :150) and the
+  -- box is 20 tiles wide from column 1, so the same 18-character budget
+  -- as the Gen 1 line.
+  --
+  -- COPY the page list, never append in place: extractedText falls
+  -- through to the module-level TEXTS table when the cache has no
+  -- extracted string (:316), so mutating it would add our line to every
+  -- mart's thanks text for the rest of the process.
+  ----------------------------------------------------------------------
+  if GEN2 then
+    local MartMenu = require("src.ui.gen2.MartMenu")
+    MartMenu._kbOriginals = MartMenu._kbOriginals
+      or { completePurchase = MartMenu.completePurchase }
+    local vanillaComplete = MartMenu._kbOriginals.completePurchase
+
+    MartMenu.completePurchase = function(self, total)
+      premierAward = 0
+      vanillaComplete(self, total)
+      -- vanilla returns early on "not enough money" and "pack full"
+      -- without ever ringing the till, so premierAward stays 0 there.
+      if premierAward < 1 then return end
+      local message = self.message
+      if not (message and message.pages) then return end
+      local line
+      if premierAward == 1 then
+        line = { "I'll throw in a", "PREMIER BALL, too!" }
+      else
+        line = { ("I'll throw in %d"):format(premierAward),
+                 "PREMIER BALLS too!" }
+      end
+      local pages = {}
+      for _, p in ipairs(message.pages) do pages[#pages + 1] = p end
+      pages[#pages + 1] = line
+      message.pages = pages
+      premierAward = 0
+    end
+  end
 
   ----------------------------------------------------------------------
   -- NEST BALL -- reading battle state in attempt().

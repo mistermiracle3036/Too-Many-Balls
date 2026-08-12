@@ -8,6 +8,9 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.4
+- No code change. Lockstep release with Too Many Balls 0.4.4.
+
 ## 0.4.3
 - No code change. Lockstep release with Too Many Balls 0.4.3.
 - The ball mod this pairs with was renamed from **Kanto Balls** to **Too

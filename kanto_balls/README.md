@@ -60,9 +60,9 @@ Since 0.4.0 the mod loads on a Gold boot too. What's different there:
 - **The prototype is labelled "PROTO BALL"** — Silph Co doesn't exist in
   Johto. Same item, same odds; a dud shows the normal break-out text
   there.
-- **The Premier bonus pays out silently** — the free balls arrive in
-  your BALLS pocket, but Gold's clerk has no text box we can borrow for
-  the announcement yet.
+- **The Premier bonus works, clerk line and all** — buy 10+ balls in one
+  purchase and he adds "I'll throw in a PREMIER BALL, too!" to his
+  thank-you, same as in Kanto.
 - **Each ball has its own colour when thrown.** Gold colours balls
   itself, but only knows the ones the cart ships, so custom balls would
   otherwise all throw grey. This mod supplies its own palettes and
