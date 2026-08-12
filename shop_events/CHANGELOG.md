@@ -8,6 +8,18 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.3
+- No code change. Lockstep release with Too Many Balls 0.4.3.
+- The ball mod this pairs with was renamed from **Kanto Balls** to **Too
+  Many Balls**, and the repo moved to `Too-Many-Balls`; this manifest's
+  `github` field follows it. Shop Events itself is unchanged, keeps its
+  name and its `shop_events` id, and existing installs keep updating —
+  GitHub redirects the old repo address.
+
+**Updating from 0.3.4?** This mod gained Pokemon Gold support in 0.4.0
+(details below); 0.3.5, 0.4.1, 0.4.2 and 0.4.3 were no-change lockstep
+releases.
+
 ## 0.4.2
 - No code change. Lockstep release with Kanto Balls 0.4.2.
 

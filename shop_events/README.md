@@ -21,8 +21,9 @@ Works on **Red/Blue/Yellow and, since 0.4.0, Pokémon Gold** — Gold's
 mart is a different screen, but its buys ring through the same shared
 till this mod listens to.
 
-Known consumer: **[Kanto Balls](../kanto_balls/)** (the free
-Premier Ball for 10+ balls bought in one purchase), in this same repo.
+Known consumer: **[Too Many Balls](../kanto_balls/)** (the free
+Premier Ball for 10+ balls bought in one purchase), in this same repo —
+called Kanto Balls before 0.4.3.
 
 ## Installation
 

@@ -1,4 +1,6 @@
--- Kanto Balls
+-- Too Many Balls  (mod id: kanto_balls -- the display name changed at
+-- 0.4.3 when the balls reached Johto; the ID never changes, it is in
+-- players' save bags, in mon.caughtBall and in the zip name)
 --
 -- Custom balls for gen1recomp, on BOTH generations since 0.4.0: Red/
 -- Blue/Yellow (Gen 1) and Gold (Gen 2).  This mod is also meant to be
@@ -70,7 +72,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.2"
+  local VERSION = "0.4.3"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -173,10 +175,18 @@ return function(mod)
     if CHEAP then price = 1 end
     -- items schema accepts ONLY: id, name, index, price, machine,
     -- effect, ball, tossable, needsTarget (strict validation)
-    mod.content.items:register(id, {
-      id = id, name = name, price = price,
-      tossable = true, ball = id,
-    })
+    --
+    -- `ball` is a REFERENCE into the balls registry (f.id("balls")), so
+    -- it is Gen 1 only: on Gold nothing reads a mod's ball record at the
+    -- throw site, we register none, and carrying the field anyway made
+    -- the loader report "items.NEST BALL.ball: unresolved reference to
+    -- balls" for every ball on the [ERRS] screen -- seven lines of noise
+    -- that would bury a real error (reported from device, 0.4.2).
+    -- Nothing on Gold needs it: the bag and the battle both route on
+    -- `pocket`, which the game.ready block below stamps.
+    local record = { id = id, name = name, price = price, tossable = true }
+    if not GEN2 then record.ball = id end
+    mod.content.items:register(id, record)
     if GEN2 then return end
     -- poke-ball-tier stock numbers; attempt (if any) supersedes them
     ballRecord.randMax = ballRecord.randMax or 255
@@ -240,13 +250,22 @@ return function(mod)
     -- always restore first, so a non-award purchase shows vanilla text
     if not GEN2 then restoreBoughtText(game) end
 
-    -- balls only.  ItemEffects.BALLS is the Gen 1 set; on Gold the
-    -- merged item record's `ball` field answers the same question.
+    -- balls only.  ItemEffects.BALLS is the Gen 1 set.
+    --
+    -- On Gold the test is the item's POCKET, not its `ball` field.  0.4.0
+    -- used `def.ball ~= nil` and that only ever matched OUR balls: `ball`
+    -- is a Gen 1 schema field this mod sets on its own items, while
+    -- Gold's own records come from the ROM extractor, which writes
+    -- `pocket` (RomExtractorGen2.lua:3694) and no `ball` at all.  So
+    -- buying ten POKE BALLs awarded nothing while buying ten of ours
+    -- worked -- reported from device, 0.4.2.  `pocket` is the field Gold
+    -- itself routes on (Bag.pocketOf, and useItem's pocket == "BALL"),
+    -- so it is the right question on that generation.
     local isBall
     if GEN2 then
       local data = p.data or (game and game.data)
       local def = data and data.items and data.items[p.id]
-      isBall = def and def.ball ~= nil
+      isBall = def ~= nil and (def.pocket == "BALL" or def.ball ~= nil)
     else
       isBall = ItemEffects.BALLS[p.id]
     end
@@ -943,9 +962,18 @@ return function(mod)
   -- tool measured, so tuning starts over and has to happen on device.
   -- TODO/CONFIRM every value here against a real Gold throw.
   ----------------------------------------------------------------------
+  -- DEVICE-CONFIRMED, 0.4.2 test round: the THIRD entry (pal2) is the
+  -- tone that reads as the ball's body -- Premier came back looking like
+  -- a red-and-white Poke Ball because its pal2 was the red accent, while
+  -- every ball whose pal2 was its body colour (Nest green, Heal pink,
+  -- Mirror silver, Silph purple, Beast navy) read correctly.  So pal2 is
+  -- the colour to pick first; pal1 is the lighter shading above it.
   local BALL_PALETTE_ROWS = {
-    -- white body, red band: the light tone IS the body here
-    PAL_KB_PREMIER = { {255,255,255}, {240,240,240}, {200, 48, 48}, {24,24,24} },
+    -- ALL WHITE, at the developer's call after seeing it on device: the
+    -- Premier Ball's whole identity is being plain white, and putting
+    -- the red band on pal2 made it read as an ordinary Poke Ball.  White
+    -- body, light grey shading, black outline.
+    PAL_KB_PREMIER = { {255,255,255}, {248,248,248}, {216,216,216}, {24,24,24} },
     PAL_KB_NEST    = { {255,255,255}, {140,230,170}, { 80,200,128}, {24,24,24} },
     PAL_KB_HEAL    = { {255,255,255}, {248,238,244}, {232,160,196}, {24,24,24} },
     PAL_KB_MIRROR  = { {255,255,255}, {244,250,255}, {168,180,200}, {24,24,24} },
@@ -964,8 +992,14 @@ return function(mod)
     SILPH_BALL   = "PAL_KB_SILPH",
   }
   if CHEAP then
+    -- GS: the pale cream carried over from Gen 1 did not read as GOLD on
+    -- device (0.4.2 report), because on Gen 1 the pale value was there to
+    -- clear a collision with the native ULTRA BALL -- a constraint Gold's
+    -- palette set does not have.  So: a real saturated gold on pal2, with
+    -- the silver as the lighter tone above it, which is the "gold AND
+    -- silver" reading the ball is named for.
     BALL_PALETTE_ROWS.PAL_KB_GS =
-      { {255,255,255}, {248,224,160}, {216,220,228}, {24,24,24} }
+      { {255,255,255}, {232,236,240}, {224,168, 32}, {24,24,24} }
     BALL_PALETTE_ROWS.PAL_KB_BEAST =
       { {255,255,255}, {244,216, 72}, { 16, 24, 56}, {24,24,24} }
     BALL_PALETTES.GS_BALL = "PAL_KB_GS"

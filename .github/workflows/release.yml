@@ -66,7 +66,7 @@ jobs:
             echo "## Shop Events $V"
             awk "/^## $V/{flag=1;next}/^## /{flag=0}flag" shop_events/CHANGELOG.md
             echo ""
-            echo "## Kanto Balls $V"
+            echo "## Too Many Balls $V"
             awk "/^## $V/{flag=1;next}/^## /{flag=0}flag" kanto_balls/CHANGELOG.md
           } > notes.md
 
@@ -77,7 +77,7 @@ jobs:
           gh release create "v$V" \
             "shop_events-$V.zip" \
             "kanto_balls-$V.zip" \
-            --title "Kanto Balls $V" \
+            --title "Too Many Balls $V" \
             --notes-file notes.md
         env:
           GH_TOKEN: ${{ github.token }}

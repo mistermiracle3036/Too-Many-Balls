@@ -1,14 +1,18 @@
-# Kanto Balls
+# Too Many Balls
 
 Custom Poké Balls for gen1recomp — on **Red/Blue/Yellow and, since
 0.4.0, Pokémon Gold**. `main.lua` is commented to be read and copied:
 every ball is one self-contained pattern with the engine file and line
 it was verified against, on both generations.
 
-*(Renamed from **Example Balls** at 0.2.0 — the mod id changed from
-`example_balls` to `kanto_balls`, so remove the old one if you had it.)*
+*(Previously called **Kanto Balls** — renamed at 0.4.3 once the balls
+reached Johto. Same mod: the id is still `kanto_balls` and the download
+is still `kanto_balls-X.Y.Z.zip`, so updates carry over and nothing in
+your save changes. Before that it was **Example Balls**, id
+`example_balls` — that one is a genuinely different id, so remove it if
+you still have it.)*
 
-<img src="https://raw.githubusercontent.com/mistermiracle3036/Kanto-Balls/main/docs/ball-colors.png" width="520" alt="All nine Kanto Balls in their own colors: Premier, Nest, Moon, Heal, Fast, Mirror, Silph, GS and Beast">
+<img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/ball-colors.png" width="520" alt="All nine Kanto Balls in their own colors: Premier, Nest, Moon, Heal, Fast, Mirror, Silph, GS and Beast">
 
 | Ball | Where | What it does |
 | ---- | ----- | ------------ |
@@ -20,13 +24,13 @@ it was verified against, on both generations.
 | MIRROR BALL (¥1200) | Great/Ultra marts | 4× when the wild Pokémon is the same species as the one you have out |
 | SILPH BALL (¥9800) | Saffron Mart (Gold: "PROTO BALL", Ultra-tier marts) | Guaranteed catch — except one throw in **two** fizzles, and the ball is spent either way |
 
-<img src="https://raw.githubusercontent.com/mistermiracle3036/Kanto-Balls/main/docs/mart-shelf.png" width="360" alt="A Kanto mart's ball shelf listing NEST, HEAL, FAST, MIRROR and SILPH BALLs with prices">
+<img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/mart-shelf.png" width="360" alt="A Kanto mart's ball shelf listing NEST, HEAL, FAST, MIRROR and SILPH BALLs with prices">
 
 The clerk announces the Premier bonus in the shop text box ("I'll throw
 in a PREMIER BALL, too!"). Purchases under 10 balls award nothing — it
 has to be one transaction.
 
-<img src="https://raw.githubusercontent.com/mistermiracle3036/Kanto-Balls/main/docs/premier-bonus.png" width="360" alt="A mart clerk saying: I'll throw in 2 PREMIER BALLS too!">
+<img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/premier-bonus.png" width="360" alt="A mart clerk saying: I'll throw in 2 PREMIER BALLS too!">
 
 **About the SILPH BALL.** It is an abandoned first pass at the Master
 Ball: when it works it is a Master Ball, and it doesn't always work. A
@@ -35,7 +39,7 @@ pretending you missed. The Saffron Mart shelf is temporary; it's there
 so the ball can be tested. The intent is that a Silph employee hands you
 exactly one after the takeover.
 
-<img src="https://raw.githubusercontent.com/mistermiracle3036/Kanto-Balls/main/docs/silph-broke.png" width="360" alt="Battle text reading: The PROTOTYPE broke apart!">
+<img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/silph-broke.png" width="360" alt="Battle text reading: The PROTOTYPE broke apart!">
 
 **Every catch is marked.** Whichever of these balls you use, the Pokémon
 remembers it (`mon.caughtBall`). The engine itself does not record this,
@@ -61,7 +65,7 @@ Since 0.4.0 the mod loads on a Gold boot too. What's different there:
   the announcement yet.
 - **Each ball has its own colour when thrown.** Gold colours balls
   itself, but only knows the ones the cart ships, so custom balls would
-  otherwise all throw grey. Kanto Balls supplies its own palettes and
+  otherwise all throw grey. This mod supplies its own palettes and
   leaves Gold's native Moon and Fast Balls exactly as they are. *(These
   colours are a first pass and will likely be retuned.)*
 

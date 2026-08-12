@@ -11,7 +11,7 @@ return {
     "MIRROR BALL (1200): 4x when the wild Pokemon is the same species as the one you have out. Sold at the Great/Ultra marts.",
     "SILPH BALL (9800): an abandoned Master Ball prototype -- a guaranteed catch, except one throw in TWO fizzles and the ball is spent anyway. Sold at Saffron Mart on Gen 1 and at Ultra-tier marts on Gold, where it is labelled PROTO BALL; intended to become a one-off quest reward.",
     "Every catch is marked with mon.caughtBall (as a fallback where pokeball_colors owns the field).",
-    "Renamed from Example Balls (mod id example_balls) at 0.2.0.",
+    "Called Kanto Balls until 0.4.3 -- display name only, the id is still kanto_balls and updates carry over. Before that it was Example Balls (mod id example_balls, a real id change, remove that one if present).",
   },
   credits = { "Mart-shelf mechanism follows Custom Poke Balls by magalvao (github.com/magalvao/custom-pokeballs)." },
   compat = {

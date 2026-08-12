@@ -8,6 +8,49 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.3
+
+**Updating from 0.3.4?** Everything since then: the mod is now called
+**Too Many Balls** (this version), it runs on **Pokemon Gold** as well as
+Red/Blue/Yellow (0.4.0 — five balls travel, MOON and FAST stay home since
+Gold has its own, shelves at Great/Ultra marts, the prototype is labelled
+PROTO BALL there), those Gold balls have their **own colours** rather than
+throwing grey (0.4.2), the dev flag can stock every Johto mart (0.4.1),
+three ball colours were retuned so no two look alike (0.3.5), and the repo
+carries an MIT licence with credits in every download (0.4.0). How the
+balls play on Red is unchanged throughout. Details under each version
+below.
+
+- **Renamed from "Kanto Balls" to "Too Many Balls."** The balls reach
+  Johto now, so "Kanto" had stopped being true.
+- **Nothing to do when you update, and nothing in your save changes.**
+  Only the display name changed. The mod id is still `kanto_balls`, the
+  download is still `kanto_balls-X.Y.Z.zip`, and every ball keeps the id
+  it always had — so the mod browser updates it in place, your bag keeps
+  its balls, and anything already caught keeps its record of which ball
+  caught it. (Contrast the 0.2.0 rename from Example Balls, which *was* an
+  id change and did need the old copy removed.)
+- The GitHub repo moved to `Too-Many-Balls` to match. GitHub redirects the
+  old address, so existing installs keep updating and old links keep
+  working; both manifests now point at the new one.
+
+**Fixes from the Gold test round:**
+
+- **The free Premier Ball now works when you buy Gold's own balls.** Buying
+  ten POKE BALLs awarded nothing, while ten of this mod's balls worked —
+  the check was looking for a marker only our own items carry. It now asks
+  what pocket the item lives in, which is how Gold itself decides what a
+  ball is.
+- **Seven bogus error lines are gone from the mod manager's [ERRS] screen.**
+  Each ball reported "unresolved reference to balls" on a Gold boot. Purely
+  cosmetic, but seven lines of noise is enough to bury a real error, which
+  is the only thing that screen is for.
+- **PREMIER BALL is now plain white when thrown**, instead of reading as an
+  ordinary red-and-white Poké Ball.
+- **GS BALL is a proper gold** rather than pale cream, with the silver as
+  its highlight. Its old colour came from Gen 1, where the paleness existed
+  only to avoid clashing with the Ultra Ball — a problem Gold doesn't have.
+
 ## 0.4.2
 
 **Updating from 0.3.4?** Everything since then: the mod now runs on
