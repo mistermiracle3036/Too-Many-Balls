@@ -53,8 +53,12 @@ jobs:
           # inside a "<mod>/" folder. LauncherMods.locateRoot accepts either
           # shape and names the install folder from manifest.id regardless,
           # but the community mod index requires files at the archive root.
-          (cd shop_events   && zip -qr "../shop_events-$V.zip"   . -x '*.DS_Store')
-          (cd kanto_balls && zip -qr "../kanto_balls-$V.zip" . -x '*.DS_Store')
+          # tests/ is dev tooling (kanto_balls/tests/hook_harness.lua) and must
+          # NOT ship: the test-build script excludes it, and a public zip that
+          # disagreed with the tested one is the exact divergence that put an
+          # internal handoff doc inside a pokeball_seals zip in August.
+          (cd shop_events && zip -qr "../shop_events-$V.zip" . -x '*.DS_Store' 'tests/*')
+          (cd kanto_balls && zip -qr "../kanto_balls-$V.zip" . -x '*.DS_Store' 'tests/*')
           unzip -l "shop_events-$V.zip"
           unzip -l "kanto_balls-$V.zip"
 
