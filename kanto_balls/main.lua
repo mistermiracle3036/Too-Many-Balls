@@ -72,7 +72,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.5"
+  local VERSION = "0.4.6"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -112,9 +112,6 @@ return function(mod)
   mod.options:define({
     { key = "cheap_balls", type = "toggle",
       label = "[DEV] CHEAP BALLS", default = false },
-    -- REMOVE BEFORE PUBLIC RELEASE -- see the KURT BALLS block below.
-    { key = "dev_kurt_balls", type = "toggle",
-      label = "[DEV] KURT BALLS", default = false },
   })
 
   -- Everything this flag changes -- prices, which balls exist, which
@@ -123,8 +120,6 @@ return function(mod)
   -- every entry chunk in Loader:load).  Nothing re-reads it later, so
   -- toggling the option takes effect only after a full quit and relaunch.
   local CHEAP = mod.options:get("cheap_balls") == true
-  -- REMOVE BEFORE PUBLIC RELEASE (see the KURT BALLS block below)
-  local DEV_KURT = mod.options:get("dev_kurt_balls") == true
 
   -- Ownership, declared so other mods (notably pokeball_colors) can
   -- check at runtime instead of via a handoff note.  This mod owns
@@ -925,86 +920,6 @@ return function(mod)
       end
     end)
   end
-
-  --====================================================================
-  -- ###  DEV SCAFFOLDING -- REMOVE BEFORE THE PUBLIC RELEASE  ###
-  --
-  -- Deleting this whole block plus the `dev_kurt_balls` options row and
-  -- the DEV_KURT local above removes the feature completely.  Nothing
-  -- else references either name.
-  --
-  -- WHY IT EXISTS: Gold's seven Apricorn balls are Kurt's, and getting
-  -- one means giving him an apricorn and waiting a real day -- per ball.
-  -- That makes "do the natives still behave and look like vanilla?"
-  -- (the last open item before release) impractical to check.  This
-  -- puts them on every mart at 1 each so they can be bought and thrown
-  -- back to back against ours.
-  --
-  -- These are the ENGINE's records, not ours.  We deliberately register
-  -- nothing here: the ids already exist (Catching.BALLS lists all of
-  -- them), the items already exist in Gold's ROM data, and they already
-  -- work at the throw site.  All this does is put them on a shelf and
-  -- make them affordable, which is why it is safe to delete outright.
-  --
-  -- PARK_BALL and SAFARI_BALL are excluded on purpose: the Park Ball is
-  -- never in the bag at all (its arm decrements wParkBallsRemaining
-  -- instead of tossing an item -- src/ui/gen2/BattleState.lua:2600) and
-  -- Safari is an RBY leftover Gold never gives out.
-  --
-  -- The price write MUTATES a vanilla item record for the session.  That
-  -- is exactly the kind of thing this mod does not do in shipping code,
-  -- and the reason this block is fenced and temporary.
-  ----------------------------------------------------------------------
-  if GEN2 and DEV_KURT then
-    local KURT_BALLS = {
-      "FAST_BALL", "FRIEND_BALL", "HEAVY_BALL", "LEVEL_BALL",
-      "LOVE_BALL", "LURE_BALL", "MOON_BALL",
-    }
-
-    mod.events:on("game.ready", function(p)
-      local data = p.game and p.game.data
-      if not data then return end
-
-      local priced = 0
-      for _, id in ipairs(KURT_BALLS) do
-        local def = data.items and data.items[id]
-        if def then
-          def.price = 1
-          priced = priced + 1
-        end
-      end
-
-      local marts = data.gen2Marts
-      local lists = marts and (marts.lists or marts)
-      if type(lists) ~= "table" then
-        Runtime.reportError("kanto_balls", "DEV KURT: no mart table")
-        return
-      end
-      local shelves = 0
-      for _, list in ipairs(lists) do
-        if type(list) == "table" then
-          local has = {}
-          for _, id in ipairs(list) do has[id] = true end
-          for _, id in ipairs(KURT_BALLS) do
-            -- only ones the game actually has records for, so a missing
-            -- id cannot put an unbuyable row on a shelf
-            if not has[id] and data.items and data.items[id] then
-              list[#list + 1] = id
-              has[id] = true
-            end
-          end
-          shelves = shelves + 1
-        end
-      end
-      -- Says what it did rather than failing silently, because "the
-      -- shelf looks the same" is otherwise indistinguishable from the
-      -- option not having taken effect (it needs a relaunch).
-      Runtime.reportError("kanto_balls",
-        ("DEV KURT ON %d/%d %dsh"):format(priced, #KURT_BALLS, shelves))
-    end)
-  end
-  -- ###  END DEV SCAFFOLDING  ###
-  --====================================================================
 
   ----------------------------------------------------------------------
   -- Colors -- registered via pokeball_colors' registerColors(colors)

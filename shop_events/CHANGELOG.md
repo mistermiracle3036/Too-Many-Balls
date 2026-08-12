@@ -8,6 +8,23 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.6
+
+**Now works on Pokémon Gold.** Everything below has landed since the last
+release (v0.3.4).
+
+- **Gold support.** Gold's mart is a different screen from Kanto's, but
+  purchases ring the same till this mod listens to — so `shop.purchased`
+  fires on Gold buys exactly as it does on Red. Selling still never fires
+  it, on either game.
+- **A scripted item gift can no longer be mis-reported as a purchase.**
+  Gold rings the same sound when you *sell*, which made a stale entry
+  possible; it's now cleared before it can be misread.
+- **An MIT licence and a credits section**, which ship inside the download.
+- The ball mod this pairs with is now called **Too Many Balls** (was Kanto
+  Balls) and the repo moved to `Too-Many-Balls`. Shop Events keeps its own
+  name and id; existing installs keep updating, and old links redirect.
+
 ## 0.4.5
 - No code change. Lockstep release with Too Many Balls 0.4.5.
 

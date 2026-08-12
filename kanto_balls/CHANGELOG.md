@@ -8,6 +8,55 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.6
+
+**This mod now works on Pokémon Gold, and it has a new name.** Everything
+below has landed since the last release (v0.3.4).
+
+### Too Many Balls (was Kanto Balls)
+
+The balls are sold in Johto now, so "Kanto" had stopped being true.
+**Nothing to do when you update** — only the name changed. Your bag keeps
+its balls, anything you've caught keeps its record of which ball caught
+it, and the mod updates in place.
+
+### Pokémon Gold support
+
+Five balls make the trip, with the same behaviour they have in Kanto:
+
+| Ball | What it does on Gold |
+| ---- | -------------------- |
+| **PREMIER** | Still free — buy 10+ balls in one purchase, one free per 10, and the clerk says so |
+| **NEST** | 4× on anything Lv 15 or under, tapering off up to 35 |
+| **HEAL** | What you catch arrives fully healed |
+| **MIRROR** | 4× when the wild Pokémon matches the one you have out |
+| **PROTO BALL** | The prototype, renamed for Johto — a guaranteed catch, except one throw in two just breaks |
+
+- **They're sold at marts that already stock Great or Ultra Balls**, sort
+  into the **BALLS pocket**, and each has **its own colour** when thrown.
+- **MOON and FAST stay in Kanto.** Gold has its own — Kurt makes them from
+  Apricorns — and his are left exactly as they are, colours included.
+- **The prototype is called PROTO BALL on Gold**, since Silph Co doesn't
+  exist in Johto. Same item, same odds. A dud there shows the normal
+  break-out message rather than "The PROTOTYPE broke apart!"
+- **Red, Blue and Yellow are unaffected.** Nothing about how the balls
+  play in Kanto has changed.
+
+### Also since v0.3.4
+
+- **Three ball colours retuned so no two balls look alike** — NEST was
+  nearly indistinguishable from the Safari Ball, and BEAST from our own
+  Moon Ball. Measured rather than eyeballed.
+- **An MIT licence and proper credits**, and the credits now ship *inside*
+  the downloads rather than only living on the repo page.
+
+### Known gaps
+
+- The Yellow mart shelves have never been tested on a real Yellow save.
+- On Gold, mod options only save correctly when changed from a Red boot —
+  an engine-side issue, not this mod's. It affects the `[DEV] CHEAP BALLS`
+  toggle.
+
 ## 0.4.5
 - **Dev build. No player-visible change.** Adds a second developer
   toggle, `[DEV] KURT BALLS`, which puts Gold's own Apricorn balls (Fast,
