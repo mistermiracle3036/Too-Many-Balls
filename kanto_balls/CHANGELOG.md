@@ -8,6 +8,16 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.5
+- **Dev build. No player-visible change.** Adds a second developer
+  toggle, `[DEV] KURT BALLS`, which puts Gold's own Apricorn balls (Fast,
+  Friend, Heavy, Level, Love, Lure, Moon) on every mart at ¥1 so they can
+  be tested back-to-back against this mod's. It exists only to check that
+  the natives still behave and look like vanilla alongside us.
+- **This toggle is removed before the public release** — it is scaffolding,
+  and it temporarily rewrites the price on records this mod does not own.
+  With it off, nothing it touches runs at all.
+
 ## 0.4.4
 
 **Updating from 0.3.4?** Everything since then: the mod is now called
