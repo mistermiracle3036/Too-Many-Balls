@@ -77,6 +77,13 @@ local function engineStubs(generation)
       ballPalette = function() return "PAL_BATTLE_OB_GRAY" end,
     },
     ["src.world.gen2.World"] = { useFieldItem = function() return nil end },
+    -- Kurt's handover reads the badge through the engine's own helper
+    ["src.world.gen2.FieldMoves"] = {
+      hasBadge = function(save, badge)
+        local owned = save and save.player and save.player.badges
+        return (owned and owned[badge]) and true or false
+      end,
+    },
     ["src.core.Game2"] = { update = function() end },
     ["src.ui.gen2.MartMenu"] = {
       completePurchase = function(self) self.message = { pages = {} } end,
@@ -133,8 +140,30 @@ local function makeModApi(options)
       warn = function(_, ...) rec.logged[#rec.logged + 1] = { ... } end,
     },
     find = function() return nil end,
-    save = { get = function() end, set = function() end },
+    -- Real storage: the once-only guard on Kurt's handover is only
+    -- meaningful if get/set actually round-trip.
+    save = {
+      get = function(_, key) return rec.saveStore[key] end,
+      set = function(_, key, value) rec.saveStore[key] = value end,
+    },
   }
+  rec.saveStore = {}
+  -- mod.game and mod.world are metatable reads in the real API
+  -- (src/mods/Loader.lua), so they are here too -- and mod.game must be
+  -- swappable mid-test, which is what rec.modGame is for.
+  rec.queued = {}
+  setmetatable(mod, { __index = function(_, key)
+    if key == "game" then return rec.modGame end
+    if key == "world" then
+      return {
+        queueScript = function(_, rows)
+          rec.queued[#rec.queued + 1] = rows
+          return true
+        end,
+      }
+    end
+    return nil
+  end })
   return mod, rec
 end
 
@@ -255,6 +284,52 @@ for _, gen in ipairs({ 1, 2 }) do
       if gen == 2 then
         check(type(rec.exports.registerBallPalette) == "function",
           label .. " registerBallPalette missing")
+      end
+
+      ------------------------------------------------- KURT'S HANDOVER
+      -- The gate must hold in BOTH directions, and the item must not be
+      -- handed over twice.  A save flag that never sets would give the
+      -- player a new case every time they talked to him.
+      if gen == 2 then
+        local ended = rec.events["script.ended"] or {}
+        check(#ended > 0, label .. " no script.ended listener")
+        local KEY = "55:45e3"
+
+        -- no badge -> nothing, however many times he is talked to
+        local noBadge = fakeGame()
+        noBadge.save.player = { badges = {} }
+        rec.modGame = noBadge
+        for _, fn in ipairs(ended) do
+          pcheck(label .. " kurt (no badge)", fn,
+            { ctx = { scriptKey = KEY }, completed = true })
+        end
+        check(noBadge.save.inventory.BALL_CASE == nil,
+          label .. " GAVE THE CASE WITHOUT THE BADGE")
+
+        -- an unrelated script must never trigger it
+        local other = fakeGame()
+        other.save.player = { badges = { HIVE = true } }
+        rec.modGame = other
+        for _, fn in ipairs(ended) do
+          pcheck(label .. " kurt (other script)", fn,
+            { ctx = { scriptKey = "55:0000" }, completed = true })
+        end
+        check(other.save.inventory.BALL_CASE == nil,
+          label .. " another NPC handed over the case")
+
+        -- badge -> exactly one case, and only once
+        local withBadge = fakeGame()
+        withBadge.save.player = { badges = { HIVE = true } }
+        rec.modGame = withBadge
+        for _ = 1, 3 do
+          for _, fn in ipairs(ended) do
+            pcheck(label .. " kurt (badge)", fn,
+              { ctx = { scriptKey = KEY }, completed = true })
+          end
+        end
+        check(withBadge.save.inventory.BALL_CASE == 1,
+          ("%s kurt gave %s cases, want exactly 1")
+            :format(label, tostring(withBadge.save.inventory.BALL_CASE)))
       end
 
       ----------------------------------------------- THE DEFERRED PUSH

@@ -8,6 +8,22 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.14
+
+- **Kurt gives you the BALL CASE.** Once you've earned the **HIVE
+  BADGE**, the next time you talk to him he adds a few words of his own
+  and hands it over — apricorns aren't just for his seven balls, so mix
+  them yourself and see what comes out.
+- **His own dialogue is untouched.** Everything he normally says, he
+  still says; this is a coda after it, not a replacement.
+- He only ever gives you one, and won't hand over a second if you already
+  have one.
+- *Why the Hive Badge:* Kurt properly starts making balls after the
+  Slowpoke Well rescue, but that story flag isn't something a mod can
+  read on Gold. The badge comes right after the well in normal play, so
+  it can't let you in early — at most very slightly late.
+- The dev shelf still sells a case while this is being tested.
+
 ## 0.4.13
 - **Dev build.** Adds a script-key probe: with `[DEV] CHEAP BALLS` on,
   talking to any NPC on Gold prints that character's script id to the mod

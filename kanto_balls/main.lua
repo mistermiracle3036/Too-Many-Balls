@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.13"
+  local VERSION = "0.4.14"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -1352,6 +1352,88 @@ return function(mod)
         Runtime.reportError("kanto_balls", "CASE FAIL " .. tostring(err))
       end
     end
+  end
+
+  ----------------------------------------------------------------------
+  -- KURT HANDS OVER THE BALL CASE.
+  --
+  -- Real content, not dev scaffolding: this is how the case is EARNED.
+  -- The dev shelf still sells one until this is confirmed on a device.
+  --
+  -- HIS OWN LINES ARE UNTOUCHED.  On Gold, Kurt is a vanilla NPC whose
+  -- talk runs the cart's decoded bytecode (npc.def.scriptKey ->
+  -- Vm:start), and a Lua row list merged into gen2Scripts is explicitly
+  -- not something that VM can run -- so the Gen 1 map_scripts takeover
+  -- has no Gold equivalent and we do not attempt one.  Instead we wait
+  -- for his script to FINISH (Vm:emitScriptEnded ->  "script.ended",
+  -- src/script/gen2/Vm.lua:2245) and add a coda after it.  He says his
+  -- piece; then he says ours.
+  --
+  -- THE GATE, and why it is a badge rather than the real story flag:
+  -- Kurt only makes balls after the Slowpoke Well rescue, and the
+  -- honest gate would be that event.  Gold's rom manifest carries NO
+  -- event-flag names at all (checked: every EVENT_ hit in it is a false
+  -- positive inside HELD_PREVENT_*), so reading "the well is done" by
+  -- name would mean guessing a ROM-derived id -- the exact mistake this
+  -- project's rules open by warning about.
+  --
+  -- The HIVE badge is readable, owned by the engine, and sits just
+  -- AFTER the well in normal play, so it cannot let the player in
+  -- early -- only very slightly late.  Read through
+  -- FieldMoves.hasBadge (src/world/gen2/FieldMoves.lua:163), which
+  -- handles both the name keys and the numeric indices the save may
+  -- carry, rather than indexing save.player.badges by hand.
+  --
+  -- TODO/CONFIRM, both on device:
+  --   * that KURT_SCRIPT below is KURT and not his granddaughter --
+  --     it was read off the probe in 0.4.13 (map 8:4 = KURTS_HOUSE,
+  --     object 2) and the house has more than one person in it;
+  --   * that a badge is not ALSO required for Kurt to make balls in
+  --     vanilla.  If it is, this gate is already at least as strict.
+  ----------------------------------------------------------------------
+  if GEN2 then
+    -- ROM-derived, read from the running game with the 0.4.13 probe and
+    -- never guessed.  If Gold's script pool is ever re-walked this may
+    -- move, so the handover reports to [ERRS] when it fires rather than
+    -- being invisible either way.
+    local KURT_SCRIPT = "55:45e3"
+    local CASE_BADGE = "HIVE"
+    local FieldMoves = require("src.world.gen2.FieldMoves")
+
+    mod.events:on("script.ended", function(p)
+      local ctx = p and p.ctx
+      if not (ctx and ctx.scriptKey == KURT_SCRIPT) then return end
+      if not p.completed then return end
+      if mod.save:get("caseGiven") then return end
+
+      local game = mod.game
+      local save = game and game.save
+      if not save then return end
+      if not FieldMoves.hasBadge(save, CASE_BADGE) then return end
+      -- Already carrying one (the dev shelf, or a previous save): mark
+      -- it done rather than handing over a second.
+      if (save.inventory and save.inventory[CASE_ID]) then
+        mod.save:set("caseGiven", true)
+        return
+      end
+      if not Bag.add(save, CASE_ID, 1, game.data) then return end
+      mod.save:set("caseGiven", true)
+
+      -- His coda.  queueScript's `text` verb is served on Gold
+      -- (src/world/gen2/WorldAPI.lua:254); the whole call is pcall'd
+      -- because a failed line must not cost the player the item they
+      -- have already been given.
+      local ok = pcall(function()
+        mod.world:queueScript({
+          { "text", "KURT: Apricorns aren't just for my seven balls." },
+          { "text", "Take this CASE. Mix them yourself and see what "
+            .. "comes out." },
+        })
+      end)
+      if not ok then
+        Runtime.reportError("kanto_balls", "KURT: case given, no text")
+      end
+    end)
   end
 
   --====================================================================
