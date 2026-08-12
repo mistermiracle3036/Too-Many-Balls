@@ -1,0 +1,18 @@
+# This repo is LF throughout.  Windows PowerShell 5.1 is the reason this
+# file exists: `Set-Content -Encoding utf8` writes CRLF *and* a UTF-8 BOM,
+# so a version bump done with it rewrites every line of a file and can
+# leave a manifest that modkit rejects outright ("MK001 manifest.json
+# unparseable: Unexpected UTF-8 BOM").  That has happened more than once.
+#
+# `text=auto eol=lf` makes git store and check out LF regardless, so a
+# stray CRLF write normalises on commit instead of becoming a 1300-line
+# diff that buries the real change.
+#
+# It does NOT strip a BOM -- git treats that as content.  So when editing
+# from PowerShell, prefer the editor tools, or write with
+# [System.IO.File]::WriteAllText($p, $t, (New-Object System.Text.UTF8Encoding($false)))
+# which is BOM-less by construction.
+* text=auto eol=lf
+
+# Screenshots and the generated ball grid: never touched by eol rules.
+*.png binary
