@@ -8,7 +8,7 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
-## 0.4.6
+## 0.4.7
 
 **Now works on Pokémon Gold.** Everything below has landed since the last
 release (v0.3.4).

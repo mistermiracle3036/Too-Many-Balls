@@ -8,7 +8,7 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
-## 0.4.6
+## 0.4.7
 
 **This mod now works on Pokémon Gold, and it has a new name.** Everything
 below has landed since the last release (v0.3.4).
@@ -34,6 +34,10 @@ Five balls make the trip, with the same behaviour they have in Kanto:
 
 - **They're sold at marts that already stock Great or Ultra Balls**, sort
   into the **BALLS pocket**, and each has **its own colour** when thrown.
+- **Pokeball Colors is worth installing on Gold too.** It's optional on
+  both games now. In Johto it colours the **Pokémon Center heal machine**,
+  giving each party slot the ball its Pokémon was actually caught in —
+  using the same colours this mod registers, so they match with no setup.
 - **MOON and FAST stay in Kanto.** Gold has its own — Kurt makes them from
   Apricorns — and his are left exactly as they are, colours included.
 - **The prototype is called PROTO BALL on Gold**, since Silph Co doesn't

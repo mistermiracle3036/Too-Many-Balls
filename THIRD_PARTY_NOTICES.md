@@ -16,9 +16,12 @@ trademarks.
   the pattern that mod established. No code or assets from it are
   included.
 - **Pokeball Colors** (https://github.com/mistermiracle3036/Pokeball-Colors)
-  — optional integration. kanto_balls registers its own color values
-  into that mod's public table when both are installed; no code is
-  shared or duplicated.
+  — optional integration on both generations, in opposite directions and
+  through public surfaces only; no code is shared or duplicated. On Gen 1
+  kanto_balls registers its own color values into that mod's public
+  table. On Gold the flow reverses: kanto_balls owns the thrown ball's
+  palette, and Pokeball Colors reads it back out to colour the Pokemon
+  Center heal machine.
 - Pokémon and all related names are trademarks of Nintendo / Creatures
   Inc. / GAME FREAK inc. Neither mod contains ROM data or copyrighted
   assets; both are fan-made script mods and require the user's own game

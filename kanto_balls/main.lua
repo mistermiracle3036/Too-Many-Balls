@@ -72,7 +72,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.6"
+  local VERSION = "0.4.7"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -473,9 +473,19 @@ return function(mod)
   -- has not loaded yet, and load order between two independent mods is
   -- not guaranteed either way.
   --
-  -- On GOLD this fallback is the ONLY writer: pokeball_colors is a
-  -- Gen 1 mod, so a Gold boot skips it, mod.find answers nil, and we
-  -- write the mark ourselves.  Same code, no branch needed.
+  -- THE SAME ARRANGEMENT HOLDS ON GOLD, and it matters more there than
+  -- 0.4.0-0.4.6 assumed.  Those versions claimed pokeball_colors was a
+  -- Gen 1 mod that a Gold boot skips, so this fallback was "the only
+  -- writer" -- wrong: Pokeball Colors runs on Gold too (0.1.22), where
+  -- it colours the POKEMON CENTER HEAL MACHINE, and reading
+  -- mon.caughtBall is exactly how it knows which ball to draw per party
+  -- slot.  So on Gold the field is load-bearing for a mod that is
+  -- present, not a fallback for one that is absent.
+  --
+  -- No code change was needed, which is the point of asking "does
+  -- anything CLAIM the field" rather than "is that mod installed": the
+  -- claim answers correctly on both generations, we stand aside when
+  -- Colors is there and write it ourselves when it is not.
   --
   -- Recorded for EVERY ball, not just GS: it is one field either way, and
   -- a ribbon for "caught in a MOON BALL" then costs no new plumbing.
@@ -933,8 +943,18 @@ return function(mod)
   -- exports.colors from for the very first draw, well before a Center
   -- or battle is reachable.
   --
-  -- On Gold this whole block is a quiet no-op: pokeball_colors is a
-  -- Gen 1 mod, a Gold boot skips it, and mod.find answers nil.
+  -- These colours are the GEN 1 throw palette.  Gold does not need them
+  -- -- it draws a thrown ball from its own palette set, which is what
+  -- the battleObjects rows and the ballPalette wrap below are for -- so
+  -- on a Gold boot this registers colours nothing reads, harmlessly.
+  --
+  -- What is NOT harmless is the claim 0.4.0-0.4.6 made here, that a Gold
+  -- boot skips pokeball_colors entirely.  It does not: Colors 0.1.22
+  -- runs on Gold and paints the Pokemon Center heal machine, taking each
+  -- ball's colour from ballPalette + battleObjects -- i.e. from the very
+  -- registrations below -- so our balls are coloured at the Center with
+  -- no coordination, and so is anything registered through
+  -- exports.registerBallPalette.
   --
   -- Fallback: an older Pokeball Colors (pre-0.1.13) has exports.colors
   -- but no exports.registerColors.  Without the fallback, updating this
@@ -978,7 +998,7 @@ return function(mod)
   end
 
   ----------------------------------------------------------------------
-  -- GOLD BALL COLOURS -- ours to own, because nobody else will.
+  -- GOLD BALL COLOURS -- the THROW is ours; the Center is Colors'.
   --
   -- Gen 1's colour problem does not exist on Gold: the engine resolves a
   -- per-ball palette from the cart's own data/battle_anims/ball_colors.asm
@@ -988,13 +1008,31 @@ return function(mod)
   -- cart balls; anything else falls to PAL_BATTLE_OB_GRAY (:2054).  So on
   -- Gold our balls would all throw GREY without this block.
   --
-  -- Pokeball Colors withdrew from Gen 2 at its 0.1.21 and is Gen 1-only by
-  -- decision, so this mod owns its own Gold colours.  Declared in
+  -- WHO OWNS WHAT ON GOLD, corrected at 0.4.7.  Pokeball Colors withdrew
+  -- from Gen 2 at its 0.1.21, which is what 0.4.2-0.4.6 were written
+  -- against; it CAME BACK at 0.1.22 and is an optional integration on
+  -- both generations now.  The split is clean and the two halves do not
+  -- overlap:
+  --   THROW  (this block)  a ball's colour in battle, ours, because the
+  --                        engine's ball -> palette table is module-local
+  --                        and only a wrap can extend it.
+  --   CENTER (Colors)      the balls on the heal machine, which Gold
+  --                        draws all in one palette.  Colors reads each
+  --                        ball's colour back out of ballPalette +
+  --                        battleObjects -- the registrations right here
+  --                        -- so our balls, and anything registered
+  --                        through registerBallPalette, are covered with
+  --                        no coordination and no second colour table.
+  -- It also needs mon.caughtBall to know which ball to draw per slot;
+  -- see THE MARK above for why we stand aside from that field.
+  --
+  -- So this mod still owns the wrap.  Declared in
   -- exports.owns.ballPalettesGen2, and registerBallPalette below is the
   -- door other ball mods use instead of installing a SECOND wrap on the
   -- same method -- chained wrappers would make load order decide the
-  -- colour, and silently.  If Pokeball Colors ever returns to Gold, hand
-  -- the wrap over rather than running both.
+  -- colour, and silently.  Colors reading our answer, rather than either
+  -- side wrapping twice, is what keeps that true now that both mods are
+  -- on Gold.
   --
   -- TWO HALVES, and only one of them has a registry:
   --   values  `palettes` routes to gen2Palettes and `battleObjects` is a

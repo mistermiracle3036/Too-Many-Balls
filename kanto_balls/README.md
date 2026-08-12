@@ -67,7 +67,9 @@ Since 0.4.0 the mod loads on a Gold boot too. What's different there:
   itself, but only knows the ones the cart ships, so custom balls would
   otherwise all throw grey. This mod supplies its own palettes and
   leaves Gold's native Moon and Fast Balls exactly as they are. *(These
-  colours are a first pass and will likely be retuned.)*
+  colours are a first pass and will likely be retuned.)* Add **Pokeball
+  Colors** and those same colours show up on the Pokémon Center heal
+  machine as well.
 
 ## Requirements
 
@@ -95,15 +97,24 @@ automatically for each. Update both together when either shows
 
 ## Plays well with
 
-- **Pokeball Colors** — on Red/Blue/Yellow, all the balls register their
-  own colors on load. This mod owns those records and their colors;
-  Pokeball Colors deliberately carries no entries for them, the same
-  arrangement it has with Snag Quest's SNAG BALL. Pokeball Colors is a
-  Gen 1-only mod, so **on Gold this mod owns ball colour itself** —
-  including the ball → palette wrap. Other ball mods should claim a
-  colour through `exports.registerBallPalette(ballId, paletteName, row)`
-  rather than wrapping `ballPalette` a second time; two wraps means load
-  order decides the colour, silently.
+- **Pokeball Colors** — optional on **both** games, and worth having on
+  either.
+  - *Red/Blue/Yellow:* every ball registers its own colors on load, so
+    each has its own look during the throw. This mod owns those records
+    and their colors; Pokeball Colors deliberately carries no entries for
+    them, the same arrangement it has with Snag Quest's SNAG BALL.
+  - *Gold:* the game already colours a thrown ball, and this mod supplies
+    the palettes for its own. What Pokeball Colors adds there is the
+    **Pokémon Center heal machine** — Gold draws every party ball in one
+    colour, and Colors gives each slot the colour of the ball that Pokémon
+    was actually caught in. It reads that from the same palettes this mod
+    registers, so the two match with no setup.
+
+  For other ball authors: claim a Gold colour through
+  `exports.registerBallPalette(ballId, paletteName, row)` rather than
+  wrapping `ballPalette` a second time — two wraps means load order
+  decides the colour, silently. A ball registered that way is picked up
+  by the heal machine too.
 - **Custom Poké Balls** by magalvao — coexists; both mods append to the
   same mart shelves, and no ball is duplicated between them.
 

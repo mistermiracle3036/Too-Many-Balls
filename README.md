@@ -101,10 +101,11 @@ actually changed. See each mod's CHANGELOG for why.
 ## Compatibility
 
 - **[Pokeball Colors](https://github.com/mistermiracle3036/Pokeball-Colors)** —
-  optional, **Gen 1 only**. Every ball registers its own colors when it is
-  installed, so each one has its own look during the throw. (On Gold this
-  mod supplies its own ball colours directly — Pokeball Colors isn't
-  needed and isn't loaded there.)
+  optional, and it works on **both** games. On Red/Blue/Yellow every ball
+  registers its own colors, so each has its own look during the throw. On
+  Gold the throw is already coloured by this mod, and Colors adds the
+  **Pokémon Center heal machine**: each party slot shows the ball its
+  Pokémon was caught in, taken from the same palettes registered here.
 
   <img src="docs/ball-colors.png" width="520" alt="All nine balls in their own colors: Premier, Nest, Moon, Heal, Fast, Mirror, Silph, GS and Beast">
 
