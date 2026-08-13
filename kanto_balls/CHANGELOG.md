@@ -8,6 +8,15 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.21
+
+- **Kurt's parting lines are readable now.** They were flashing past: the
+  text went up while he was still finishing his own dialogue, so the
+  button press you were already making dismissed it instantly. It now
+  waits for him to be properly done before he speaks.
+- The lines were also too long for the text box, which made them wrap and
+  scroll. Rewritten to fit.
+
 ## 0.4.20
 
 - **Kurt now gives you the BALL CASE at the right moment** — as you're

@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.20"
+  local VERSION = "0.4.21"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -187,6 +187,16 @@ return function(mod)
   -- no error to see -- which is the whole reason this trap keeps costing
   -- rounds.
   local CASE_ID = "BALL_CASE"
+
+  -- Work that must wait for a quiet frame, drained by the single
+  -- Game2.update wrap below.  Declared up here because TWO blocks feed
+  -- it -- the Ball Case push and Kurt's coda -- and a `local` declared
+  -- after its first use compiles that use as a nil global, silently
+  -- (0.4.11 shipped exactly that bug).
+  --
+  -- One wrap, one queue: wrapping Game2.update twice would make load
+  -- order decide which drain ran first.
+  local pendingCoda = nil
 
   local OWNED = {}
   for _, id in ipairs(BALL_IDS) do OWNED[id] = true end
@@ -1855,6 +1865,27 @@ return function(mod)
 
     Game2.update = function(self, dt)
       vanillaGameUpdate(self, dt)
+
+      -- Deferred dialogue (Kurt's coda) waits for a QUIET WORLD, not
+      -- merely the next frame.  World:busy() is the engine's own guard
+      -- (src/world/gen2/World.lua:1444): it is true while the VM is
+      -- running, a text box or choice box is up, an object is moving, a
+      -- map setup is fading, and so on.  Firing into a busy world is
+      -- what made the coda flash past -- the box went up while the
+      -- player's A press from Kurt's own dialogue was still in flight,
+      -- and was dismissed by it.
+      if pendingCoda then
+        local world = self.world
+        if world and world.busy and not world:busy() then
+          local fn = pendingCoda
+          pendingCoda = nil
+          local ok, err = pcall(fn)
+          if not ok then
+            Runtime.reportError("kanto_balls", "CODA " .. tostring(err))
+          end
+        end
+      end
+
       if not pendingCase then return end
       pendingCase = false
       local ok, err = pcall(Screens.push, self, "KbBallCase")
@@ -1987,19 +2018,24 @@ return function(mod)
       if not Bag.add(save, CASE_ID, 1, game.data) then return end
       mod.save:set("caseGiven", true)
 
-      -- His coda.  queueScript's `text` verb is served on Gold
-      -- (src/world/gen2/WorldAPI.lua:254); the whole call is pcall'd
-      -- because a failed line must not cost the player the item they
-      -- have already been given.
-      local ok = pcall(function()
+      -- His coda, DEFERRED until the world is quiet -- see the drain in
+      -- the Game2.update wrap above.  Queued rather than spoken here
+      -- because script.ended fires while the VM is still unwinding and
+      -- the player's A press is still in flight; both boxes went up and
+      -- were dismissed instantly, which read on device as the lines
+      -- "firing too fast".
+      --
+      -- WIDTH IS TWO LINES OF EIGHTEEN COLUMNS, and the first draft
+      -- broke it badly: one line ran to 46 characters.  An over-length
+      -- line does not clip -- TextBox soft-wraps it and the page then
+      -- SCROLLS (src/render/TextBox.lua, MAX_COLS 18), which is the
+      -- other half of what "too fast" looked like.  `\n` is the second
+      -- line of a box; each row below is one box the player dismisses.
+      pendingCoda = function()
         mod.world:queueScript({
-          { "text", "KURT: Apricorns aren't just for my seven balls." },
-          { "text", "Take this CASE. Mix them yourself and see what "
-            .. "comes out." },
+          { "text", "APRICORNS aren't\njust for my seven." },
+          { "text", "Take this CASE and\nmix your own." },
         })
-      end)
-      if not ok then
-        Runtime.reportError("kanto_balls", "KURT: case given, no text")
       end
     end)
   end

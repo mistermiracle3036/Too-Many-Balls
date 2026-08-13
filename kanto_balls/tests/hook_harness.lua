@@ -430,6 +430,51 @@ for _, gen in ipairs({ 1, 2 }) do
           ("%s kurt gave %s cases, want exactly 1")
             :format(label, tostring(rescue.save.inventory.BALL_CASE)))
 
+        -- THE CODA MUST NOT BE SPOKEN INSIDE script.ended.
+        -- Reported from device at 0.4.20: both lines flashed past,
+        -- because the box went up while the VM was still unwinding and
+        -- the player's A press from Kurt's own dialogue was still in
+        -- flight.  It is now deferred until World:busy() is false, and
+        -- these assertions are what stop it drifting back.
+        check(#rec.queued == 0,
+          label .. " CODA SPOKE IMMEDIATELY, it must wait for a quiet world")
+
+        local Game2Stub = rec.stubs["src.core.Game2"]
+        local busyWorld = { busy = function() return true end }
+        local calmWorld = { busy = function() return false end }
+
+        pcheck(label .. " coda held while busy", Game2Stub.update,
+          { world = busyWorld }, 0.016)
+        check(#rec.queued == 0,
+          label .. " CODA FIRED INTO A BUSY WORLD")
+
+        pcheck(label .. " coda drains when calm", Game2Stub.update,
+          { world = calmWorld }, 0.016)
+        check(#rec.queued == 1,
+          ("%s coda did not speak on a quiet frame (queued %d)")
+            :format(label, #rec.queued))
+
+        -- ...and only once, not every frame thereafter.
+        pcheck(label .. " coda not repeated", Game2Stub.update,
+          { world = calmWorld }, 0.016)
+        check(#rec.queued == 1,
+          label .. " CODA REPEATED on later frames")
+
+        -- Every line must fit the box: two lines of <= 18 columns.
+        -- An over-length line soft-wraps and SCROLLS rather than
+        -- clipping, which is the other half of "too fast".
+        for _, rows in ipairs(rec.queued) do
+          for _, row in ipairs(rows) do
+            if row[1] == "text" then
+              for line in tostring(row[2]):gmatch("[^\n]+") do
+                check(#line <= 18,
+                  ("%s coda line is %d cols (max 18): %s")
+                    :format(label, #line, line))
+              end
+            end
+          end
+        end
+
         -- Another NPC handing over an item must never trigger it.
         local otherNpc = fakeGame()
         kurtTalk(otherNpc, "55:0000", "POTION")
