@@ -8,7 +8,7 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
-## 0.4.25
+## 0.4.26
 
 **Updating from 0.4.7? Kurt will teach you to make your own balls.**
 
@@ -51,10 +51,19 @@ whole second way to get a ball.
 *If you play on Gold, note that the engine doesn't currently keep mod
 options set on a Gold boot — set them from a Red boot and they'll stick.*
 
-**New in 0.4.25 specifically:** the developer-only probes and the free
+**New in this release specifically:** the developer-only probes and the free
 Apricorn shelf used to build all this are gone from the release, and the
 BALL CASE is off the dev shelf now that Kurt hands it over properly.
 Documentation caught up with the mod.
+
+**Also new in 0.4.26:** screenshots of the BALL CASE and of the KECLEON
+BALL taking its target's colours, on the download page and in the mod's
+own README.
+
+## 0.4.25
+
+- Superseded by 0.4.26 before release; see above. Dev scaffolding removed
+  and documentation rewritten.
 
 ## 0.4.24
 

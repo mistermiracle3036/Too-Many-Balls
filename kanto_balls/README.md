@@ -65,10 +65,25 @@ pick a ball, and if you have the Apricorns it's made on the spot.
 | CATALYST BALL | 1 Green + 1 Yellow Apricorn | 4× on species that evolve with a stone |
 | CRADLE BALL | 1 White + 1 Pink + 1 Green + 1 Red Apricorn | Never misses — and the catch **starts over at level 1** |
 
+<img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/craft-made.png" width="360" alt="The BALL CASE menu listing CATALYST, DRIFT, SNARE, KECLEON and CRADLE BALL, with a message reading: Made a KECLEON BALL!">
+
 **The KECLEON BALL is the one to see.** It reads the wild Pokémon's own
-palette as it flies, so it is pink at a Wigglytuff, orange at a Slugma,
-red at a Scizor, blue at a Lapras. Throw it at a shiny and you get a
-shiny-coloured ball.
+palette as it flies. Same ball, three encounters:
+
+<table>
+<tr>
+<td><img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/kecleon-wigglytuff-mon.png" width="240" alt="A wild WIGGLYTUFF"></td>
+<td><img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/kecleon-scizor-mon.png" width="240" alt="A wild SCIZOR"></td>
+<td><img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/kecleon-lapras-mon.png" width="240" alt="A wild LAPRAS"></td>
+</tr>
+<tr>
+<td><img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/kecleon-wigglytuff-ball.png" width="240" alt="The KECLEON BALL thrown at it, pink"></td>
+<td><img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/kecleon-scizor-ball.png" width="240" alt="The KECLEON BALL thrown at it, red"></td>
+<td><img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/kecleon-lapras-ball.png" width="240" alt="The KECLEON BALL thrown at it, blue"></td>
+</tr>
+</table>
+
+Throw it at a shiny and you get a shiny-coloured ball.
 
 **The CRADLE BALL is not a punishment.** Your catch comes back at level
 1 with level-1 moves, but its DVs and stat experience are untouched — so

@@ -58,9 +58,27 @@ CASE** — a key item that mixes Apricorns into five more balls:
 | **CATALYST BALL** | 1 Green + 1 Yellow | **4×** on anything that evolves with a stone |
 | **CRADLE BALL** | 1 White + 1 Pink + 1 Green + 1 Red | **Never misses** — and your catch starts over at level 1 |
 
-The Kecleon Ball reads the wild Pokémon's own palette as it flies, so it
-comes out pink at a Wigglytuff, red at a Scizor, blue at a Lapras. Throw
-it at a shiny and the ball is shiny too.
+<img src="docs/craft-made.png" width="360" alt="The BALL CASE menu listing CATALYST, DRIFT, SNARE, KECLEON and CRADLE BALL, with a message reading: Made a KECLEON BALL!">
+
+### The Kecleon Ball is the colour of whatever you throw it at
+
+Not a palette swap per ball — it reads the wild Pokémon's own colours as
+it flies. This is the **same ball** in all three:
+
+<table>
+<tr>
+<td><img src="docs/kecleon-wigglytuff-mon.png" width="240" alt="A wild WIGGLYTUFF"></td>
+<td><img src="docs/kecleon-scizor-mon.png" width="240" alt="A wild SCIZOR"></td>
+<td><img src="docs/kecleon-lapras-mon.png" width="240" alt="A wild LAPRAS"></td>
+</tr>
+<tr>
+<td><img src="docs/kecleon-wigglytuff-ball.png" width="240" alt="The KECLEON BALL thrown at it, pink"></td>
+<td><img src="docs/kecleon-scizor-ball.png" width="240" alt="The KECLEON BALL thrown at it, red"></td>
+<td><img src="docs/kecleon-lapras-ball.png" width="240" alt="The KECLEON BALL thrown at it, blue"></td>
+</tr>
+</table>
+
+Throw it at a shiny and the ball is shiny too.
 
 The Cradle Ball is not a punishment. Your catch comes back at level 1
 with level-1 moves, but its DVs and stat experience are untouched — so it
