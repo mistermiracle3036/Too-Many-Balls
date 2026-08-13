@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.14"
+  local VERSION = "0.4.15"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -156,7 +156,7 @@ return function(mod)
     -- sits in the same "exists, not obtainable" state as GS and BEAST --
     -- and for the same reason, it is registered rather than gated, or a
     -- traded/imported one would fall to the ITEMS pocket (see 0.4.9).
-    "SNARE_BALL",
+    "SNARE_BALL", "CATALYST_BALL", "DRIFT_BALL", "KECLEON_BALL",
   }
   if not GEN2 then
     BALL_IDS[#BALL_IDS + 1] = "MOON_BALL"
@@ -285,6 +285,47 @@ return function(mod)
   if GEN2 then mod.exports.owns.ballPalettesGen2 = true end
 
   ----------------------------------------------------------------------
+  -- ITEM DESCRIPTIONS.
+  --
+  -- Gold shows these in three places -- the mart's buy list
+  -- (src/ui/gen2/MartMenu.lua:873), the PACK
+  -- (src/ui/gen2/PackMenu.lua:746) and the item PC
+  -- (src/ui/gen2/ItemPcMenu.lua:531) -- and all three read a plain
+  -- `description` field off the merged item record.  Ours had none, so
+  -- a shelf full of our balls showed an empty box, which reads as
+  -- broken rather than as terse.
+  --
+  -- `description` is NOT in the items schema (id, name, index, price,
+  -- machine, effect, ball, tossable, needsTarget).  It rides as an
+  -- extensible field: Schemas.check only rejects an unknown TOP-LEVEL
+  -- key when it is a near-miss typo of a known one, and "description"
+  -- is close to nothing in that list.
+  --
+  -- SHAPE: the drawer splits on `<NEXT>` or `\n` and prints two rows at
+  -- column 1 of a 20-wide box, so it is TWO LINES of at most ~18
+  -- characters.  A longer line is simply cut off, silently.
+  --
+  -- Gen 1 has no item-description UI at all (nothing under src/ui
+  -- outside gen2/ reads the field), so these are a Gold nicety and
+  -- harmless there.
+  ----------------------------------------------------------------------
+  local BALL_DESC = {
+    PREMIER_BALL = "A gift ball.\nPlain catch odds.",
+    NEST_BALL    = "Good on young,\nlow-level POKeMON.",
+    HEAL_BALL    = "The catch arrives\nfully healed.",
+    MIRROR_BALL  = "Best when it meets\nyour own species.",
+    SILPH_BALL   = "A prototype ball.\nIt often breaks.",
+    MOON_BALL    = "Good on those that\ntake a MOON STONE.",
+    FAST_BALL    = "Good on very fast\nPOKeMON.",
+    GS_BALL      = "A curious ball.\nIt marks its catch.",
+    BEAST_BALL   = "Made for legends.\nPoor on all else.",
+    SNARE_BALL   = "Holds a sleeping\nor frozen POKeMON.",
+    CATALYST_BALL = "Good on those that\nevolve by stone.",
+    DRIFT_BALL   = "Good on light and\nairy POKeMON.",
+    KECLEON_BALL = "Turns the colour of\nits target.",
+  }
+
+  ----------------------------------------------------------------------
   -- shared helper: every registration a ball needs, per generation.
   --
   -- Gen 1: the classic three (balls record, items record, bag toss
@@ -308,7 +349,8 @@ return function(mod)
     -- that would bury a real error (reported from device, 0.4.2).
     -- Nothing on Gold needs it: the bag and the battle both route on
     -- `pocket`, which the game.ready block below stamps.
-    local record = { id = id, name = name, price = price, tossable = true }
+    local record = { id = id, name = name, price = price, tossable = true,
+                     description = BALL_DESC[id] }
     if not GEN2 then record.ball = id end
     mod.content.items:register(id, record)
     if GEN2 then return end
@@ -714,6 +756,87 @@ return function(mod)
   })
 
   ----------------------------------------------------------------------
+  -- CATALYST BALL -- the evolution-stone ball.
+  --
+  -- Reads `evolveItem`, which is in Gold's catch opts and is used by
+  -- NOTHING -- not this mod, not Custom Poke Balls, not Kurt's seven.
+  -- It was the one genuinely unclaimed field in the game.
+  --
+  -- Generalises our own MOON BALL from one stone to all of them, which
+  -- is why MOON stays Gen 1-only and specific: they do not overlap.
+  --
+  -- Gold sets `evolveItem` only from an EVOLVE_ITEM row
+  -- (src/ui/gen2/BattleState.lua's useItem), so its mere PRESENCE means
+  -- "this species evolves by an item".  Gen 1 has no such field, so the
+  -- attempt walks targetDef.evolutions for method == "ITEM" -- the MOON
+  -- predicate with the specific stone check removed.
+  ----------------------------------------------------------------------
+  local function evolvesByItem(def)
+    for _, evo in ipairs((def and def.evolutions) or {}) do
+      if evo.method == "ITEM" then return true end
+    end
+    return false
+  end
+
+  registerBall("CATALYST_BALL", "CATALYST BALL", 1200, {
+    attempt = function(ctx)
+      if evolvesByItem(ctx.targetDef) then boost(ctx, 4) end
+      return ctx.vanillaAttempt()
+    end,
+  })
+
+  ----------------------------------------------------------------------
+  -- DRIFT BALL -- the Heavy Ball's mirror.
+  --
+  -- HEAVY is taken twice over (Kurt's, and Custom Poke Balls'), but the
+  -- INVERSE is claimed by nobody, and `weight` is already in the opts.
+  --
+  -- Units are the dex weight in TENTHS OF A POUND -- that is what
+  -- Gold's own HeavyBallMultiplier reads before converting
+  -- (src/battle/gen2/Catching.lua:64) -- so 200 is 20 lb and 500 is
+  -- 50 lb.  TODO/CONFIRM the Gen 1 species record carries `weight` at
+  -- all; if it does not, the Gen 1 arm simply never boosts rather than
+  -- erroring, which is the safe way to be wrong.
+  ----------------------------------------------------------------------
+  local DRIFT_FEATHER = 200   -- 20 lb and under
+  local DRIFT_LIGHT   = 500   -- 50 lb and under
+
+  local function driftMultiplier(weight)
+    if type(weight) ~= "number" then return 1 end
+    if weight <= DRIFT_FEATHER then return 4 end
+    if weight <= DRIFT_LIGHT then return 2 end
+    return 1
+  end
+
+  registerBall("DRIFT_BALL", "DRIFT BALL", 1000, {
+    attempt = function(ctx)
+      local mult = driftMultiplier(ctx.targetDef and ctx.targetDef.weight)
+      if mult > 1 then boost(ctx, mult) end
+      return ctx.vanillaAttempt()
+    end,
+  })
+
+  ----------------------------------------------------------------------
+  -- KECLEON BALL -- it changes colour to match what you are throwing it
+  -- at.  Plain Poke Ball odds; the trick is entirely cosmetic.
+  --
+  -- The mechanics live in the GOLD PALETTE WRAP further down, not here,
+  -- which is why this record is empty: no attempt(), no rate change.
+  -- GS BALL is the precedent -- a ball whose whole point is not the
+  -- maths.
+  --
+  -- It costs the least of the tier for the same reason.  A player
+  -- crafts this one because it looks extraordinary, not because it
+  -- catches better, and pricing it like a specialist would be a lie.
+  --
+  -- GEN 1 gets the ball but not the trick: colours there come from
+  -- pokeball_colors' static table, which has no per-target hook, so on
+  -- Red it throws in its own fixed green-and-red.  Registered on both
+  -- regardless -- see the BALL_IDS note.
+  ----------------------------------------------------------------------
+  registerBall("KECLEON_BALL", "KECLEON BALL", 800, {})
+
+  ----------------------------------------------------------------------
   -- GS BALL and BEAST BALL -- [DEV] CHEAP BALLS only.
   --
   -- Both are gated on the option because they are not earned content yet:
@@ -931,6 +1054,14 @@ return function(mod)
           boostFlat(o, 4)
         end
 
+      elseif ball == "CATALYST_BALL" then
+        -- presence of evolveItem IS "evolves by an item" on Gold
+        if o.evolveItem then boostFlat(o, 4) end
+
+      elseif ball == "DRIFT_BALL" then
+        local mult = driftMultiplier(o.weight)
+        if mult > 1 then boostFlat(o, mult) end
+
       elseif ball == "SNARE_BALL" then
         -- Same contract as the Gen 1 attempt above: caught on a held
         -- target, an outright dud otherwise.  rate 1 on the dud gives
@@ -954,7 +1085,9 @@ return function(mod)
           boostFlat(o, BEAST_PENALTY)
         end
       end
-      -- PREMIER, HEAL, GS: no catch code by design -- plain odds.
+      -- PREMIER, HEAL, GS, KECLEON: no catch code by design.  KECLEON's
+      -- whole effect is the palette wrap below; its odds are a Poke
+      -- Ball's on purpose.
       return next_(ball, mon, def, o)
     end)
   end
@@ -1148,13 +1281,47 @@ return function(mod)
   -- `learned` is reserved and unused today: every recipe is available
   -- immediately.  When Kurt teaches recipes it becomes the gate, and
   -- nothing else has to change.  TODO/CONFIRM with the developer.
+  -- The craft tier, in ladder order: cheap utility first, specialists
+  -- after.  Every recipe is MULTI-apricorn and most are mixed colours,
+  -- which is the whole advantage of owning the table -- Kurt is
+  -- strictly 1:1 and ROM-bound, so a tier of single-apricorn recipes
+  -- would be Kurt with extra steps.
+  --
+  -- COSTED AGAINST REAL SUPPLY, not the dev shelf: seven apricorn trees
+  -- on a daily refill, one colour each.  A 2-apricorn recipe is about
+  -- two days, a 3-apricorn mixed one is a small project.  Nothing costs
+  -- four, so the tier stays playable on tree supply and an apricorn
+  -- farm would make it comfortable rather than mandatory.
   local RECIPES = {
+    {
+      id = "CATALYST_BALL",
+      label = "CATALYST BALL",
+      inputs = { GRN_APRICORN = 1, YLW_APRICORN = 1 },
+      blurb = "Good on those that",
+      blurb2 = "evolve by stone.",
+    },
+    {
+      id = "DRIFT_BALL",
+      label = "DRIFT BALL",
+      inputs = { WHT_APRICORN = 1, YLW_APRICORN = 1 },
+      blurb = "For the light and",
+      blurb2 = "hard to pin down.",
+    },
     {
       id = "SNARE_BALL",
       label = "SNARE BALL",
       inputs = { BLK_APRICORN = 2 },
       blurb = "Holds a sleeping",
       blurb2 = "or frozen one.",
+    },
+    {
+      id = "KECLEON_BALL",
+      label = "KECLEON BALL",
+      -- Kecleon's own green and red, and the cheapest recipe in the
+      -- tier: plain catch odds, so it is crafted for the spectacle.
+      inputs = { GRN_APRICORN = 1, RED_APRICORN = 1 },
+      blurb = "Takes the colour",
+      blurb2 = "of its target.",
     },
   }
 
@@ -1200,6 +1367,7 @@ return function(mod)
     -- has no such field), just like pocket = "BALL".
     mod.content.items:register(CASE_ID, {
       id = CASE_ID, name = "BALL CASE", price = 2000, tossable = false,
+      description = "Mix APRICORNS into\nnew kinds of ball.",
     })
 
     ------------------------------------------------------------------
@@ -1601,6 +1769,13 @@ return function(mod)
     SILPH_BALL   = { body = { 120,  88, 168 }, accent = {  96, 216, 200 } },
     -- SNARE: dark green trap, pale bone catch.  TODO/CONFIRM on device.
     SNARE_BALL   = { body = {  56, 104,  72 }, accent = { 224, 216, 176 } },
+    -- The craft tier, first pass -- device-tune these like the others.
+    -- CATALYST: stone-grey shell with an evolution-flash core.
+    CATALYST_BALL = { body = { 120, 128, 144 }, accent = { 216, 128, 232 } },
+    -- DRIFT: pale sky and cloud-white, as light as it reads.
+    DRIFT_BALL   = { body = { 152, 200, 232 }, accent = { 248, 250, 252 } },
+    -- KECLEON: the lizard's green with its red stripe.
+    KECLEON_BALL = { body = {  72, 168,  96 }, accent = { 216,  72,  88 } },
   }
   if not GEN2 then
     COLORS.MOON_BALL = { body = {  60,  68, 128 }, accent = { 232, 208,  96 } }
@@ -1704,6 +1879,9 @@ return function(mod)
     -- the prototype: Master-ball purple over its teal flash
     PAL_KB_SILPH   = { {255,255,255}, { 96,216,200}, {120, 88,168}, {24,24,24} },
     PAL_KB_SNARE   = { {255,255,255}, {224,216,176}, { 56,104, 72}, {24,24,24} },
+    PAL_KB_CATALYST = { {255,255,255}, {216,128,232}, {120,128,144}, {24,24,24} },
+    PAL_KB_DRIFT   = { {255,255,255}, {248,250,252}, {152,200,232}, {24,24,24} },
+    PAL_KB_KECLEON = { {255,255,255}, {216, 72, 88}, { 72,168, 96}, {24,24,24} },
   }
   -- ball id -> palette name.  MOON and FAST are deliberately ABSENT: they
   -- are the cart's own Kurt balls on Gold and already get real colours
@@ -1716,6 +1894,9 @@ return function(mod)
     MIRROR_BALL  = "PAL_KB_MIRROR",
     SILPH_BALL   = "PAL_KB_SILPH",
     SNARE_BALL   = "PAL_KB_SNARE",
+    CATALYST_BALL = "PAL_KB_CATALYST",
+    DRIFT_BALL   = "PAL_KB_DRIFT",
+    KECLEON_BALL = "PAL_KB_KECLEON",
   }
   do
     -- GS: the pale cream carried over from Gen 1 did not read as GOLD on
@@ -1745,7 +1926,31 @@ return function(mod)
       or { ballPalette = BattleState2.ballPalette }
     local vanillaBallPalette = BattleState2._kbOriginals.ballPalette
 
+    -- KECLEON BALL: the ball takes the TARGET's own colours.
+    --
+    -- No new art and no new palette data -- the engine already has a
+    -- name for exactly this.  BattleAnimView:objPalette
+    -- (src/ui/gen2/BattleAnimView.lua:95-99) special-cases
+    -- PAL_BATTLE_OB_ENEMY and answers it with
+    -- Palettes.monColors(enemy.species, enemy.shiny), which is the wild
+    -- Pokemon's own battle palette -- SHINY INCLUDED, so a shiny target
+    -- gets a shiny-coloured ball for free.
+    --
+    -- Guarded on there actually being an enemy, because ballPalette is
+    -- not only called from the throw: pokeball_colors 0.1.22+ reads it
+    -- to paint the Pokemon Center heal machine, where there is no
+    -- battle at all.  Returning the enemy name there would resolve to
+    -- nil and draw the ball unpaletted.  With no enemy in sight it
+    -- falls back to its own green-and-red, which is also what a shelf
+    -- or a bag icon should show.
+    local KECLEON_ID = "KECLEON_BALL"
+
     BattleState2.ballPalette = function(self, itemId)
+      if itemId == KECLEON_ID then
+        local battle = self and self.battle
+        local enemy = battle and battle.enemy
+        if enemy and enemy.species then return "PAL_BATTLE_OB_ENEMY" end
+      end
       local name = BALL_PALETTES[itemId]
       if name then return name end
       return vanillaBallPalette(self, itemId)

@@ -8,6 +8,24 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.15
+
+- **Three new craftable balls**, made in the BALL CASE from apricorns:
+  - **CATALYST BALL** (green + yellow) — 4× on anything that evolves by
+    a stone. Not just the Moon Stone: all of them.
+  - **DRIFT BALL** (white + yellow) — the Heavy Ball's opposite. Best on
+    the light and hard to pin down.
+  - **KECLEON BALL** (green + red + pink) — **best on a target that
+    hasn't been touched**, and poor once you've worn it down. The one
+    ball you throw *first* instead of last.
+- **Every ball has a description now.** They showed a blank box in marts,
+  the PACK and the item PC, which looked broken rather than terse.
+- Recipes are costed for real apricorn supply — seven trees on a daily
+  refill — so nothing needs four apricorns. They're a project, not a
+  grind.
+- *Craft recipes and prices are a first pass and will be retuned once
+  they've been played.*
+
 ## 0.4.14
 
 - **Kurt gives you the BALL CASE.** Once you've earned the **HIVE

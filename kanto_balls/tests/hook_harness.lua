@@ -286,6 +286,27 @@ for _, gen in ipairs({ 1, 2 }) do
           label .. " registerBallPalette missing")
       end
 
+      -------------------------------------------- KECLEON'S PALETTE
+      -- The ball's whole effect is here, so it is worth asserting in
+      -- both directions: the target's own palette name in a battle, and
+      -- its OWN colours when there is no enemy to copy (the heal
+      -- machine calls this too, and a nil there draws unpaletted).
+      if gen == 2 then
+        local BS2 = rec.stubs["src.ui.gen2.BattleState"]
+        local inBattle = { battle = { enemy = { species = "KECLEON" } } }
+        check(BS2.ballPalette(inBattle, "KECLEON_BALL")
+                == "PAL_BATTLE_OB_ENEMY",
+          label .. " KECLEON did not take the target's palette")
+        check(BS2.ballPalette({}, "KECLEON_BALL") == "PAL_KB_KECLEON",
+          label .. " KECLEON has no fallback without an enemy")
+        -- and it must not have hijacked anyone else's colour
+        check(BS2.ballPalette(inBattle, "SNARE_BALL") == "PAL_KB_SNARE",
+          label .. " KECLEON's rule leaked onto another ball")
+        check(BS2.ballPalette(inBattle, "MOON_BALL")
+                == "PAL_BATTLE_OB_GRAY",
+          label .. " wrap swallowed a native ball's palette")
+      end
+
       ------------------------------------------------- KURT'S HANDOVER
       -- The gate must hold in BOTH directions, and the item must not be
       -- handed over twice.  A save flag that never sets would give the
@@ -376,8 +397,26 @@ for _, gen in ipairs({ 1, 2 }) do
             or factory.new
           check(type(newFn) == "function", label .. " screen has no new()")
           if type(newFn) == "function" then
-            -- craftable: give it the apricorns the recipe wants
-            game.save.inventory.BLK_APRICORN = 4
+            -- Stock every apricorn generously: the harness must not
+            -- assume WHICH recipes exist or what order they sit in.
+            -- Hard-coding SNARE's inputs here is what broke this test
+            -- the moment the craft tier reordered the rows -- correctly,
+            -- but the assertion should have been about "a recipe", not
+            -- about that recipe.
+            local APRICORNS = { "RED_APRICORN", "BLU_APRICORN",
+              "YLW_APRICORN", "GRN_APRICORN", "WHT_APRICORN",
+              "BLK_APRICORN", "PNK_APRICORN" }
+            local function apricornTotal(save)
+              local n = 0
+              for _, id in ipairs(APRICORNS) do
+                n = n + (save.inventory[id] or 0)
+              end
+              return n
+            end
+            for _, id in ipairs(APRICORNS) do
+              game.save.inventory[id] = 9
+            end
+
             local okNew, screen = pcall(newFn, game)
             check(okNew and screen ~= nil,
               label .. " screen new() -> " .. tostring(screen))
@@ -390,25 +429,54 @@ for _, gen in ipairs({ 1, 2 }) do
               end
               _G.__PRESS = nil
 
-              -- A craft must have consumed apricorns and produced a ball
-              local made = game.save.inventory.SNARE_BALL or 0
-              check(made >= 1, label .. " craft produced no SNARE_BALL")
-              check((game.save.inventory.BLK_APRICORN or 0) == 2,
-                label .. " craft consumed the wrong apricorn count")
+              -- EVERY row must craft: walk them all, and for each one
+              -- assert a ball appeared and apricorns were spent.  This
+              -- is what catches a recipe whose inputs name an item id
+              -- that does not exist, which no static check can see.
+              local rowCount = 0
+              local s = select(2, pcall(newFn, game))
+              if s then
+                local rows = s:rows()
+                rowCount = #rows
+                check(rowCount >= 1, label .. " case lists no recipes")
+                for i, recipe in ipairs(rows) do
+                  s.index = i
+                  s.message = nil
+                  local before = apricornTotal(game.save)
+                  local hadBall = game.save.inventory[recipe.id] or 0
+                  _G.__PRESS = "a"
+                  pcheck(label .. " craft " .. tostring(recipe.id),
+                    s.update, s)
+                  _G.__PRESS = nil
+                  check((game.save.inventory[recipe.id] or 0) > hadBall,
+                    label .. " craft made no " .. tostring(recipe.id))
+                  check(apricornTotal(game.save) < before,
+                    label .. " craft spent no apricorns for "
+                      .. tostring(recipe.id))
+                end
+              end
 
               -- THE FAILURE PATH THAT COSTS MATERIALS: a full pocket must
               -- consume nothing.
               local full = fakeGame()
               full.data.items = game.data.items
-              full.save.inventory.BLK_APRICORN = 2
+              for _, id in ipairs(APRICORNS) do
+                full.save.inventory[id] = 9
+              end
+              local stocked = apricornTotal(full.save)
               rec.stubs["src.inventory.Bag"].add = function() return false end
               local okFull, s2 = pcall(newFn, full)
               if okFull and s2 then
-                _G.__PRESS = "a"
-                pcheck(label .. " case craft when pack full",
-                  s2.update, s2)
-                _G.__PRESS = nil
-                check((full.save.inventory.BLK_APRICORN or 0) == 2,
+                -- try EVERY recipe against a full pocket, not just one
+                for i = 1, math.max(1, rowCount) do
+                  s2.index = i
+                  s2.message = nil
+                  _G.__PRESS = "a"
+                  pcheck(label .. " case craft when pack full",
+                    s2.update, s2)
+                  _G.__PRESS = nil
+                end
+                check(apricornTotal(full.save) == stocked,
                   label .. " FULL POCKET ATE THE APRICORNS")
               end
             end

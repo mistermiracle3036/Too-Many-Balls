@@ -1,7 +1,7 @@
 {
   "id": "kanto_balls",
   "name": "Too Many Balls",
-  "version": "0.4.14",
+  "version": "0.4.15",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
