@@ -411,19 +411,32 @@ for _, gen in ipairs({ 1, 2 }) do
         check(other.save.inventory.BALL_CASE == nil,
           label .. " another NPC handed over the case")
 
-        -- badge -> exactly one case, and only once
-        local withBadge = fakeGame()
-        withBadge.save.player = { badges = { HIVE = true } }
-        rec.modGame = withBadge
+        -- THE FIRST CONVERSATION MUST GIVE NOTHING, badge or not.
+        -- Reported from device at 0.4.14: the coda fired on the first
+        -- meeting -- the scene where Kurt leaves for Slowpoke Well --
+        -- because his house object has ONE scriptKey for every story
+        -- state and the badge does not imply the well is done.
+        local firstTalk = fakeGame()
+        firstTalk.save.player = { badges = { HIVE = true } }
+        rec.modGame = firstTalk
+        for _, fn in ipairs(ended) do
+          pcheck(label .. " kurt (first talk)", fn,
+            { ctx = { scriptKey = KEY }, completed = true })
+        end
+        check(firstTalk.save.inventory.BALL_CASE == nil,
+          label .. " KURT GAVE THE CASE ON THE FIRST MEETING")
+
+        -- ...and the NEXT one does, exactly once however often he is
+        -- talked to after that.
         for _ = 1, 3 do
           for _, fn in ipairs(ended) do
-            pcheck(label .. " kurt (badge)", fn,
+            pcheck(label .. " kurt (later talks)", fn,
               { ctx = { scriptKey = KEY }, completed = true })
           end
         end
-        check(withBadge.save.inventory.BALL_CASE == 1,
-          ("%s kurt gave %s cases, want exactly 1")
-            :format(label, tostring(withBadge.save.inventory.BALL_CASE)))
+        check(firstTalk.save.inventory.BALL_CASE == 1,
+          ("%s kurt gave %s cases after the first, want exactly 1")
+            :format(label, tostring(firstTalk.save.inventory.BALL_CASE)))
       end
 
       ----------------------------------------------- THE DEFERRED PUSH

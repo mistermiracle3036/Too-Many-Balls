@@ -8,6 +8,19 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.18
+
+- **Kurt no longer hands over the BALL CASE at the wrong moment.** It was
+  firing on your *first* meeting — the scene where he says apricorns
+  aren't just for his seven balls and then heads off to Slowpoke Well.
+  It should be his parting line when he comes *back*.
+- This is an **interim fix**: it can no longer happen on that first
+  conversation. Pinning it exactly to his return needs one more piece of
+  information from a running game, which this build collects.
+- Dev build otherwise: adds a probe (behind `[DEV] CHEAP BALLS`) that
+  records what Kurt's conversation actually does, so the next build can
+  tie the handover to the real moment instead of to a badge.
+
 ## 0.4.17
 
 - **Recipes can now be taught by other mods.** A recipe can be locked

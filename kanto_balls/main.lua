@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.17"
+  local VERSION = "0.4.18"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -1910,6 +1910,32 @@ return function(mod)
     local CASE_BADGE = "HIVE"
     local FieldMoves = require("src.world.gen2.FieldMoves")
 
+    -- THE BADGE IS NOT ENOUGH, reported from device 0.4.14: the coda
+    -- fired on the FIRST meeting -- the scene where Kurt says apricorns
+    -- aren't just for his seven balls and then leaves for Slowpoke Well.
+    -- It should be his LAST line when he comes BACK.
+    --
+    -- Why the badge let that through: Kurt's house object has ONE
+    -- scriptKey that branches internally on story flags, so every
+    -- conversation with him -- before the well, after it -- ends the
+    -- same script. The badge was chosen as a stand-in for "the well is
+    -- done" and a save can hold it while Kurt is still in his pre-well
+    -- state.
+    --
+    -- Why not gate on the real event: Gen 2 event flags are NUMERIC ONLY
+    -- (src/world/gen2/WorldAPI.lua:109-113 rejects a string outright)
+    -- and no manifest maps EVENT_* names to numbers, so gating on
+    -- "cleared Slowpoke Well" means knowing a number we can only learn
+    -- by watching the running game. The probe below is how we learn it.
+    --
+    -- INTERIM, and deliberately conservative: never fire on the FIRST
+    -- completed Kurt conversation we have ever seen. The first meeting
+    -- is by definition the first, so the reported bug cannot recur; a
+    -- second pre-well conversation could still slip through, which is
+    -- why this is interim and not the answer.
+    -- TODO/CONFIRM: replace with the real gate once the probe names it.
+    local KURT_SEEN_KEY = "kurtTalks"
+
     mod.events:on("script.ended", function(p)
       local ctx = p and p.ctx
       if not (ctx and ctx.scriptKey == KURT_SCRIPT) then return end
@@ -1919,7 +1945,19 @@ return function(mod)
       local game = mod.game
       local save = game and game.save
       if not save then return end
+
       if not FieldMoves.hasBadge(save, CASE_BADGE) then return end
+
+      -- Count only conversations that happen WHILE THE BADGE IS HELD,
+      -- and skip the first of those.  Counting every conversation was
+      -- the first attempt and the harness rejected it: chatter with
+      -- pre-well Kurt burned the allowance, so the case could still land
+      -- on the wrong line.  Gating the counter behind the badge makes it
+      -- independent of however many times the player talked to him
+      -- earlier.
+      local seen = tonumber(mod.save:get(KURT_SEEN_KEY)) or 0
+      mod.save:set(KURT_SEEN_KEY, seen + 1)
+      if seen < 1 then return end
       -- Already carrying one (the dev shelf, or a previous save): mark
       -- it done rather than handing over a second.
       if (save.inventory and save.inventory[CASE_ID]) then
@@ -1945,6 +1983,67 @@ return function(mod)
       end
     end)
   end
+
+  --====================================================================
+  -- ###  DEV SCAFFOLDING -- KURT CONVERSATION PROBE  ###
+  --
+  -- Finds what distinguishes Kurt's POST-well conversation from the
+  -- first meeting, so the case handover can be gated on the real thing
+  -- instead of on a badge (see the note above the handover).
+  --
+  -- The `script.command` hook is handed the opcode NAME out of
+  -- src/script/gen2/Opcodes.lua plus the whole decoded row as a fourth
+  -- argument, whose interesting operands are named fields -- cmd.text,
+  -- cmd.script, cmd.value, cmd.object (src/script/gen2/Vm.lua:1747-1783).
+  -- So this records the shape of each Kurt conversation and prints it
+  -- when the script ends.
+  --
+  -- WHAT TO LOOK FOR when comparing the two runs: an opcode that only
+  -- the post-well branch reaches -- most likely the apricorn menu, since
+  -- Kurt's ball-making script compares against apricorn item constants
+  -- (src/world/gen2/World.lua:3515 says his is `ifequal BLU_APRICORN`).
+  -- Whatever it is becomes the gate, and this block comes out.
+  --
+  -- [ERRS] is 16 columns by 11 rows, so this prints ONE line: the run's
+  -- opcode count and the first few names, truncated hard.
+  ----------------------------------------------------------------------
+  if GEN2 and CHEAP then
+    local KURT_SCRIPT = "55:45e3"
+    local run = nil
+
+    mod.events:on("script.started", function(p)
+      local ctx = p and p.ctx
+      run = (ctx and ctx.scriptKey == KURT_SCRIPT) and { n = 0, ops = {} }
+        or nil
+    end)
+
+    mod.hooks:wrap("script.command", function(next_, ctx, name, args, cmd)
+      if run and ctx and ctx.scriptKey == KURT_SCRIPT then
+        run.n = run.n + 1
+        if #run.ops < 5 and type(name) == "string" then
+          run.ops[#run.ops + 1] = name
+        end
+        -- A value operand is what an `ifequal` against an item constant
+        -- carries, so remember the first one we see.
+        if run.value == nil and cmd and type(cmd.value) == "number" then
+          run.value = cmd.value
+        end
+      end
+      return next_(ctx, name, args, cmd)
+    end)
+
+    mod.events:on("script.ended", function(p)
+      local ctx = p and p.ctx
+      if not (run and ctx and ctx.scriptKey == KURT_SCRIPT) then return end
+      local ops = table.concat(run.ops, ",")
+      if #ops > 40 then ops = ops:sub(1, 40) end
+      Runtime.reportError("kanto_balls",
+        ("KURT n%d v%s %s"):format(run.n, tostring(run.value), ops))
+      run = nil
+    end)
+  end
+  -- ###  END DEV SCAFFOLDING  ###
+  --====================================================================
 
   --====================================================================
   -- ###  DEV SCAFFOLDING -- SCRIPT KEY PROBE  ###
