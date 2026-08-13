@@ -8,6 +8,17 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.20
+
+- **Kurt now gives you the BALL CASE at the right moment** — as you're
+  leaving after rescuing him from Slowpoke Well, right after he hands you
+  the LURE BALL. Previously it could happen at your *first* meeting, as
+  he was heading off to the well, which made no sense.
+- **The badge requirement is gone.** It was standing in for "you've
+  rescued him", and it wasn't a good stand-in — a save could hold the
+  badge with Kurt still stuck down the well. It now waits for the rescue
+  itself, so the case arrives exactly when he's grateful and not before.
+
 ## 0.4.19
 - Dev build. The Kurt probe now writes the whole conversation to the
   desktop log as well as its one-line summary to [ERRS], so a PC test

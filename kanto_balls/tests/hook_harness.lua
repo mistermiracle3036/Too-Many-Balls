@@ -381,62 +381,67 @@ for _, gen in ipairs({ 1, 2 }) do
       end
 
       ------------------------------------------------- KURT'S HANDOVER
-      -- The gate must hold in BOTH directions, and the item must not be
-      -- handed over twice.  A save flag that never sets would give the
-      -- player a new case every time they talked to him.
+      -- The gate is "Kurt gave you something", read as a bag diff across
+      -- his conversation.  Modelled here exactly as the probe saw it on
+      -- the running game (0.4.19):
+      --   first meeting -> he walks out and gives NOTHING
+      --   the return    -> he hands over a LURE BALL and stays
       if gen == 2 then
+        local started = rec.events["script.started"] or {}
         local ended = rec.events["script.ended"] or {}
+        check(#started > 0, label .. " no script.started listener")
         check(#ended > 0, label .. " no script.ended listener")
         local KEY = "55:45e3"
 
-        -- no badge -> nothing, however many times he is talked to
-        local noBadge = fakeGame()
-        noBadge.save.player = { badges = {} }
-        rec.modGame = noBadge
-        for _, fn in ipairs(ended) do
-          pcheck(label .. " kurt (no badge)", fn,
-            { ctx = { scriptKey = KEY }, completed = true })
-        end
-        check(noBadge.save.inventory.BALL_CASE == nil,
-          label .. " GAVE THE CASE WITHOUT THE BADGE")
-
-        -- an unrelated script must never trigger it
-        local other = fakeGame()
-        other.save.player = { badges = { HIVE = true } }
-        rec.modGame = other
-        for _, fn in ipairs(ended) do
-          pcheck(label .. " kurt (other script)", fn,
-            { ctx = { scriptKey = "55:0000" }, completed = true })
-        end
-        check(other.save.inventory.BALL_CASE == nil,
-          label .. " another NPC handed over the case")
-
-        -- THE FIRST CONVERSATION MUST GIVE NOTHING, badge or not.
-        -- Reported from device at 0.4.14: the coda fired on the first
-        -- meeting -- the scene where Kurt leaves for Slowpoke Well --
-        -- because his house object has ONE scriptKey for every story
-        -- state and the badge does not imply the well is done.
-        local firstTalk = fakeGame()
-        firstTalk.save.player = { badges = { HIVE = true } }
-        rec.modGame = firstTalk
-        for _, fn in ipairs(ended) do
-          pcheck(label .. " kurt (first talk)", fn,
-            { ctx = { scriptKey = KEY }, completed = true })
-        end
-        check(firstTalk.save.inventory.BALL_CASE == nil,
-          label .. " KURT GAVE THE CASE ON THE FIRST MEETING")
-
-        -- ...and the NEXT one does, exactly once however often he is
-        -- talked to after that.
-        for _ = 1, 3 do
+        -- Run one Kurt conversation. `gift` is what he hands over during
+        -- it, or nil for a conversation that gives nothing.
+        local function kurtTalk(game, key, gift, completed)
+          rec.modGame = game
+          for _, fn in ipairs(started) do
+            pcheck(label .. " kurt start", fn, { ctx = { scriptKey = key } })
+          end
+          if gift then
+            game.save.inventory[gift] = (game.save.inventory[gift] or 0) + 1
+          end
           for _, fn in ipairs(ended) do
-            pcheck(label .. " kurt (later talks)", fn,
-              { ctx = { scriptKey = KEY }, completed = true })
+            pcheck(label .. " kurt end", fn,
+              { ctx = { scriptKey = key },
+                completed = completed ~= false })
           end
         end
-        check(firstTalk.save.inventory.BALL_CASE == 1,
-          ("%s kurt gave %s cases after the first, want exactly 1")
-            :format(label, tostring(firstTalk.save.inventory.BALL_CASE)))
+
+        -- THE FIRST MEETING: he gives nothing and leaves.  This is the
+        -- bug reported on device at 0.4.14 and it must never pass.
+        local firstMeeting = fakeGame()
+        kurtTalk(firstMeeting, KEY, nil)
+        check(firstMeeting.save.inventory.BALL_CASE == nil,
+          label .. " KURT GAVE THE CASE ON THE FIRST MEETING")
+
+        -- THE RETURN: he hands over the LURE BALL for the rescue.
+        local rescue = fakeGame()
+        kurtTalk(rescue, KEY, "LURE_BALL")
+        check(rescue.save.inventory.BALL_CASE == 1,
+          label .. " KURT DID NOT GIVE THE CASE ON HIS RETURN")
+
+        -- ...and only ever once, however many gifts follow.
+        kurtTalk(rescue, KEY, "MOON_BALL")
+        kurtTalk(rescue, KEY, "FAST_BALL")
+        check(rescue.save.inventory.BALL_CASE == 1,
+          ("%s kurt gave %s cases, want exactly 1")
+            :format(label, tostring(rescue.save.inventory.BALL_CASE)))
+
+        -- Another NPC handing over an item must never trigger it.
+        local otherNpc = fakeGame()
+        kurtTalk(otherNpc, "55:0000", "POTION")
+        check(otherNpc.save.inventory.BALL_CASE == nil,
+          label .. " another NPC handed over the case")
+
+        -- An ABANDONED conversation must not count, even with a gift:
+        -- completed=false is a whiteout or a script that died.
+        local abandoned = fakeGame()
+        kurtTalk(abandoned, KEY, "LURE_BALL", false)
+        check(abandoned.save.inventory.BALL_CASE == nil,
+          label .. " an abandoned conversation handed over the case")
       end
 
       ----------------------------------------------- THE DEFERRED PUSH

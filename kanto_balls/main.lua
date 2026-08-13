@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.19"
+  local VERSION = "0.4.20"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -1879,27 +1879,21 @@ return function(mod)
   -- src/script/gen2/Vm.lua:2245) and add a coda after it.  He says his
   -- piece; then he says ours.
   --
-  -- THE GATE, and why it is a badge rather than the real story flag:
-  -- Kurt only makes balls after the Slowpoke Well rescue, and the
-  -- honest gate would be that event.  Gold's rom manifest carries NO
-  -- event-flag names at all (checked: every EVENT_ hit in it is a false
-  -- positive inside HELD_PREVENT_*), so reading "the well is done" by
-  -- name would mean guessing a ROM-derived id -- the exact mistake this
-  -- project's rules open by warning about.
+  -- THE GATE is the moment he GIVES you something, which is the rescue
+  -- conversation itself.  See the long note below for how that was
+  -- established and why the earlier badge gate was wrong.
   --
-  -- The HIVE badge is readable, owned by the engine, and sits just
-  -- AFTER the well in normal play, so it cannot let the player in
-  -- early -- only very slightly late.  Read through
-  -- FieldMoves.hasBadge (src/world/gen2/FieldMoves.lua:163), which
-  -- handles both the name keys and the numeric indices the save may
-  -- carry, rather than indexing save.player.badges by hand.
+  -- Gold's rom manifest carries NO event-flag names at all (checked:
+  -- every EVENT_ hit in it is a false positive inside HELD_PREVENT_*),
+  -- and Gen 2 flags are numeric-only, so "the well is done" is not
+  -- readable by name.  Reading the conversation instead needs no flag.
   --
-  -- TODO/CONFIRM, both on device:
-  --   * that KURT_SCRIPT below is KURT and not his granddaughter --
-  --     it was read off the probe in 0.4.13 (map 8:4 = KURTS_HOUSE,
-  --     object 2) and the house has more than one person in it;
-  --   * that a badge is not ALSO required for Kurt to make balls in
-  --     vanilla.  If it is, this gate is already at least as strict.
+  -- TODO/CONFIRM on device: that KURT_SCRIPT is KURT and not his
+  -- granddaughter.  It came off the 0.4.13 probe (map 8:4 =
+  -- KURTS_HOUSE, object 2) and the house holds more than one person --
+  -- though the 0.4.19 probe run makes this near-certain, since the
+  -- script it captured walks object 2 out of the house and later hands
+  -- over an item, which is Kurt's part and nobody else's.
   ----------------------------------------------------------------------
   if GEN2 then
     -- ROM-derived, read from the running game with the 0.4.13 probe and
@@ -1907,57 +1901,83 @@ return function(mod)
     -- move, so the handover reports to [ERRS] when it fires rather than
     -- being invisible either way.
     local KURT_SCRIPT = "55:45e3"
-    local CASE_BADGE = "HIVE"
-    local FieldMoves = require("src.world.gen2.FieldMoves")
 
-    -- THE BADGE IS NOT ENOUGH, reported from device 0.4.14: the coda
-    -- fired on the FIRST meeting -- the scene where Kurt says apricorns
-    -- aren't just for his seven balls and then leaves for Slowpoke Well.
-    -- It should be his LAST line when he comes BACK.
+    -- WHEN THIS FIRES: the conversation in which KURT GIVES YOU
+    -- SOMETHING.  That is the rescue conversation -- he hands over a
+    -- LURE BALL for saving him from Slowpoke Well -- and it is exactly
+    -- the moment the developer asked for: his parting line on the way
+    -- back, not the one on the way out.
     --
-    -- Why the badge let that through: Kurt's house object has ONE
-    -- scriptKey that branches internally on story flags, so every
-    -- conversation with him -- before the well, after it -- ends the
-    -- same script. The badge was chosen as a stand-in for "the well is
-    -- done" and a save can hold it while Kurt is still in his pre-well
-    -- state.
+    -- HOW WE KNOW, from a probe on the running game (0.4.19, read off
+    -- the PC rig's log) rather than from guessing.  His house object has
+    -- ONE scriptKey for every story state, so script.ended alone cannot
+    -- tell the branches apart -- but the two runs are unmistakable:
     --
-    -- Why not gate on the real event: Gen 2 event flags are NUMERIC ONLY
-    -- (src/world/gen2/WorldAPI.lua:109-113 rejects a string outright)
-    -- and no manifest maps EVENT_* names to numbers, so gating on
-    -- "cleared Slowpoke Well" means knowing a number we can only learn
-    -- by watching the running game. The probe below is how we learn it.
+    --   first meeting  … applymovement, DISAPPEAR object=2, end
+    --                    (he walks out; gives nothing)
+    --   the return     … writetext, promptbutton, VERBOSEGIVEITEM,
+    --                    then a long checkevent/iftrue chain
+    --                    (he hands over an item; he stays)
     --
-    -- INTERIM, and deliberately conservative: never fire on the FIRST
-    -- completed Kurt conversation we have ever seen. The first meeting
-    -- is by definition the first, so the reported bug cannot recur; a
-    -- second pre-well conversation could still slip through, which is
-    -- why this is interim and not the answer.
-    -- TODO/CONFIRM: replace with the real gate once the probe names it.
-    local KURT_SEEN_KEY = "kurtTalks"
+    -- 0.4.14 gated on the HIVE badge as a stand-in for "the well is
+    -- done" and that was simply wrong: a save can hold the badge while
+    -- Kurt is still in his pre-well state, which is how the coda landed
+    -- on the first meeting.  The badge and the interim skip-the-first
+    -- counter are both gone -- this reads the actual story moment, so it
+    -- needs no proxy and no `learned`-style bookkeeping.
+    --
+    -- WHY A BAG DIFF AND NOT THE OPCODE: watching for `verbosegiveitem`
+    -- means keeping a `script.command` wrap installed forever, and
+    -- Runtime.wantsHook("script.command") being true puts EVERY command
+    -- of EVERY script in the game through the hooked path
+    -- (src/script/gen2/Vm.lua:1747).  A snapshot of the bag on his
+    -- script.started and a compare on script.ended costs nothing outside
+    -- his conversation and answers the same question: did he give me
+    -- something?
+    --
+    -- A later conversation where he hands over a finished apricorn ball
+    -- also passes this test.  That is fine and deliberate: it is still
+    -- post-rescue, the case is given once, and "Kurt gave you something"
+    -- is the honest condition rather than a fragile guess at which gift.
+    local kurtBag = nil
+
+    mod.events:on("script.started", function(p)
+      local ctx = p and p.ctx
+      kurtBag = nil
+      if not (ctx and ctx.scriptKey == KURT_SCRIPT) then return end
+      if mod.save:get("caseGiven") then return end
+      local save = mod.game and mod.game.save
+      local inv = save and save.inventory
+      if not inv then return end
+      local snap = {}
+      for id, n in pairs(inv) do snap[id] = n end
+      kurtBag = snap
+    end)
 
     mod.events:on("script.ended", function(p)
       local ctx = p and p.ctx
+      local snap = kurtBag
+      kurtBag = nil
       if not (ctx and ctx.scriptKey == KURT_SCRIPT) then return end
       if not p.completed then return end
+      if not snap then return end
       if mod.save:get("caseGiven") then return end
 
       local game = mod.game
       local save = game and game.save
       if not save then return end
 
-      if not FieldMoves.hasBadge(save, CASE_BADGE) then return end
-
-      -- Count only conversations that happen WHILE THE BADGE IS HELD,
-      -- and skip the first of those.  Counting every conversation was
-      -- the first attempt and the harness rejected it: chatter with
-      -- pre-well Kurt burned the allowance, so the case could still land
-      -- on the wrong line.  Gating the counter behind the badge makes it
-      -- independent of however many times the player talked to him
-      -- earlier.
-      local seen = tonumber(mod.save:get(KURT_SEEN_KEY)) or 0
-      mod.save:set(KURT_SEEN_KEY, seen + 1)
-      if seen < 1 then return end
+      -- Did anything in the bag go UP during his conversation?  Checked
+      -- before we add the case ourselves, so our own gift cannot be the
+      -- thing that satisfies the test.
+      local gained = false
+      for id, n in pairs(save.inventory or {}) do
+        if type(n) == "number" and n > (snap[id] or 0) then
+          gained = true
+          break
+        end
+      end
+      if not gained then return end
       -- Already carrying one (the dev shelf, or a previous save): mark
       -- it done rather than handing over a second.
       if (save.inventory and save.inventory[CASE_ID]) then
