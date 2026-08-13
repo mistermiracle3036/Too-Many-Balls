@@ -8,6 +8,11 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.19
+- Dev build. The Kurt probe now writes the whole conversation to the
+  desktop log as well as its one-line summary to [ERRS], so a PC test
+  gives the full picture instead of sixteen columns of it.
+
 ## 0.4.18
 
 - **Kurt no longer hands over the BALL CASE at the wrong moment.** It was

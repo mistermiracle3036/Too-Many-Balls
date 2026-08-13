@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.18"
+  local VERSION = "0.4.19"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -2004,17 +2004,28 @@ return function(mod)
   -- (src/world/gen2/World.lua:3515 says his is `ifequal BLU_APRICORN`).
   -- Whatever it is becomes the gate, and this block comes out.
   --
-  -- [ERRS] is 16 columns by 11 rows, so this prints ONE line: the run's
-  -- opcode count and the first few names, truncated hard.
+  -- TWO CHANNELS, because the two test rigs are not alike:
+  --   * [ERRS] gets ONE hard-truncated line -- 16 columns by 11 rows is
+  --     all the iPhone has.
+  --   * mod.log:info gets the WHOLE conversation, one opcode per line
+  --     with its named operands.  Logger.emit is a bare print()
+  --     (src/core/Logger.lua:8), and the PC rig's run-ipc-test.bat
+  --     redirects stdout, so on desktop this lands in ipc-log.txt with
+  --     no width limit at all.  That is the copy worth reading.
   ----------------------------------------------------------------------
   if GEN2 and CHEAP then
     local KURT_SCRIPT = "55:45e3"
+    local PROBE_MAX = 80          -- runaway guard, not an expected length
     local run = nil
 
     mod.events:on("script.started", function(p)
       local ctx = p and p.ctx
       run = (ctx and ctx.scriptKey == KURT_SCRIPT) and { n = 0, ops = {} }
         or nil
+      if run then
+        mod.log:info("KURTPROBE start map=%s object=%s",
+          tostring(ctx.mapId), tostring(ctx.object))
+      end
     end)
 
     mod.hooks:wrap("script.command", function(next_, ctx, name, args, cmd)
@@ -2023,10 +2034,22 @@ return function(mod)
         if #run.ops < 5 and type(name) == "string" then
           run.ops[#run.ops + 1] = name
         end
-        -- A value operand is what an `ifequal` against an item constant
-        -- carries, so remember the first one we see.
         if run.value == nil and cmd and type(cmd.value) == "number" then
           run.value = cmd.value
+        end
+        -- The full row, for the desktop log.  cmd carries the decoded
+        -- operands as named fields (Vm.lua:1756-1758); text is trimmed
+        -- because a dialogue line would swamp the dump.
+        if run.n <= PROBE_MAX then
+          local text = cmd and cmd.text
+          if type(text) == "string" and #text > 24 then
+            text = text:sub(1, 24) .. "..."
+          end
+          mod.log:info(
+            "KURTPROBE %3d %-16s value=%s script=%s object=%s text=%s",
+            run.n, tostring(name),
+            tostring(cmd and cmd.value), tostring(cmd and cmd.script),
+            tostring(cmd and cmd.object), tostring(text))
         end
       end
       return next_(ctx, name, args, cmd)
@@ -2036,6 +2059,8 @@ return function(mod)
       local ctx = p and p.ctx
       if not (run and ctx and ctx.scriptKey == KURT_SCRIPT) then return end
       local ops = table.concat(run.ops, ",")
+      mod.log:info("KURTPROBE end n=%d completed=%s firstValue=%s ops=%s",
+        run.n, tostring(p.completed), tostring(run.value), ops)
       if #ops > 40 then ops = ops:sub(1, 40) end
       Runtime.reportError("kanto_balls",
         ("KURT n%d v%s %s"):format(run.n, tostring(run.value), ops))
