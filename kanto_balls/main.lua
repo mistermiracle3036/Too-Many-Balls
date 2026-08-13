@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.21"
+  local VERSION = "0.4.22"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -1734,7 +1734,12 @@ return function(mod)
           local recipe = row.recipe
           local ok, reason = craft(self.save, self.data, recipe)
           if ok then
-            self.message = { "Made a " .. recipe.label .. "!" }
+            -- TWO lines, always.  The message box is 20 wide with
+            -- borders, so 18 columns of text, and "Made a CATALYST
+            -- BALL!" is 21 -- it soft-wrapped and scrolled on device.
+            -- Splitting at the label keeps the longest craft line at
+            -- 14 ("CATALYST BALL!") with room for a longer name later.
+            self.message = { "Made a", recipe.label .. "!" }
           elseif reason == "pack full" then
             self.message = { "No room for it." }
           else

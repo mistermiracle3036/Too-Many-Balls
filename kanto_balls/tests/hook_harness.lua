@@ -578,6 +578,29 @@ for _, gen in ipairs({ 1, 2 }) do
                 -- Rows are TAGGED now (kind = recipe|stow|take|cancel).
                 -- Craft only the recipe rows; the action rows have their
                 -- own assertions below.
+                -- THE MESSAGE BOX IS 20 WIDE WITH BORDERS, so 18
+                -- columns of text, and an over-length line does not
+                -- clip -- it soft-wraps and scrolls, which is what the
+                -- coda assertion above already exists to stop.  The
+                -- craft line interpolates a ball NAME, so it is the one
+                -- message that grows every time a recipe is added:
+                -- "Made a CATALYST BALL!" was 21 and shipped that way.
+                -- Checked after EVERY press, not just the crafts.
+                local msgSeen = 0
+                local function checkMessage(what)
+                  local m = s.message
+                  if not m then return end
+                  msgSeen = msgSeen + 1
+                  check(#m <= 3,
+                    ("%s %s message is %d lines (box fits 3)")
+                      :format(label, what, #m))
+                  for _, line in ipairs(m) do
+                    check(#line <= 18,
+                      ("%s %s message line is %d cols (max 18): %s")
+                        :format(label, what, #line, line))
+                  end
+                end
+
                 local recipeRows, sawStow, sawTake, sawCancel = 0, false, false, false
                 for i, row in ipairs(rows) do
                   if row.kind == "stow" then sawStow = true end
@@ -599,6 +622,7 @@ for _, gen in ipairs({ 1, 2 }) do
                     check(apricornTotal(game.save) < before,
                       label .. " craft spent no apricorns for "
                         .. tostring(recipe.id))
+                    checkMessage("craft " .. tostring(recipe.id))
                   end
                 end
                 check(recipeRows >= 1, label .. " case lists no recipes")
@@ -631,6 +655,7 @@ for _, gen in ipairs({ 1, 2 }) do
                   _G.__PRESS = "a"
                   pcheck(label .. " case " .. kind, s.update, s)
                   _G.__PRESS = nil
+                  checkMessage(kind)
                 end
 
                 local ballsBefore = 0
@@ -685,6 +710,15 @@ for _, gen in ipairs({ 1, 2 }) do
                 check(recovered == ballsBefore,
                   ("%s FULL POCKET LOST BALLS: %d of %d came back")
                     :format(label, recovered, ballsBefore))
+
+                -- COUNT, not just contents.  checkMessage returns early
+                -- on a nil message, so if a press ever stopped setting
+                -- one the width check would pass by inspecting nothing.
+                -- One per recipe crafted, plus the five action presses
+                -- above (stow, take, stow, take-into-full, take).
+                check(msgSeen >= recipeRows + 5,
+                  ("%s only %d messages checked, expected >= %d")
+                    :format(label, msgSeen, recipeRows + 5))
               end
 
               -- THE FAILURE PATH THAT COSTS MATERIALS: a full pocket must

@@ -8,6 +8,13 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.22
+
+- **"Made a CATALYST BALL!" no longer overflows the BALL CASE message
+  box.** The longest ball names ran past the edge of the box, which made
+  the line wrap and scroll instead of just sitting there. It now reads
+  over two lines, with room for longer names than any ball has today.
+
 ## 0.4.21
 
 - **Kurt's parting lines are readable now.** They were flashing past: the
