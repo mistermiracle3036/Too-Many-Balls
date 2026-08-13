@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.15"
+  local VERSION = "0.4.16"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -157,6 +157,7 @@ return function(mod)
     -- and for the same reason, it is registered rather than gated, or a
     -- traded/imported one would fall to the ITEMS pocket (see 0.4.9).
     "SNARE_BALL", "CATALYST_BALL", "DRIFT_BALL", "KECLEON_BALL",
+    "CRADLE_BALL",
   }
   if not GEN2 then
     BALL_IDS[#BALL_IDS + 1] = "MOON_BALL"
@@ -323,6 +324,7 @@ return function(mod)
     CATALYST_BALL = "Good on those that\nevolve by stone.",
     DRIFT_BALL   = "Good on light and\nairy POKeMON.",
     KECLEON_BALL = "Turns the colour of\nits target.",
+    CRADLE_BALL  = "The catch begins\nagain at level 1.",
   }
 
   ----------------------------------------------------------------------
@@ -756,6 +758,102 @@ return function(mod)
   })
 
   ----------------------------------------------------------------------
+  -- CRADLE BALL -- a guaranteed catch that starts over at level 1.
+  --
+  -- Authored by ChatGPT against
+  -- exchange/work-orders/too-many-balls-cradle-ball.md, reviewed here.
+  --
+  -- Not a punishment: DVs and stat exp are read and never replaced, so a
+  -- mon caught at 40 and reset to 1 gains the whole stat-exp curve from
+  -- scratch and ends up STRONGER at 100 than one caught late.  Four
+  -- apricorns is the price of that, and the "downside" is the joke.
+  --
+  -- The guarantee uses the same replacement shape as SNARE and SILPH:
+  -- Gen 1's attempt contract is `caught, shakes`, where true, 3 is the
+  -- clean guaranteed catch; Gold's arm lives in the one catch.rate wrap.
+  --
+  -- The reset runs in pokemon.caught, which BOTH generations emit with
+  -- the live mon AFTER it is in the party or box, so mutating that
+  -- reference is what persists.
+  --
+  -- THE TWO GENERATIONS DO NOT SHARE A MON SHAPE, and this is the half
+  -- the work order could not paste.  Verified against ./engine at
+  -- v0.1.79 on intake rather than trusted:
+  --   Gen 1 (src/pokemon/Pokemon.lua:60-85)  exp · stats · hp ·
+  --         moves as { id, pp } · NO maxHp field at all
+  --   Gold  (src/battle/gen2/Mon.lua:243-263) experience · stats ·
+  --         maxHp · statExp · moves as { id, pp, maxPp }, which
+  --         Mon.movesAtLevel already builds when handed data.moves
+  ----------------------------------------------------------------------
+  registerBall("CRADLE_BALL", "CRADLE BALL", 2000, {
+    tossAnim = "ULTRATOSS_ANIM",
+    attempt = function()
+      return true, 3
+    end,
+  })
+
+  local function resetCradleCaught(game, mon)
+    local data = assert(game and game.data, "game data missing")
+    local species = mon and mon.species
+    local def = assert(data.pokemon and data.pokemon[species],
+      "species missing: " .. tostring(species))
+
+    if GEN2 then
+      local Mon = require("src.battle.gen2.Mon")
+      local growth = Mon.growthFor(data, def.growthRate)
+
+      -- Everything is computed BEFORE the live record is touched, so a
+      -- helper that fails leaves the caught Pokemon internally
+      -- consistent rather than half-reset.
+      local experience = Mon.experienceForLevel(growth, 1)
+      local moves = Mon.movesAtLevel(def, 1, data.moves)
+      local stats = Mon.stats(def.baseStats, mon.dvs, 1, mon.statExp)
+
+      mon.level = 1
+      mon.experience = experience
+      mon.moves = moves
+      mon.stats = stats
+      mon.maxHp = stats.hp
+      mon.hp = stats.hp
+
+      -- caughtLevel deliberately keeps the ENCOUNTER level: the engine
+      -- preserves it across evolution and daycare independently of the
+      -- mon's current level, so resetting it would be a lie about where
+      -- the Pokemon came from.
+    else
+      local Stats = require("src.pokemon.Stats")
+      local Growth = require("src.pokemon.Growth")
+
+      local exp = Growth.expForLevel(def.growthRate, 1, data.growth_rates)
+      local moves = {}
+      for _, id in ipairs(Pokemon.movesAtLevel(def, 1)) do
+        local moveDef = data.moves and data.moves[id]
+        moves[#moves + 1] = { id = id, pp = moveDef and moveDef.pp or 0 }
+      end
+      local stats = Stats.calc(def, 1, mon.dvs or {}, mon.statExp)
+
+      mon.level = 1
+      mon.exp = exp
+      mon.moves = moves
+      mon.stats = stats
+      mon.hp = stats.hp
+    end
+  end
+
+  mod.events:on("pokemon.caught", function(p)
+    if not (p and p.ball == "CRADLE_BALL" and p.mon) then return end
+    -- A failed reset must never cost the player the Pokemon they already
+    -- caught, and must not escape the event bus into someone else's
+    -- listener.  Named in [ERRS] rather than swallowed.
+    local ok, err = pcall(resetCradleCaught, p.game, p.mon)
+    if not ok then
+      Runtime.reportError("kanto_balls", "CRADLE reset: " .. tostring(err))
+      return
+    end
+    mod.log:info("CRADLE BALL: %s restarted at level 1", tostring(p.species))
+  end)
+
+  ----------------------------------------------------------------------
   -- CATALYST BALL -- the evolution-stone ball.
   --
   -- Reads `evolveItem`, which is in Gold's catch opts and is used by
@@ -1054,6 +1152,11 @@ return function(mod)
           boostFlat(o, 4)
         end
 
+      elseif ball == "CRADLE_BALL" then
+        -- Replace the roll outright.  Gold returns `caught,
+        -- wFinalCatchRate`, and 255 drives the clean catch animation.
+        return true, 255
+
       elseif ball == "CATALYST_BALL" then
         -- presence of evolveItem IS "evolves by an item" on Gold
         if o.evolveItem then boostFlat(o, 4) end
@@ -1289,9 +1392,13 @@ return function(mod)
   --
   -- COSTED AGAINST REAL SUPPLY, not the dev shelf: seven apricorn trees
   -- on a daily refill, one colour each.  A 2-apricorn recipe is about
-  -- two days, a 3-apricorn mixed one is a small project.  Nothing costs
-  -- four, so the tier stays playable on tree supply and an apricorn
-  -- farm would make it comfortable rather than mandatory.
+  -- two days and a 3-apricorn mixed one is a small project, so the tier
+  -- stays playable on tree supply and an apricorn farm would make it
+  -- comfortable rather than mandatory.
+  --
+  -- CRADLE alone costs FOUR.  It is the capstone, and the recipe IS the
+  -- balance for a guaranteed catch -- do not add a further penalty to
+  -- the ball to compensate.
   local RECIPES = {
     {
       id = "CATALYST_BALL",
@@ -1322,6 +1429,16 @@ return function(mod)
       inputs = { GRN_APRICORN = 1, RED_APRICORN = 1 },
       blurb = "Takes the colour",
       blurb2 = "of its target.",
+    },
+    {
+      id = "CRADLE_BALL",
+      label = "CRADLE BALL",
+      inputs = {
+        WHT_APRICORN = 1, PNK_APRICORN = 1,
+        GRN_APRICORN = 1, RED_APRICORN = 1,
+      },
+      blurb = "A fresh start for",
+      blurb2 = "what it catches.",
     },
   }
 
@@ -1360,6 +1477,98 @@ return function(mod)
     return true
   end
 
+  ----------------------------------------------------------------------
+  -- BALL CASE STORAGE -- only the balls this mod owns.
+  --
+  -- Authored by ChatGPT against
+  -- exchange/work-orders/too-many-balls-case-storage.md, reviewed here.
+  --
+  -- WHY IT EXISTS: with the mod disabled its item ids stay in the save
+  -- but nothing registers them, so they fall into the ITEMS pocket under
+  -- raw names.  No mod can fix that from outside -- a disabled mod's
+  -- entry chunk never runs and Loader:setEnabled emits no event -- so
+  -- the player stows deliberately before switching off instead.
+  --
+  -- Apricorns are NOT stowed: they are ordinary vanilla items and look
+  -- perfectly normal with the mod off.  The CASE is not stowed either --
+  -- it is the container, and stowing it would strand the contents.
+  ----------------------------------------------------------------------
+  local STOWED_KEY = "stowed"
+
+  local function stowedBalls()
+    local value = mod.save:get(STOWED_KEY)
+    if type(value) ~= "table" then return {} end
+    return value
+  end
+
+  local function countStored(stowed)
+    local total = 0
+    for _, id in ipairs(BALL_IDS) do
+      local n = stowed and stowed[id]
+      if type(n) == "number" and n > 0 then total = total + n end
+    end
+    return total
+  end
+
+  local function countOwnedInBag(save)
+    local total = 0
+    for _, id in ipairs(BALL_IDS) do
+      total = total + held(save, id)
+    end
+    return total
+  end
+
+  local function stowAll(save)
+    if not save then return 0 end
+    local stowed = stowedBalls()
+    local moved = 0
+    for _, id in ipairs(BALL_IDS) do
+      local n = held(save, id)
+      if n > 0 then
+        -- Bag.remove maintains inventory AND bagOrder; never write
+        -- save.inventory directly.
+        Bag.remove(save, id, n)
+        local old = stowed[id]
+        if type(old) ~= "number" or old < 0 then old = 0 end
+        stowed[id] = old + n
+        moved = moved + n
+      end
+    end
+    if moved > 0 then mod.save:set(STOWED_KEY, stowed) end
+    return moved
+  end
+
+  local function takeBack(save, data)
+    local stowed = stowedBalls()
+    local before = countStored(stowed)
+    if before == 0 or not save then return 0, before end
+
+    local moved, blocked = 0, false
+    for _, id in ipairs(BALL_IDS) do
+      local n = stowed[id]
+      if type(n) ~= "number" or n < 1 then n = 0 end
+      -- ONE AT A TIME, deliberately.  Bag.add refuses a whole quantity
+      -- when the pocket is full or the stack would pass 99, so asking
+      -- for the lot would return nothing when only some fit.  This
+      -- returns everything that fits and leaves the exact remainder.
+      --
+      -- And it ADDS BEFORE IT DECREMENTS: the stow is only reduced once
+      -- Bag.add has said yes.  The reverse order would eat the player's
+      -- balls against a full pocket, which is the one failure here that
+      -- costs something real.
+      while n > 0 do
+        if not Bag.add(save, id, 1, data) then blocked = true break end
+        n = n - 1
+        moved = moved + 1
+        if n > 0 then stowed[id] = n else stowed[id] = nil end
+      end
+      if blocked then break end
+    end
+
+    mod.save:set(STOWED_KEY, stowed)
+    return moved, countStored(stowed)
+  end
+
   if GEN2 then
     -- The case itself.  A KEY ITEM: its own 25-slot pocket, so it costs
     -- nothing from the twelve ball slots this mod is already stretching.
@@ -1394,11 +1603,19 @@ return function(mod)
       return self
     end
 
+    -- Rows are now TAGGED, not bare recipes: CANCEL used to be virtual
+    -- (index == #rows + 1) and the two new actions could not be told
+    -- apart that way.  Anything reading a row must switch on `kind`.
     function Case:rows()
       local rows = {}
       for _, recipe in ipairs(RECIPES) do
-        rows[#rows + 1] = recipe
+        rows[#rows + 1] = { kind = "recipe", label = recipe.label,
+                            recipe = recipe }
       end
+      rows[#rows + 1] = { kind = "stow", label = "STOW ALL" }
+      rows[#rows + 1] = { kind = "take",
+        label = "TAKE BACK (" .. tostring(countStored(stowedBalls())) .. ")" }
+      rows[#rows + 1] = { kind = "cancel", label = "CANCEL" }
       return rows
     end
 
@@ -1420,43 +1637,86 @@ return function(mod)
       end
       local rows = self:rows()
       if input:wasPressed("down") then
-        self.index = math.min(#rows + 1, self.index + 1)
+        -- #rows, not #rows + 1: CANCEL is a real row now.
+        self.index = math.min(#rows, self.index + 1)
       elseif input:wasPressed("up") then
         self.index = math.max(1, self.index - 1)
       elseif input:wasPressed("b") then
         self:close()
       elseif input:wasPressed("a") then
-        local recipe = rows[self.index]
-        if not recipe then return self:close() end   -- the CANCEL row
-        local ok, reason = craft(self.save, self.data, recipe)
-        if ok then
-          self.message = { "Made a " .. recipe.label .. "!" }
-        elseif reason == "pack full" then
-          self.message = { "No room for it." }
-        else
-          self.message = { "Not enough", "APRICORNS." }
+        local row = rows[self.index]
+        if not row then return end
+
+        if row.kind == "cancel" then
+          return self:close()
+
+        elseif row.kind == "recipe" then
+          local recipe = row.recipe
+          local ok, reason = craft(self.save, self.data, recipe)
+          if ok then
+            self.message = { "Made a " .. recipe.label .. "!" }
+          elseif reason == "pack full" then
+            self.message = { "No room for it." }
+          else
+            self.message = { "Not enough", "APRICORNS." }
+          end
+
+        elseif row.kind == "stow" then
+          local moved = stowAll(self.save)
+          if moved > 0 then
+            self.message = { "Stowed " .. tostring(moved) .. " balls." }
+          else
+            self.message = { "Nothing to stow." }
+          end
+
+        elseif row.kind == "take" then
+          if countStored(stowedBalls()) == 0 then
+            self.message = { "The case is", "empty." }
+          else
+            local moved, remaining = takeBack(self.save, self.data)
+            if remaining > 0 then
+              self.message = { "No room for the", "rest." }
+            else
+              self.message = { "Took " .. tostring(moved) .. " back." }
+            end
+          end
         end
       end
     end
 
+    -- ROW SPACING IS 1, NOT 2, AND THAT IS A FIX RATHER THAN A STYLE
+    -- CHOICE.  The screen is 18 tile rows (144px / 8), and the returned
+    -- patch kept the old two-row spacing while adding three rows.  With
+    -- five recipes that is eight rows from y=3 at stride 2 -- y=17,
+    -- which is the box's own bottom border, off the usable area.  It
+    -- only breaks once CRADLE lands, so the two returns were each fine
+    -- alone and wrong together.
+    --
+    -- Stride 1 puts eight rows at y=3..10, well clear of the message
+    -- box at y=12, and leaves room for several more recipes before this
+    -- needs scrolling.
     function Case:draw()
       local rows = self:rows()
       Chrome.box(0, 0, 20, 12)
       Chrome.print("BALL CASE", 1, 1)
       local y = 3
-      for i, recipe in ipairs(rows) do
-        -- The mark sits in its OWN column and the label always starts at
-        -- the same one.  0.4.12 printed mark .. label from column 2, so a
-        -- craftable row (mark " ") sat one column right of CANCEL and an
-        -- uncraftable one ("-") lined up -- the ragged left edge the
-        -- developer spotted on device.
-        if not canCraft(self.save, recipe) then Chrome.print("-", 2, y) end
-        Chrome.print(recipe.label, 3, y)
+      for i, row in ipairs(rows) do
+        -- A row that would do nothing is marked, in its OWN column so
+        -- every label shares a left edge (the ragged edge the developer
+        -- spotted on device at 0.4.12).
+        local doesNothing = false
+        if row.kind == "recipe" then
+          doesNothing = not canCraft(self.save, row.recipe)
+        elseif row.kind == "stow" then
+          doesNothing = countOwnedInBag(self.save) == 0
+        elseif row.kind == "take" then
+          doesNothing = countStored(stowedBalls()) == 0
+        end
+        if doesNothing then Chrome.print("-", 2, y) end
+        Chrome.print(row.label, 3, y)
         if i == self.index then Chrome.cursor(1, y) end
-        y = y + 2
+        y = y + 1
       end
-      Chrome.print("CANCEL", 3, y)
-      if self.index > #rows then Chrome.cursor(1, y) end
       if self.message then
         Chrome.box(0, 12, 20, 6)
         for i, line in ipairs(self.message) do
@@ -1776,6 +2036,9 @@ return function(mod)
     DRIFT_BALL   = { body = { 152, 200, 232 }, accent = { 248, 250, 252 } },
     -- KECLEON: the lizard's green with its red stripe.
     KECLEON_BALL = { body = {  72, 168,  96 }, accent = { 216,  72,  88 } },
+    -- CRADLE: soft nursery lavender with a warm cream accent.
+    -- TODO/CONFIRM both tones on device.
+    CRADLE_BALL  = { body = { 184, 168, 216 }, accent = { 248, 232, 200 } },
   }
   if not GEN2 then
     COLORS.MOON_BALL = { body = {  60,  68, 128 }, accent = { 232, 208,  96 } }
@@ -1882,6 +2145,7 @@ return function(mod)
     PAL_KB_CATALYST = { {255,255,255}, {216,128,232}, {120,128,144}, {24,24,24} },
     PAL_KB_DRIFT   = { {255,255,255}, {248,250,252}, {152,200,232}, {24,24,24} },
     PAL_KB_KECLEON = { {255,255,255}, {216, 72, 88}, { 72,168, 96}, {24,24,24} },
+    PAL_KB_CRADLE  = { {255,255,255}, {248,232,200}, {184,168,216}, {24,24,24} },
   }
   -- ball id -> palette name.  MOON and FAST are deliberately ABSENT: they
   -- are the cart's own Kurt balls on Gold and already get real colours
@@ -1897,6 +2161,7 @@ return function(mod)
     CATALYST_BALL = "PAL_KB_CATALYST",
     DRIFT_BALL   = "PAL_KB_DRIFT",
     KECLEON_BALL = "PAL_KB_KECLEON",
+    CRADLE_BALL  = "PAL_KB_CRADLE",
   }
   do
     -- GS: the pale cream carried over from Gen 1 did not read as GOLD on

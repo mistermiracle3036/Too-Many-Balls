@@ -438,22 +438,111 @@ for _, gen in ipairs({ 1, 2 }) do
               if s then
                 local rows = s:rows()
                 rowCount = #rows
-                check(rowCount >= 1, label .. " case lists no recipes")
-                for i, recipe in ipairs(rows) do
-                  s.index = i
-                  s.message = nil
-                  local before = apricornTotal(game.save)
-                  local hadBall = game.save.inventory[recipe.id] or 0
-                  _G.__PRESS = "a"
-                  pcheck(label .. " craft " .. tostring(recipe.id),
-                    s.update, s)
-                  _G.__PRESS = nil
-                  check((game.save.inventory[recipe.id] or 0) > hadBall,
-                    label .. " craft made no " .. tostring(recipe.id))
-                  check(apricornTotal(game.save) < before,
-                    label .. " craft spent no apricorns for "
-                      .. tostring(recipe.id))
+                check(rowCount >= 1, label .. " case lists no rows")
+                -- Rows are TAGGED now (kind = recipe|stow|take|cancel).
+                -- Craft only the recipe rows; the action rows have their
+                -- own assertions below.
+                local recipeRows, sawStow, sawTake, sawCancel = 0, false, false, false
+                for i, row in ipairs(rows) do
+                  if row.kind == "stow" then sawStow = true end
+                  if row.kind == "take" then sawTake = true end
+                  if row.kind == "cancel" then sawCancel = true end
+                  if row.kind == "recipe" then
+                    recipeRows = recipeRows + 1
+                    local recipe = row.recipe
+                    s.index = i
+                    s.message = nil
+                    local before = apricornTotal(game.save)
+                    local hadBall = game.save.inventory[recipe.id] or 0
+                    _G.__PRESS = "a"
+                    pcheck(label .. " craft " .. tostring(recipe.id),
+                      s.update, s)
+                    _G.__PRESS = nil
+                    check((game.save.inventory[recipe.id] or 0) > hadBall,
+                      label .. " craft made no " .. tostring(recipe.id))
+                    check(apricornTotal(game.save) < before,
+                      label .. " craft spent no apricorns for "
+                        .. tostring(recipe.id))
+                  end
                 end
+                check(recipeRows >= 1, label .. " case lists no recipes")
+                check(sawStow and sawTake and sawCancel,
+                  label .. " case is missing STOW/TAKE/CANCEL rows")
+
+                -- Every row must fit the screen.  The box is 12 tiles
+                -- tall and rows start at y=3 with stride 1, so the last
+                -- row must land above the message box at y=12.  This is
+                -- the bug the two ChatGPT returns had TOGETHER: stride 2
+                -- put an eighth row on the border.
+                check(3 + (rowCount - 1) < 12,
+                  ("%s %d rows overflow the case box"):format(label, rowCount))
+
+                ------------------------------------------ STOW / TAKE
+                local function rowIndex(kind)
+                  for i, r in ipairs(s:rows()) do
+                    if r.kind == kind then return i end
+                  end
+                end
+                local function press(kind)
+                  s.index = rowIndex(kind)
+                  s.message = nil
+                  _G.__PRESS = "a"
+                  pcheck(label .. " case " .. kind, s.update, s)
+                  _G.__PRESS = nil
+                end
+
+                local ballsBefore = 0
+                for _, id in ipairs(rec.exports.balls or {}) do
+                  ballsBefore = ballsBefore + (game.save.inventory[id] or 0)
+                end
+                check(ballsBefore > 0,
+                  label .. " nothing was crafted to stow")
+
+                press("stow")
+                local leftInBag = 0
+                for _, id in ipairs(rec.exports.balls or {}) do
+                  leftInBag = leftInBag + (game.save.inventory[id] or 0)
+                end
+                check(leftInBag == 0,
+                  label .. " STOW left balls in the bag")
+                -- apricorns must NOT be stowed: they are vanilla items
+                check(apricornTotal(game.save) > 0,
+                  label .. " STOW took the apricorns too")
+                -- and neither may the case itself, or it strands them
+                check(game.save.inventory.BALL_CASE == nil
+                        or game.save.inventory.BALL_CASE > 0,
+                  label .. " STOW swallowed the BALL CASE")
+
+                press("take")
+                local backInBag = 0
+                for _, id in ipairs(rec.exports.balls or {}) do
+                  backInBag = backInBag + (game.save.inventory[id] or 0)
+                end
+                check(backInBag == ballsBefore,
+                  ("%s TAKE BACK returned %d of %d")
+                    :format(label, backInBag, ballsBefore))
+
+                -- THE ONE THAT COSTS REAL ITEMS: a full pocket must
+                -- return what fits and keep the rest, losing nothing.
+                press("stow")
+                local vanillaAdd = rec.stubs["src.inventory.Bag"].add
+                rec.stubs["src.inventory.Bag"].add = function() return false end
+                press("take")
+                rec.stubs["src.inventory.Bag"].add = vanillaAdd
+                local stranded = 0
+                for _, id in ipairs(rec.exports.balls or {}) do
+                  stranded = stranded + (game.save.inventory[id] or 0)
+                end
+                check(stranded == 0,
+                  label .. " TAKE BACK added into a full pocket")
+                press("take")
+                local recovered = 0
+                for _, id in ipairs(rec.exports.balls or {}) do
+                  recovered = recovered + (game.save.inventory[id] or 0)
+                end
+                check(recovered == ballsBefore,
+                  ("%s FULL POCKET LOST BALLS: %d of %d came back")
+                    :format(label, recovered, ballsBefore))
               end
 
               -- THE FAILURE PATH THAT COSTS MATERIALS: a full pocket must

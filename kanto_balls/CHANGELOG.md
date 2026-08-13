@@ -8,6 +8,26 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.16
+
+- **CRADLE BALL** — the capstone craft, four apricorns. It **always
+  catches**, and what it catches **arrives at level 1**.
+  - That's a reward, not a punishment: its DVs and training are
+    untouched, so a Pokémon caught late and started over ends up
+    *stronger* at level 100 than one caught at its original level. The
+    four-apricorn cost is the balance.
+  - Where it was caught is still remembered — only its level restarts.
+- **The BALL CASE can hold your balls now.** *STOW ALL* moves every ball
+  this mod adds out of your bag and into the case; *TAKE BACK* returns
+  them, and shows how many are waiting.
+  - Useful if you want to turn the mod off: stow first and your bag looks
+    completely normal, with everything safe until you turn it back on.
+  - Apricorns stay in your bag — they're ordinary items — and the case
+    never stows itself.
+  - **A full pocket can't cost you anything.** Take back with no room and
+    you get whatever fits; the rest stays in the case.
+- The case list is more compact, so the longer recipe list fits.
+
 ## 0.4.15
 
 - **Three new craftable balls**, made in the BALL CASE from apricorns:
