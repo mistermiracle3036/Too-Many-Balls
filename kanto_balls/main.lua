@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.16"
+  local VERSION = "0.4.17"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -157,7 +157,7 @@ return function(mod)
     -- and for the same reason, it is registered rather than gated, or a
     -- traded/imported one would fall to the ITEMS pocket (see 0.4.9).
     "SNARE_BALL", "CATALYST_BALL", "DRIFT_BALL", "KECLEON_BALL",
-    "CRADLE_BALL",
+    "CRADLE_BALL", "ACE_BALL",
   }
   if not GEN2 then
     BALL_IDS[#BALL_IDS + 1] = "MOON_BALL"
@@ -325,6 +325,7 @@ return function(mod)
     DRIFT_BALL   = "Good on light and\nairy POKeMON.",
     KECLEON_BALL = "Turns the colour of\nits target.",
     CRADLE_BALL  = "The catch begins\nagain at level 1.",
+    ACE_BALL     = "Best on a target\nstill at full HP.",
   }
 
   ----------------------------------------------------------------------
@@ -854,6 +855,39 @@ return function(mod)
   end)
 
   ----------------------------------------------------------------------
+  -- ACE BALL -- rewards catching without first grinding the target down.
+  --
+  -- At full HP it is x4.  From there it falls in a straight line to x1
+  -- at half HP, and stays at x1 below half.  Multiplying the species
+  -- catch rate rather than replacing the roll leaves the ordinary HP and
+  -- status parts of each generation's formula intact.
+  --
+  -- Gen 1 supplies targetMon.hp / targetMon.stats.hp in the ball attempt
+  -- ctx (src/battle/Catching.lua:95-103).  Gold supplies the parallel
+  -- o.hp / o.maxHp pair at its throw site
+  -- (src/ui/gen2/BattleState.lua:2684-2700).
+  ----------------------------------------------------------------------
+  local function aceMultiplier(hp, maxHp)
+    if type(hp) ~= "number" or type(maxHp) ~= "number" or maxHp <= 0 then
+      return 1
+    end
+    local fraction = math.max(0, math.min(1, hp / maxHp))
+    if fraction <= 0.5 then return 1 end
+    return 1 + (fraction - 0.5) * 6
+  end
+
+  registerBall("ACE_BALL", "ACE BALL", 1200, {
+    tossAnim = "ULTRATOSS_ANIM",
+    attempt = function(ctx)
+      local mon = ctx.targetMon
+      local maxHp = mon and mon.stats and mon.stats.hp
+      local mult = aceMultiplier(mon and mon.hp, maxHp)
+      if mult > 1 then boost(ctx, mult) end
+      return ctx.vanillaAttempt()
+    end,
+  })
+
+  ----------------------------------------------------------------------
   -- CATALYST BALL -- the evolution-stone ball.
   --
   -- Reads `evolveItem`, which is in Gold's catch opts and is used by
@@ -1157,6 +1191,10 @@ return function(mod)
         -- wFinalCatchRate`, and 255 drives the clean catch animation.
         return true, 255
 
+      elseif ball == "ACE_BALL" then
+        local mult = aceMultiplier(o.hp, o.maxHp)
+        if mult > 1 then boostFlat(o, mult) end
+
       elseif ball == "CATALYST_BALL" then
         -- presence of evolveItem IS "evolves by an item" on Gold
         if o.evolveItem then boostFlat(o, 4) end
@@ -1440,6 +1478,14 @@ return function(mod)
       blurb = "A fresh start for",
       blurb2 = "what it catches.",
     },
+    {
+      id = "ACE_BALL",
+      label = "ACE BALL",
+      inputs = { WHT_APRICORN = 1, BLU_APRICORN = 1 },
+      learned = "route_aces:ace_ball",
+      blurb = "Best on a target",
+      blurb2 = "still at full HP.",
+    },
   }
 
   -- How many of `id` the bag holds.  save.inventory is a flat id->count
@@ -1450,7 +1496,26 @@ return function(mod)
     return (type(n) == "number" and n) or 0
   end
 
+  ----------------------------------------------------------------------
+  -- RECIPE LEARNING -- a read-only cross-mod contract.
+  --
+  -- A teaching mod writes save.recipeUnlocks[recipe.learned] = true.
+  -- We never check which mod is installed and never create that table:
+  -- the save field is the contract, so either side may ship first and an
+  -- unlock earned earlier appears as soon as the Case next builds rows.
+  -- SaveSerializer walks arbitrary keys recursively with no whitelist
+  -- (src/core/SaveSerializer.lua:12-42), including keys containing `:`.
+  ----------------------------------------------------------------------
+  local function recipeUnlocked(save, recipe)
+    if not (recipe and recipe.learned) then return true end
+    local unlocks = save and save.recipeUnlocks
+    return type(unlocks) == "table" and unlocks[recipe.learned] == true
+  end
+
   local function canCraft(save, recipe)
+    -- Visibility is not security: keep the same gate here so another UI
+    -- or future caller cannot craft a hidden recipe by reaching craft().
+    if not recipeUnlocked(save, recipe) then return false end
     for id, need in pairs(recipe.inputs) do
       if held(save, id) < need then return false end
     end
@@ -1609,8 +1674,13 @@ return function(mod)
     function Case:rows()
       local rows = {}
       for _, recipe in ipairs(RECIPES) do
-        rows[#rows + 1] = { kind = "recipe", label = recipe.label,
-                            recipe = recipe }
+        -- Read the LIVE screen save every build: unlocks earned in this
+        -- session appear immediately.  Locked recipes are hidden rather
+        -- than greyed so a missing teaching mod never looks like a bug.
+        if recipeUnlocked(self.save, recipe) then
+          rows[#rows + 1] = { kind = "recipe", label = recipe.label,
+                              recipe = recipe }
+        end
       end
       rows[#rows + 1] = { kind = "stow", label = "STOW ALL" }
       rows[#rows + 1] = { kind = "take",
@@ -1699,7 +1769,19 @@ return function(mod)
       local rows = self:rows()
       Chrome.box(0, 0, 20, 12)
       Chrome.print("BALL CASE", 1, 1)
-      local y = 3
+      -- ROWS START AT 2, NOT 3, AND THAT IS CAPACITY, NOT TASTE.
+      -- Font.drawBox puts its bottom border at ty + th - 1
+      -- (src/render/Font.lua:549), so this 12-tall box borders at row 11
+      -- and its interior is rows 1..10.  With ACE BALL LOCKED there are
+      -- eight rows and y=3 fits; the moment Route Aces unlocks it there
+      -- are nine, and the last would land on 11 -- the border itself.
+      -- Starting at 2 fits all nine.
+      --
+      -- The next recipe after that does NOT fit, and the harness asserts
+      -- exactly this, so it will fail loudly rather than overflowing on
+      -- someone's phone.  When that day comes the answer is a scrolling
+      -- list, not another row of shaving.
+      local y = 2
       for i, row in ipairs(rows) do
         -- A row that would do nothing is marked, in its OWN column so
         -- every label shares a left edge (the ragged edge the developer
@@ -2039,6 +2121,8 @@ return function(mod)
     -- CRADLE: soft nursery lavender with a warm cream accent.
     -- TODO/CONFIRM both tones on device.
     CRADLE_BALL  = { body = { 184, 168, 216 }, accent = { 248, 232, 200 } },
+    -- ACE: trophy blue under a gold band. TODO/CONFIRM on a real throw.
+    ACE_BALL     = { body = {  56,  88, 176 }, accent = { 240, 192,  64 } },
   }
   if not GEN2 then
     COLORS.MOON_BALL = { body = {  60,  68, 128 }, accent = { 232, 208,  96 } }
@@ -2146,6 +2230,8 @@ return function(mod)
     PAL_KB_DRIFT   = { {255,255,255}, {248,250,252}, {152,200,232}, {24,24,24} },
     PAL_KB_KECLEON = { {255,255,255}, {216, 72, 88}, { 72,168, 96}, {24,24,24} },
     PAL_KB_CRADLE  = { {255,255,255}, {248,232,200}, {184,168,216}, {24,24,24} },
+    -- Third entry is the body tone. TODO/CONFIRM on a real Gold throw.
+    PAL_KB_ACE     = { {255,255,255}, {240,192, 64}, { 56, 88,176}, {24,24,24} },
   }
   -- ball id -> palette name.  MOON and FAST are deliberately ABSENT: they
   -- are the cart's own Kurt balls on Gold and already get real colours
@@ -2162,6 +2248,7 @@ return function(mod)
     DRIFT_BALL   = "PAL_KB_DRIFT",
     KECLEON_BALL = "PAL_KB_KECLEON",
     CRADLE_BALL  = "PAL_KB_CRADLE",
+    ACE_BALL     = "PAL_KB_ACE",
   }
   do
     -- GS: the pale cream carried over from Gen 1 did not read as GOLD on

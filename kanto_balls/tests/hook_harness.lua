@@ -286,6 +286,79 @@ for _, gen in ipairs({ 1, 2 }) do
           label .. " registerBallPalette missing")
       end
 
+      ------------------------------------------- LOCKED RECIPES
+      -- The cross-mod unlock gate (save.recipeUnlocks).  ChatGPT could
+      -- not test the UNLOCKED half -- the default harness supplies no
+      -- unlocks -- so this is the half that was never exercised, which
+      -- is exactly where a gate goes wrong.
+      if gen == 2 then
+        local factory = rec.screens.KbBallCase
+        local newFn = factory and ((type(factory) == "function") and factory
+          or factory.new)
+        if newFn then
+          local function rowsWith(unlocks)
+            local g = fakeGame()
+            g.save.recipeUnlocks = unlocks
+            local ok, s = pcall(newFn, g)
+            if not (ok and s) then return nil end
+            return s:rows(), g
+          end
+
+          local lockedRows = rowsWith(nil)
+          check(lockedRows ~= nil, label .. " case failed with no unlocks")
+          local unlockedRows = rowsWith({ ["route_aces:ace_ball"] = true })
+          check(unlockedRows ~= nil, label .. " case failed with an unlock")
+
+          if lockedRows and unlockedRows then
+            local function hasAce(rows)
+              for _, r in ipairs(rows) do
+                if r.kind == "recipe" and r.recipe.id == "ACE_BALL" then
+                  return true
+                end
+              end
+              return false
+            end
+            check(not hasAce(lockedRows),
+              label .. " ACE BALL is visible while LOCKED")
+            check(hasAce(unlockedRows),
+              label .. " ACE BALL stayed hidden after its unlock")
+            check(#unlockedRows == #lockedRows + 1,
+              label .. " unlocking changed the row count by more than one")
+
+            -- An unlock nobody has a recipe for must be inert, and a
+            -- garbage value must not read as unlocked.
+            local junkRows = rowsWith({ ["nobody:nothing"] = true })
+            check(junkRows and #junkRows == #lockedRows,
+              label .. " an unrelated unlock key changed the list")
+            local falseRows = rowsWith({ ["route_aces:ace_ball"] = false })
+            check(falseRows and not hasAce(falseRows),
+              label .. " a false unlock value counted as unlocked")
+
+            -- And the gate must hold in craft(), not just in the list:
+            -- hiding a row is not the same as refusing to make it.
+            local g = fakeGame()
+            g.save.recipeUnlocks = nil
+            for _, id in ipairs({ "WHT_APRICORN", "BLU_APRICORN" }) do
+              g.save.inventory[id] = 9
+            end
+            local aceRecipe
+            for _, r in ipairs(unlockedRows) do
+              if r.kind == "recipe" and r.recipe.id == "ACE_BALL" then
+                aceRecipe = r.recipe
+              end
+            end
+            check(aceRecipe ~= nil, label .. " could not find the ACE recipe")
+            if aceRecipe and rec.exports.craftForTest then
+              -- only if the mod ever exposes it; otherwise the row-level
+              -- assertions above are the coverage
+              rec.exports.craftForTest(g.save, g.data, aceRecipe)
+              check((g.save.inventory.ACE_BALL or 0) == 0,
+                label .. " craft() made a LOCKED recipe")
+            end
+          end
+        end
+      end
+
       -------------------------------------------- KECLEON'S PALETTE
       -- The ball's whole effect is here, so it is worth asserting in
       -- both directions: the target's own palette name in a battle, and
@@ -469,13 +542,19 @@ for _, gen in ipairs({ 1, 2 }) do
                 check(sawStow and sawTake and sawCancel,
                   label .. " case is missing STOW/TAKE/CANCEL rows")
 
-                -- Every row must fit the screen.  The box is 12 tiles
-                -- tall and rows start at y=3 with stride 1, so the last
-                -- row must land above the message box at y=12.  This is
-                -- the bug the two ChatGPT returns had TOGETHER: stride 2
-                -- put an eighth row on the border.
-                check(3 + (rowCount - 1) < 12,
-                  ("%s %d rows overflow the case box"):format(label, rowCount))
+                -- EVERY ROW MUST FIT INSIDE THE BOX, and this assertion
+                -- has now caught the same class of bug twice.
+                -- Font.drawBox borders at ty + th - 1
+                -- (src/render/Font.lua:549), so a 12-tall box at y=0 has
+                -- interior rows 1..10 -- NOT 1..11.  Rows start at y=2
+                -- with stride 1, so the last row is 2 + (n - 1) and it
+                -- must be <= 10, i.e. at most NINE rows.
+                local CASE_FIRST_ROW, CASE_LAST_INTERIOR = 2, 10
+                check(CASE_FIRST_ROW + (rowCount - 1) <= CASE_LAST_INTERIOR,
+                  ("%s %d rows overflow the case box (last y=%d, max %d)")
+                    :format(label, rowCount,
+                            CASE_FIRST_ROW + (rowCount - 1),
+                            CASE_LAST_INTERIOR))
 
                 ------------------------------------------ STOW / TAKE
                 local function rowIndex(kind)

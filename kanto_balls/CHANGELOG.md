@@ -8,6 +8,26 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.17
+
+- **Recipes can now be taught by other mods.** A recipe can be locked
+  until some other mod says you've earned it — hidden until then, rather
+  than shown greyed, so a mod you don't have never looks like something
+  broken.
+- **ACE BALL**, the first of those. **×4 on a target at full HP**, falling
+  away to no bonus at half HP and below — the one ball that rewards
+  catching something cleanly instead of wearing it down. It's worse than
+  a Great Ball against anything you've already softened up, which is the
+  point.
+  - Made from one white + one blue apricorn, and taught by **Route Aces**
+    (a separate mod in development) for beating every Johto route ace and
+    its superboss.
+  - You don't need that mod installed. Without it the recipe simply isn't
+    there, and nothing else changes.
+  - If you already earned it before updating, it appears the next time you
+    open the case.
+- The case list is a little tighter so the extra recipe fits on screen.
+
 ## 0.4.16
 
 - **CRADLE BALL** — the capstone craft, four apricorns. It **always
