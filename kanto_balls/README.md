@@ -1,9 +1,10 @@
 # Too Many Balls
 
 Custom Poké Balls for gen1recomp — on **Red/Blue/Yellow and, since
-0.4.0, Pokémon Gold**. `main.lua` is commented to be read and copied:
-every ball is one self-contained pattern with the engine file and line
-it was verified against, on both generations.
+0.4.0, Pokémon Gold**. Fourteen of them now, which is where the name
+came from. `main.lua` is commented to be read and copied: every ball is
+one self-contained pattern with the engine file and line it was verified
+against, on both generations.
 
 *(Previously called **Kanto Balls** — renamed at 0.4.3 once the balls
 reached Johto. Same mod: the id is still `kanto_balls` and the download
@@ -12,16 +13,22 @@ your save changes. Before that it was **Example Balls**, id
 `example_balls` — that one is a genuinely different id, so remove it if
 you still have it.)*
 
-<img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/ball-colors.png" width="520" alt="All nine Kanto Balls in their own colors: Premier, Nest, Moon, Heal, Fast, Mirror, Silph, GS and Beast">
+<img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/ball-colors.png" width="520" alt="Nine of the balls in their own colors: Premier, Nest, Moon, Heal, Fast, Mirror, Silph, GS and Beast">
+
+There are two ways to get a ball here. Most are **bought** at marts. The
+rest are **crafted** from Apricorns in the BALL CASE, which is a Gold
+feature — Kurt gives you the case, and it is worth having.
+
+## Balls you buy
 
 | Ball | Where | What it does |
 | ---- | ----- | ------------ |
 | PREMIER BALL | Free: buy 10+ balls in one purchase and the clerk throws one in per 10 (buy 20, get 2) | Plain 1× odds |
 | NEST BALL (¥1000) | Great/Ultra marts | 4× vs Lv ≤ 15, 3× ≤ 25, 2× ≤ 35 |
-| MOON BALL (¥1200) | Pewter Mart, before Mt. Moon — *Gen 1 only* | 4× vs species that evolve by Moon Stone |
 | HEAL BALL (¥300) | Great/Ultra marts | Normal odds; the catch arrives fully healed (HP, status, PP) |
-| FAST BALL (¥1000) | Great/Ultra marts — *Gen 1 only* | 4× vs species with base Speed ≥ 100 |
 | MIRROR BALL (¥1200) | Great/Ultra marts | 4× when the wild Pokémon is the same species as the one you have out |
+| MOON BALL (¥1200) | Pewter Mart, before Mt. Moon — *Gen 1 only* | 4× vs species that evolve by Moon Stone |
+| FAST BALL (¥1000) | Great/Ultra marts — *Gen 1 only* | 4× vs species with base Speed ≥ 100 |
 | SILPH BALL (¥9800) | Saffron Mart (Gold: "PROTO BALL", Ultra-tier marts) | Guaranteed catch — except one throw in **two** fizzles, and the ball is spent either way |
 
 <img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/mart-shelf.png" width="360" alt="A Kanto mart's ball shelf listing NEST, HEAL, FAST, MIRROR and SILPH BALLs with prices">
@@ -41,6 +48,55 @@ exactly one after the takeover.
 
 <img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/silph-broke.png" width="360" alt="Battle text reading: The PROTOTYPE broke apart!">
 
+## Balls you make — the BALL CASE
+
+*Pokémon Gold only.* Kurt has been making balls out of Apricorns for
+years. When you come back to him from the Slowpoke Well he decides
+you're worth teaching, and hands over a **BALL CASE**.
+
+The case is a key item. Use it from the pack and it opens a workbench:
+pick a ball, and if you have the Apricorns it's made on the spot.
+
+| Ball | Costs | What it does |
+| ---- | ----- | ------------ |
+| KECLEON BALL | 1 Green + 1 Red Apricorn | 1.5×, same as a Great Ball — **and it turns the colour of whatever you throw it at** |
+| DRIFT BALL | 1 White + 1 Yellow Apricorn | 4× on light, airy Pokémon |
+| SNARE BALL | 2 Black Apricorns | Catches a sleeping or frozen target outright; a dud on anything awake |
+| CATALYST BALL | 1 Green + 1 Yellow Apricorn | 4× on species that evolve with a stone |
+| CRADLE BALL | 1 White + 1 Pink + 1 Green + 1 Red Apricorn | Never misses — and the catch **starts over at level 1** |
+
+**The KECLEON BALL is the one to see.** It reads the wild Pokémon's own
+palette as it flies, so it is pink at a Wigglytuff, orange at a Slugma,
+red at a Scizor, blue at a Lapras. Throw it at a shiny and you get a
+shiny-coloured ball.
+
+**The CRADLE BALL is not a punishment.** Your catch comes back at level
+1 with level-1 moves, but its DVs and stat experience are untouched — so
+it grows the whole curve from scratch and ends up *stronger* at 100 than
+one caught late. Four Apricorns is the price of that, and the downside
+is the joke.
+
+The case also stores balls. **STOW ALL** moves every ball from this mod
+out of your pack and into the case; **TAKE BACK** returns them. Nothing
+is ever lost — if your pack is full you get back what fits and the rest
+stays put. Apricorns are never stowed, and neither is the case.
+
+Apricorns come off the seven Apricorn trees, and the recipes are costed
+against that supply — the case is meant to be worth a detour, not a
+vending machine.
+
+## Two balls you won't see
+
+**GS BALL** and **BEAST BALL** exist but aren't obtainable in normal
+play; they're behind the *[DEV] CHEAP BALLS* option. They're still
+registered on every boot on purpose, so if you ever got one they stay in
+the BALLS pocket and look like themselves rather than turning into junk.
+
+The **ACE BALL** is a case recipe that stays hidden until another mod
+teaches it — that hook is for [Route
+Aces](https://github.com/mistermiracle3036/) and isn't live yet. Nothing
+to find for now.
+
 **Every catch is marked.** Whichever of these balls you use, the Pokémon
 remembers it (`mon.caughtBall`). The engine itself does not record this,
 so the mod does — it is what lets [Kanto
@@ -51,9 +107,10 @@ ribbon for how something was caught.
 
 Since 0.4.0 the mod loads on a Gold boot too. What's different there:
 
-- **Five balls travel:** PREMIER, NEST, HEAL, MIRROR and the prototype,
-  with the same behaviour as on Red. They appear at marts that already
-  sell GREAT or ULTRA BALLs, and sort into the BALLS pocket.
+- **The whole craft tier is Gold-only**, because Kurt and the Apricorns
+  are. The balls themselves are registered on Red as well, so one that
+  arrives from elsewhere still works and still sorts correctly — there's
+  just no way to make one there.
 - **MOON and FAST stay in Kanto** — Gold has its own native Moon Ball
   and Fast Ball (Kurt makes them from Apricorns), so ours step aside
   rather than fight them.
@@ -66,10 +123,13 @@ Since 0.4.0 the mod loads on a Gold boot too. What's different there:
 - **Each ball has its own colour when thrown.** Gold colours balls
   itself, but only knows the ones the cart ships, so custom balls would
   otherwise all throw grey. This mod supplies its own palettes and
-  leaves Gold's native Moon and Fast Balls exactly as they are. *(These
-  colours are a first pass and will likely be retuned.)* Add **Pokeball
-  Colors** and those same colours show up on the Pokémon Center heal
-  machine as well.
+  leaves Gold's native Moon and Fast Balls exactly as they are. Add
+  **Pokeball Colors** and those same colours show up on the Pokémon
+  Center heal machine as well.
+- **Your BALLS pocket grows to fit.** Gold's ball pocket holds twelve
+  kinds, which this mod would fill on its own, so it adds one slot per
+  ball it registers. Turn on *VANILLA BAG LIMITS* if you'd rather it
+  didn't.
 
 ## Requirements
 
@@ -95,6 +155,16 @@ After the first install, the mod browser checks this repo's releases
 automatically for each. Update both together when either shows
 "available" -- see the note in Shop Events' README on why.
 
+## Options
+
+- **[DEV] CHEAP BALLS** — puts GS and BEAST on every ball shelf and
+  widens the Gold shelves to every mart. For testing.
+- **VANILLA BAG LIMITS** — keeps Gold's stock twelve-kind ball pocket
+  instead of growing it.
+
+*A note for Gold players:* the engine currently doesn't persist mod
+options set on a Gold boot. Set these from a Red boot and they'll stick.
+
 ## Plays well with
 
 - **Pokeball Colors** — optional on **both** games, and worth having on
@@ -114,7 +184,9 @@ automatically for each. Update both together when either shows
   `exports.registerBallPalette(ballId, paletteName, row)` rather than
   wrapping `ballPalette` a second time — two wraps means load order
   decides the colour, silently. A ball registered that way is picked up
-  by the heal machine too.
+  by the heal machine too. There's a matching
+  `exports.requestBallSlots(n)` if your mod needs pocket headroom of its
+  own.
 - **Custom Poké Balls** by magalvao — coexists; both mods append to the
   same mart shelves, and no ball is duplicated between them.
 
@@ -133,15 +205,26 @@ per generation. After it, each ball is one pattern:
 - **Mirror** — `attempt(ctx)` reading *your* side of the battle
 - **Silph** — `attempt(ctx)` replacing the roll outright, including
   failing
+- **Kecleon** — a ball whose whole effect is a palette, not maths
+- **Cradle** — rewriting the caught Pokémon after the fact, safely
 
-And for Gold, the three Gen 2 seams in one place: a `catch.rate` wrap
-carrying every ball's behaviour, the `pocket` stamp that puts custom
-items in the BALLS pocket, and the presence-checked mart append —
-each commented with why the Gen 1 mechanism doesn't reach there.
+And for Gold, the Gen 2 seams in one place: a `catch.rate` wrap carrying
+every ball's behaviour, the `pocket` stamp that puts custom items in the
+BALLS pocket, the presence-checked mart append, a key item that opens a
+mod-owned screen, and an NPC handover driven off script events — each
+commented with why the Gen 1 mechanism doesn't reach there.
+
+`tests/hook_harness.lua` runs the whole mod against stub engine modules
+and presses every button, on both generations, in about a second. It is
+not shipped in the zip; it's in the repo, and it exists because static
+checks cannot see a menu row that calls a nil.
 
 ## Credits
 
 - **Mister Miracle** — design, code and the ball colours.
+- Parts of the craft tier were written by **ChatGPT** to written
+  specifications in `exchange/work-orders/`, then reviewed and corrected
+  before landing. The commit for each says which.
 - **Custom Poké Balls by magalvao**
   (https://github.com/magalvao/custom-pokeballs) — the mart-shelf
   mechanism follows the pattern that mod established. No code or assets
