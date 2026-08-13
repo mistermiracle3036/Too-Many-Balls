@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.23"
+  local VERSION = "0.4.24"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -333,7 +333,11 @@ return function(mod)
     SNARE_BALL   = "Holds a sleeping\nor frozen POKeMON.",
     CATALYST_BALL = "Good on those that\nevolve by stone.",
     DRIFT_BALL   = "Good on light and\nairy POKeMON.",
-    KECLEON_BALL = "Turns the colour of\nits target.",
+    -- Was "Turns the colour of\nits target." -- that first line is 19
+    -- columns, one over, and it promised only the trick.  Now it leads
+    -- with the odds, because that is what a player choosing a ball off
+    -- this list needs to know first.
+    KECLEON_BALL = "A good ball that\nmimics its target.",
     CRADLE_BALL  = "The catch begins\nagain at level 1.",
     ACE_BALL     = "Best on a target\nstill at full HP.",
   }
@@ -959,24 +963,52 @@ return function(mod)
   })
 
   ----------------------------------------------------------------------
-  -- KECLEON BALL -- it changes colour to match what you are throwing it
-  -- at.  Plain Poke Ball odds; the trick is entirely cosmetic.
+  -- KECLEON BALL -- a good all-round ball that changes colour to match
+  -- what you throw it at.
   --
-  -- The mechanics live in the GOLD PALETTE WRAP further down, not here,
-  -- which is why this record is empty: no attempt(), no rate change.
-  -- GS BALL is the precedent -- a ball whose whole point is not the
-  -- maths.
+  -- IT WAS COSMETIC-ONLY UNTIL 0.4.24, and the developer's device report
+  -- was "it feels worse".  The code was clean -- an unknown ball id gets
+  -- `catchRate = opts.catchRate` at Catching.lua:283, arithmetically a
+  -- Poke Ball -- so the finding was about the COMPANY it keeps, not a
+  -- bug.  Every other ball in the craft tier is x4 when its condition
+  -- holds (SNARE sleep/freeze, CATALYST stone-evolvers, DRIFT light
+  -- targets) and CRADLE is a guaranteed catch.  A plain ball crafted
+  -- from the same scarce apricorns, sitting in the same menu, reads as
+  -- broken even while working correctly.
   --
-  -- It costs the least of the tier for the same reason.  A player
-  -- crafts this one because it looks extraordinary, not because it
-  -- catches better, and pricing it like a specialist would be a lie.
+  -- x1.5 UNCONDITIONAL is the answer, and 1.5 is not an invented number:
+  -- it is what GREAT_BALL, SAFARI_BALL and PARK_BALL already carry in
+  -- Catching.BALL_MULTIPLIER (Catching.lua:36-46), so this cannot drift
+  -- out of step with the cart's own maths.  It fills the one slot four
+  -- specialists leave empty -- strictly worse than any of them when
+  -- their condition is met, strictly better when it is not.
   --
-  -- GEN 1 gets the ball but not the trick: colours there come from
-  -- pokeball_colors' static table, which has no per-target hook, so on
-  -- Red it throws in its own fixed green-and-red.  Registered on both
-  -- regardless -- see the BALL_IDS note.
+  -- It does NOT undercut buying Great Balls, because the currencies
+  -- differ: Great Balls cost money, which is unlimited late; this costs
+  -- two apricorns, capped by seven trees and their regrowth.
+  --
+  -- Not a fix for the report's own test case, and that was said plainly
+  -- at the time: on a full-HP SNORLAX the HP term takes the species rate
+  -- to a third before any ball touches it, so x1.5 moves /3 to /2 and a
+  -- healthy target still shrugs it off.  The lever there is damage or
+  -- status, not the ball.
+  --
+  -- The COLOUR trick still lives in the GOLD PALETTE WRAP further down,
+  -- not here.  GEN 1 gets the ball and the multiplier but not the trick:
+  -- colours there come from pokeball_colors' static table, which has no
+  -- per-target hook, so on Red it throws in its own fixed green-and-red.
+  --
+  -- Price left at 800 deliberately -- it is craft-only, so the number is
+  -- sell value rather than balance, and moving it was not asked for.
   ----------------------------------------------------------------------
-  registerBall("KECLEON_BALL", "KECLEON BALL", 800, {})
+  local KECLEON_MULT = 1.5
+
+  registerBall("KECLEON_BALL", "KECLEON BALL", 800, {
+    attempt = function(ctx)
+      boost(ctx, KECLEON_MULT)
+      return ctx.vanillaAttempt()
+    end,
+  })
 
   ----------------------------------------------------------------------
   -- GS BALL and BEAST BALL -- [DEV] CHEAP BALLS only.
@@ -1235,10 +1267,16 @@ return function(mod)
         else
           boostFlat(o, BEAST_PENALTY)
         end
+
+      elseif ball == "KECLEON_BALL" then
+        -- Unconditional, unlike every other arm here -- see the ball's
+        -- own section for why a generalist earns the slot.  Same 1.5 the
+        -- engine gives GREAT_BALL, and the same constant Gen 1's
+        -- attempt() uses, so the two generations cannot disagree.
+        boostFlat(o, KECLEON_MULT)
       end
-      -- PREMIER, HEAL, GS, KECLEON: no catch code by design.  KECLEON's
-      -- whole effect is the palette wrap below; its odds are a Poke
-      -- Ball's on purpose.
+
+      -- PREMIER, HEAL, GS: no catch code by design.
       return next_(ball, mon, def, o)
     end)
   end
@@ -1473,10 +1511,10 @@ return function(mod)
       id = "KECLEON_BALL",
       label = "KECLEON BALL",
       -- Kecleon's own green and red, and the cheapest recipe in the
-      -- tier: plain catch odds, so it is crafted for the spectacle.
+      -- tier -- now the tier's generalist rather than its novelty.
       inputs = { GRN_APRICORN = 1, RED_APRICORN = 1 },
-      blurb = "Takes the colour",
-      blurb2 = "of its target.",
+      blurb = "A good ball that",
+      blurb2 = "mimics its target.",
     },
     {
       id = "CRADLE_BALL",

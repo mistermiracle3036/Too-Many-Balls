@@ -247,20 +247,42 @@ for _, gen in ipairs({ 1, 2 }) do
       end
 
       -- every Gen 1 ball's attempt(), including the ones that replace
-      -- the roll outright
+      -- the roll outright.
+      --
+      -- These two loops used to CALL the catch code and assert nothing
+      -- about the result -- "it did not crash" and no more. A ball whose
+      -- multiplier silently did nothing passed both. So KECLEON, whose
+      -- whole 0.4.24 change is a multiplier, is checked by OUTCOME on
+      -- both generations: the rate must actually move, and move by the
+      -- same factor on each, or the two can drift apart unnoticed.
+      local KECLEON_MULT = 1.5
+      local BASE_RATE = 45
+      local sawGen1Kecleon = false
       for id, record in pairs(rec.registries.balls or {}) do
         if type(record) == "table" and record.attempt then
-          pcheck(label .. " attempt " .. id, record.attempt, {
+          local ctx = {
             targetMon = { level = 10, species = "PIDGEY", status = "SLP",
                           hp = 5 },
-            targetDef = { catchRate = 45, baseStats = { speed = 100 },
+            targetDef = { catchRate = BASE_RATE, baseStats = { speed = 100 },
                           evolutions = {} },
             rateOverride = nil,
             battle = { player = { mon = { species = "PIDGEY" } } },
             rng = function() return 1 end,
             vanillaAttempt = function() return true, 3 end,
-          })
+          }
+          pcheck(label .. " attempt " .. id, record.attempt, ctx)
+          if id == "KECLEON_BALL" then
+            sawGen1Kecleon = true
+            check(ctx.rateOverride == BASE_RATE * KECLEON_MULT,
+              ("%s KECLEON gen1 rate is %s, expected %s")
+                :format(label, tostring(ctx.rateOverride),
+                        tostring(BASE_RATE * KECLEON_MULT)))
+          end
         end
+      end
+      if gen == 1 then
+        check(sawGen1Kecleon,
+          label .. " KECLEON registered no gen1 attempt -- the buff is gone")
       end
 
       -- the Gen 2 catch.rate wrap, once per ball we own
@@ -269,12 +291,36 @@ for _, gen in ipairs({ 1, 2 }) do
         check(hook ~= nil, label .. " registered no catch.rate hook")
       end
       if hook then
+        local sawGen2Kecleon = false
         for _, ball in ipairs(rec.exports.balls or {}) do
+          local o = { catchRate = BASE_RATE, level = 10, species = "PIDGEY",
+                      playerSpecies = "PIDGEY", status = "sleep",
+                      random = function() return 0 end }
           pcheck(label .. " catch.rate " .. ball, hook,
-            function() return false, 1 end, ball, nil, nil,
-            { catchRate = 45, level = 10, species = "PIDGEY",
-              playerSpecies = "PIDGEY", status = "sleep",
-              random = function() return 0 end })
+            function() return false, 1 end, ball, nil, nil, o)
+          if ball == "KECLEON_BALL" then
+            sawGen2Kecleon = true
+            -- The hook mutates o.catchRate in place; the engine reads it
+            -- back out (Catching.lua:279).  UNCONDITIONAL, so no state
+            -- in `o` can excuse it not having moved.
+            --
+            -- FLOORED here and not on Gen 1, which is correct for both:
+            -- boostFlat floors because Gold's own multiply does
+            -- (Catching.lua:279), while Gen 1's boost leaves the
+            -- fraction alone because stockAttempt floors it downstream
+            -- inside the wobble maths (src/battle/Catching.lua:62).
+            -- 67 vs 67.5 is that difference and nothing more; the two
+            -- generations are kept honest by sharing KECLEON_MULT, not
+            -- by landing on the same byte.
+            local want = math.floor(BASE_RATE * KECLEON_MULT)
+            check(o.catchRate == want,
+              ("%s KECLEON gen2 rate is %s, expected %s")
+                :format(label, tostring(o.catchRate), tostring(want)))
+          end
+        end
+        if gen == 2 then
+          check(sawGen2Kecleon,
+            label .. " KECLEON absent from exports.balls on gen 2")
         end
       end
 

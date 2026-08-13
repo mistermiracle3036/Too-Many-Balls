@@ -8,6 +8,20 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.24
+
+- **The KECLEON BALL now catches as well as a GREAT BALL**, on top of
+  taking its target's colours. It used to have plain POKE BALL odds, and
+  next to a case full of specialists — SNARE, CATALYST and DRIFT are all
+  four times better when they apply, and CRADLE never misses — it felt
+  broken even though it wasn't. It's the everyday ball of the set now.
+  Still the cheapest recipe: one Green and one Red Apricorn.
+- Its description says so, and it was one character too wide for the box
+  besides.
+- Confirmed on device: the colour trick reads off the wild Pokémon, not
+  yours — pink for a WIGGLYTUFF, orange for a SLUGMA, red for a SCIZOR,
+  blue for a LAPRAS.
+
 ## 0.4.23
 
 - **The CATALYST BALL is magenta now, not dark purple.** It was coming out
