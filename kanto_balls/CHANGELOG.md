@@ -8,57 +8,82 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.27
+
+**Updating from 0.4.7?** This is the big one: **you can make your own balls
+now.** Kurt hands you a BALL CASE, and apricorns stop being just his
+business.
+
+- **KURT GIVES YOU THE BALL CASE.** After you rescue him from SLOWPOKE
+  WELL, as you are leaving and right after he hands over the LURE BALL, he
+  adds a few words of his own: apricorns are not only for his seven balls.
+  Mix them yourself and see what comes out.
+  - His own dialogue is untouched. Everything he normally says, he still
+    says — this is a coda after it, not a replacement.
+  - His seven recipes work exactly as before. The case is a second, separate
+    way to make balls; nothing canon is taken away.
+
+- **FIVE BALLS YOU CRAFT YOURSELF**, one at a time, from apricorns:
+  - **SNARE BALL** (2 Black) — a finisher. A **guaranteed** catch on a
+    sleeping or frozen target, and a dud on anything else. The dud is the
+    point: it rewards setting the status up rather than being a better ball.
+  - **CATALYST BALL** (Green + Yellow) — **4×** on anything that evolves by
+    a stone. Not just the Moon Stone: all of them.
+  - **DRIFT BALL** (White + Yellow) — the Heavy Ball's opposite. Best on the
+    light and hard to pin down.
+  - **KECLEON BALL** (Green + Red) — catches as well as a **GREAT BALL**,
+    and takes the colour of whatever you throw it at. Pink at a WIGGLYTUFF,
+    red at a SCIZOR, blue at a LAPRAS, shiny colours at a shiny. The
+    everyday ball of the set, and the cheapest recipe.
+  - **CRADLE BALL** (four apricorns) — the capstone. It **always catches**,
+    and what it catches **arrives at level 1**. That is a reward, not a
+    punishment: its DVs and training are untouched, so a Pokémon caught late
+    and started over ends up *stronger* at level 100 than one caught at its
+    original level. The ball it was caught in is still remembered — only the
+    level restarts.
+
+- **THE CASE HOLDS YOUR BALLS TOO.** *STOW ALL* moves every ball this mod
+  adds out of your bag and into the case; *TAKE BACK* returns them and shows
+  how many are waiting.
+  - Handy if you want to switch the mod off: stow first, and your bag looks
+    completely normal with everything safe until you turn it back on.
+  - **A full pocket cannot cost you anything.** Take back with no room and
+    you get whatever fits; the rest stays in the case.
+  - Apricorns stay in your bag — they are ordinary items — and the case
+    never stows itself.
+
+- **Recipes other mods can teach you.** A recipe can stay hidden until
+  another mod says you have earned it — hidden rather than greyed out, so a
+  mod you do not have never looks like something broken. The **ACE BALL**
+  (White + Blue) is the first, and it is **not available yet**: **Route
+  Aces** teaches it for beating every Johto route ace and its superboss.
+  It is 4× on a target at full HP, falling away to nothing by half HP — the
+  one ball that rewards catching something cleanly instead of wearing it
+  down. You do not need that mod; without it the recipe simply is not
+  there, and nothing else changes. If you earn it later it appears the next
+  time you open the case.
+
+- **Every ball has a description now.** They used to show a blank box in
+  marts, the PACK and the item PC, which looked broken rather than terse.
+
+- **Bag housekeeping** — the balls this mod adds no longer crowd your
+  pockets, and the GS and BEAST balls keep their proper pocket.
+
+**Crafting is Pokémon Gold only**, because apricorns are: Red, Blue and
+Yellow have none. Every ball this mod already added works on all four games
+exactly as before — this release does not take anything away from a Kanto
+game.
+
+*If you play on Gold, note that the engine does not currently keep mod
+options set on a Gold boot — set them from a Red boot and they will stick.*
+
+*Craft recipes and costs are a first pass and will be retuned once they have
+been played.*
+
 ## 0.4.26
 
-**Updating from 0.4.7? Kurt will teach you to make your own balls.**
-
-Everything below has landed since the last release. The headline is a
-whole second way to get a ball.
-
-- **The BALL CASE, and five balls you make yourself.** *Pokémon Gold.*
-  Go back to Kurt after the Slowpoke Well and he decides you're worth
-  teaching — he hands you a BALL CASE. It's a key item: use it from the
-  pack and it opens a workbench that mixes Apricorns into balls.
-  - **KECLEON BALL** (1 Green + 1 Red) — catches as well as a Great Ball,
-    **and turns the colour of whatever you throw it at.** Pink at a
-    Wigglytuff, red at a Scizor, blue at a Lapras. Throw it at a shiny
-    and the ball comes out shiny.
-  - **DRIFT BALL** (1 White + 1 Yellow) — 4× on light, airy Pokémon.
-  - **SNARE BALL** (2 Black) — catches a sleeping or frozen target
-    outright. A dud on anything awake.
-  - **CATALYST BALL** (1 Green + 1 Yellow) — 4× on species that evolve
-    with a stone.
-  - **CRADLE BALL** (1 White + 1 Pink + 1 Green + 1 Red) — never misses,
-    and your catch **starts over at level 1**. It isn't a punishment: its
-    DVs and stat experience come through untouched, so it grows the whole
-    curve from scratch and ends up stronger at 100 than a late catch.
-- **The case stores balls too.** *STOW ALL* clears every ball of this
-  mod's out of your pack; *TAKE BACK* returns them. If your pack is full
-  you get back what fits and the rest waits in the case — nothing is ever
-  lost. Your Apricorns stay where they are.
-- **Kurt's own seven recipes are untouched.** He still makes what he
-  always made; this is in addition, and his dialogue is his own.
-- **Room in your bag for all of it.** Gold's ball pocket only holds
-  twelve kinds, which this mod fills by itself, so it now adds a slot per
-  ball it brings. Nothing else gets more room and nothing you own is
-  touched. *VANILLA BAG LIMITS* turns it off.
-- **Balls have descriptions now.** They used to show an empty box in
-  marts and in the pack.
-- **Fixed: a GS or BEAST BALL you already owned could fall out of the
-  BALLS pocket** if you turned the dev option off. They're registered on
-  every boot now, so anything you have keeps its pocket and its colour.
-
-*If you play on Gold, note that the engine doesn't currently keep mod
-options set on a Gold boot — set them from a Red boot and they'll stick.*
-
-**New in this release specifically:** the developer-only probes and the free
-Apricorn shelf used to build all this are gone from the release, and the
-BALL CASE is off the dev shelf now that Kurt hands it over properly.
-Documentation caught up with the mod.
-
-**Also new in 0.4.26:** screenshots of the BALL CASE and of the KECLEON
-BALL taking its target's colours, on the download page and in the mod's
-own README.
+- Superseded by 0.4.27 before release; see above. Screenshots of the BALL
+  CASE and of the KECLEON BALL taking its target's colours.
 
 ## 0.4.25
 

@@ -13,7 +13,7 @@ your save changes. Before that it was **Example Balls**, id
 `example_balls` — that one is a genuinely different id, so remove it if
 you still have it.)*
 
-<img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/ball-colors.png" width="520" alt="Nine of the balls in their own colors: Premier, Nest, Moon, Heal, Fast, Mirror, Silph, GS and Beast">
+<img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/ball-colors.png" width="520" alt="Every ball in its own colors: Premier, Nest, Moon, Heal, Fast, Mirror, Silph, GS, Beast, Snare, Drift and Cradle">
 
 There are two ways to get a ball here. Most are **bought** at marts. The
 rest are **crafted** from Apricorns in the BALL CASE, which is a Gold

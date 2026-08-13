@@ -159,7 +159,7 @@ actually changed. See each mod's CHANGELOG for why.
   **Pokémon Center heal machine**: each party slot shows the ball its
   Pokémon was caught in, taken from the same palettes registered here.
 
-  <img src="docs/ball-colors.png" width="520" alt="Nine of the balls in their own colors: Premier, Nest, Moon, Heal, Fast, Mirror, Silph, GS and Beast">
+  <img src="docs/ball-colors.png" width="520" alt="Every ball in its own colors: Premier, Nest, Moon, Heal, Fast, Mirror, Silph, GS, Beast, Snare, Drift and Cradle">
 
   *Requires Pokeball Colors with **COLORS** set to ADVANCED — without it
   every ball throws in the default palette. GS and BEAST are the two
