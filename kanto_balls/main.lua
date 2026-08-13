@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.22"
+  local VERSION = "0.4.23"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -2294,17 +2294,24 @@ return function(mod)
     HEAL_BALL    = { body = { 232, 160, 196 }, accent = { 248, 238, 244 } },
     MIRROR_BALL  = { body = { 168, 180, 200 }, accent = { 244, 250, 255 } },
     SILPH_BALL   = { body = { 120,  88, 168 }, accent = {  96, 216, 200 } },
-    -- SNARE: dark green trap, pale bone catch.  TODO/CONFIRM on device.
+    -- SNARE: dark green trap, pale bone catch.  Confirmed on device.
     SNARE_BALL   = { body = {  56, 104,  72 }, accent = { 224, 216, 176 } },
-    -- The craft tier, first pass -- device-tune these like the others.
-    -- CATALYST: stone-grey shell with an evolution-flash core.
-    CATALYST_BALL = { body = { 120, 128, 144 }, accent = { 216, 128, 232 } },
+    -- The craft tier.  DEVICE-CONFIRMED 2026-08-13 except ACE.
+    -- CATALYST: the evolution flash IS the ball, with a stone-grey band.
+    -- It was the other way round for one round and came back reading as
+    -- DARK PURPLE next to CRADLE's light purple -- two purple balls, and
+    -- adjacent rows in the case at that.  Same inversion the PREMIER
+    -- BALL hit in 0.4.2: a colour on `accent` only shades the body, so
+    -- grey body + magenta accent dithers to purple at sprite size.  The
+    -- ball a player is meant to recognise goes on `body`.
+    CATALYST_BALL = { body = { 200,  72, 208 }, accent = { 216, 216, 224 } },
     -- DRIFT: pale sky and cloud-white, as light as it reads.
     DRIFT_BALL   = { body = { 152, 200, 232 }, accent = { 248, 250, 252 } },
-    -- KECLEON: the lizard's green with its red stripe.
+    -- KECLEON: the lizard's green with its red stripe -- but this is the
+    -- FALLBACK only; in battle the ball takes its target's own palette,
+    -- confirmed on device (pink on a SLOWPOKE, yellow on a PIKACHU).
     KECLEON_BALL = { body = {  72, 168,  96 }, accent = { 216,  72,  88 } },
-    -- CRADLE: soft nursery lavender with a warm cream accent.
-    -- TODO/CONFIRM both tones on device.
+    -- CRADLE: soft nursery lavender with a warm cream accent. Confirmed.
     CRADLE_BALL  = { body = { 184, 168, 216 }, accent = { 248, 232, 200 } },
     -- ACE: trophy blue under a gold band. TODO/CONFIRM on a real throw.
     ACE_BALL     = { body = {  56,  88, 176 }, accent = { 240, 192,  64 } },
@@ -2411,11 +2418,17 @@ return function(mod)
     -- the prototype: Master-ball purple over its teal flash
     PAL_KB_SILPH   = { {255,255,255}, { 96,216,200}, {120, 88,168}, {24,24,24} },
     PAL_KB_SNARE   = { {255,255,255}, {224,216,176}, { 56,104, 72}, {24,24,24} },
-    PAL_KB_CATALYST = { {255,255,255}, {216,128,232}, {120,128,144}, {24,24,24} },
+    -- CATALYST: pal2 was the stone grey and it read DARK PURPLE against
+    -- CRADLE's light purple on device.  The magenta is the body now, and
+    -- pal1 is a lighter magenta -- the same shading relationship NEST and
+    -- HEAL already use, rather than a contrasting tone that muddies it.
+    PAL_KB_CATALYST = { {255,255,255}, {236,168,244}, {200, 72,208}, {24,24,24} },
     PAL_KB_DRIFT   = { {255,255,255}, {248,250,252}, {152,200,232}, {24,24,24} },
     PAL_KB_KECLEON = { {255,255,255}, {216, 72, 88}, { 72,168, 96}, {24,24,24} },
     PAL_KB_CRADLE  = { {255,255,255}, {248,232,200}, {184,168,216}, {24,24,24} },
-    -- Third entry is the body tone. TODO/CONFIRM on a real Gold throw.
+    -- Third entry is the body tone. TODO/CONFIRM on a real Gold throw --
+    -- ACE is the one craft ball still unseen, because it stays hidden
+    -- until Route Aces unlocks the recipe.
     PAL_KB_ACE     = { {255,255,255}, {240,192, 64}, { 56, 88,176}, {24,24,24} },
   }
   -- ball id -> palette name.  MOON and FAST are deliberately ABSENT: they

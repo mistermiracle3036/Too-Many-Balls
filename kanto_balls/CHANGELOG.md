@@ -8,6 +8,17 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.23
+
+- **The CATALYST BALL is magenta now, not dark purple.** It was coming out
+  close enough to the CRADLE BALL to be mistaken for it, which is no good
+  when the two sit next to each other in the BALL CASE. Its evolution-stone
+  flash is the ball's own colour now, with the stone grey as the band.
+- Confirmed on a real Gold throw: SNARE, DRIFT, CRADLE, and the KECLEON
+  BALL taking its target's colours (pink on a SLOWPOKE, yellow on a
+  PIKACHU). Only the ACE BALL is still unseen, since its recipe stays
+  locked until Route Aces.
+
 ## 0.4.22
 
 - **"Made a CATALYST BALL!" no longer overflows the BALL CASE message
