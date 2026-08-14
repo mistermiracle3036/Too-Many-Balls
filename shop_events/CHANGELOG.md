@@ -8,6 +8,89 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.30
+
+- No changes to Shop Events itself. It releases in lockstep with Too Many
+  Balls, so this version exists to keep the two in step — see below for
+  what is new.
+
+## 0.4.29
+
+- No changes to Shop Events itself. It releases in lockstep with Too Many
+  Balls, so this version exists to keep the two in step — see below for
+  what is new.
+
+## 0.4.28
+
+- No changes to Shop Events itself. It releases in lockstep with Too Many
+  Balls, so this version exists to keep the two in step — see below for
+  what is new.
+
+## 0.4.27
+
+- No changes to Shop Events itself. It releases in lockstep with Too Many
+  Balls, so this version exists to keep the two in step — see below for
+  what is new.
+
+## 0.4.26
+- No code change. Lockstep release with Too Many Balls 0.4.26.
+
+## 0.4.25
+- No code change. Lockstep release with Too Many Balls 0.4.25.
+
+## 0.4.24
+- No code change. Lockstep release with Too Many Balls 0.4.24.
+
+## 0.4.23
+- No code change. Lockstep release with Too Many Balls 0.4.23.
+
+## 0.4.22
+- No code change. Lockstep release with Too Many Balls 0.4.22.
+
+## 0.4.21
+- No code change. Lockstep release with Too Many Balls 0.4.21.
+
+## 0.4.20
+- No code change. Lockstep release with Too Many Balls 0.4.20.
+
+## 0.4.19
+- No code change. Lockstep release with Too Many Balls 0.4.19.
+
+## 0.4.18
+- No code change. Lockstep release with Too Many Balls 0.4.18.
+
+## 0.4.17
+- No code change. Lockstep release with Too Many Balls 0.4.17.
+
+## 0.4.16
+- No code change. Lockstep release with Too Many Balls 0.4.16.
+
+## 0.4.15
+- No code change. Lockstep release with Too Many Balls 0.4.15.
+
+## 0.4.14
+- No code change. Lockstep release with Too Many Balls 0.4.14.
+
+## 0.4.13
+- No code change. Lockstep release with Too Many Balls 0.4.13.
+
+## 0.4.12
+- No code change. Lockstep release with Too Many Balls 0.4.12.
+
+## 0.4.11
+- No code change. Lockstep release with Too Many Balls 0.4.11.
+
+## 0.4.10
+- No code change. Lockstep release with Too Many Balls 0.4.10.
+
+## 0.4.9
+- No code change. Lockstep release with Too Many Balls 0.4.9.
+- Verified against engine v0.1.79: the shared till sound and `Bag.add`
+  path this mod listens to are unchanged on both generations.
+
+## 0.4.8
+- No code change. Lockstep release with Too Many Balls 0.4.8.
+
 ## 0.4.7
 
 **Now works on Pokémon Gold.** Everything below has landed since the last

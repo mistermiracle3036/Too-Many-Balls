@@ -8,6 +8,348 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.4.30
+
+**Updating from 0.4.7?** This is the big one: **you can make your own balls
+now.** Kurt hands you a BALL CASE, and apricorns stop being just his
+business.
+
+- **KURT GIVES YOU THE BALL CASE.** After you rescue him from SLOWPOKE
+  WELL, as you are leaving and right after he hands over the LURE BALL, he
+  adds a few words of his own: apricorns are not only for his seven balls.
+  Mix them yourself and see what comes out.
+  - His own dialogue is untouched. Everything he normally says, he still
+    says — this is a coda after it, not a replacement.
+  - His seven recipes work exactly as before. The case is a second, separate
+    way to make balls; nothing canon is taken away.
+
+- **FIVE BALLS YOU CRAFT YOURSELF**, one at a time, from apricorns:
+  - **SNARE BALL** (2 Black) — a finisher. A **guaranteed** catch on a
+    sleeping or frozen target, and a dud on anything else. The dud is the
+    point: it rewards setting the status up rather than being a better ball.
+  - **CATALYST BALL** (Green + Yellow) — **4×** on anything that evolves by
+    a stone. Not just the Moon Stone: all of them.
+  - **DRIFT BALL** (White + Yellow) — the Heavy Ball's opposite. Best on the
+    light and hard to pin down.
+  - **KECLEON BALL** (Green + Red) — catches as well as a **GREAT BALL**,
+    and takes the colour of whatever you throw it at. Pink at a WIGGLYTUFF,
+    red at a SCIZOR, blue at a LAPRAS, shiny colours at a shiny. The
+    everyday ball of the set, and the cheapest recipe.
+  - **CRADLE BALL** (four apricorns) — the capstone. It **always catches**,
+    and what it catches **arrives at level 1**. That is a reward, not a
+    punishment: its DVs and training are untouched, so a Pokémon caught late
+    and started over ends up *stronger* at level 100 than one caught at its
+    original level. The ball it was caught in is still remembered — only the
+    level restarts.
+
+- **THE CASE HOLDS YOUR BALLS TOO.** *STOW ALL* moves every ball this mod
+  adds out of your bag and into the case; *TAKE BACK* returns them and shows
+  how many are waiting.
+  - Handy if you want to switch the mod off: stow first, and your bag looks
+    completely normal with everything safe until you turn it back on.
+  - **A full pocket cannot cost you anything.** Take back with no room and
+    you get whatever fits; the rest stays in the case.
+  - Apricorns stay in your bag — they are ordinary items — and the case
+    never stows itself.
+
+- **Recipes other mods can teach you.** A recipe can stay hidden until
+  another mod says you have earned it — hidden rather than greyed out, so a
+  mod you do not have never looks like something broken. The **ACE BALL**
+  (White + Blue) is the first, and it is **not available yet**: **Route
+  Aces** teaches it for beating every Johto route ace and its superboss.
+  It is 4× on a target at full HP, falling away to nothing by half HP — the
+  one ball that rewards catching something cleanly instead of wearing it
+  down. You do not need that mod; without it the recipe simply is not
+  there, and nothing else changes. If you earn it later it appears the next
+  time you open the case.
+
+- **Every ball has a description now.** They used to show a blank box in
+  marts, the PACK and the item PC, which looked broken rather than terse.
+
+- **Bag housekeeping** — the balls this mod adds no longer crowd your
+  pockets, and the GS and BEAST balls keep their proper pocket.
+
+**Crafting is Pokémon Gold only**, because apricorns are: Red, Blue and
+Yellow have none. Every ball this mod already added works on all four games
+exactly as before — this release does not take anything away from a Kanto
+game.
+
+*If you play on Gold, note that the engine does not currently keep mod
+options set on a Gold boot — set them from a Red boot and they will stick.*
+
+*Craft recipes and costs are a first pass and will be retuned once they have
+been played.*
+
+**Also new in 0.4.28:** screenshots throughout — Kurt handing the case over,
+the BALL CASE in KEY ITEMS, a Johto mart shelf, the KECLEON BALL taking
+three different targets' colours, and a level 41 DODUO arriving at level
+1 with its level-1 moves. The ball line-up picture now has the craft tier
+in it.
+
+**Also new in 0.4.29:** the bag-space note now says what it always did on
+Red, Blue and Yellow as well as Gold — this mod makes room for its own
+balls on every game, not just Johto.
+
+**Also new in 0.4.30:** the extra bag space is sized to the balls you can
+actually get on the game you are playing. On Red, Blue and Yellow that is
+seven rather than fifteen — the craft-tier balls need Kurt's BALL CASE,
+so they no longer reserve room in a Kanto bag they can never reach.
+
+## 0.4.29
+
+- Superseded by 0.4.30 before release; see above.
+
+## 0.4.28
+
+- Superseded by 0.4.29 before release; see above.
+
+## 0.4.27
+
+- Superseded by 0.4.28 before release; see above.
+
+## 0.4.26
+
+- Superseded by 0.4.27 before release; see above. Screenshots of the BALL
+  CASE and of the KECLEON BALL taking its target's colours.
+
+## 0.4.25
+
+- Superseded by 0.4.26 before release; see above. Dev scaffolding removed
+  and documentation rewritten.
+
+## 0.4.24
+
+- **The KECLEON BALL now catches as well as a GREAT BALL**, on top of
+  taking its target's colours. It used to have plain POKE BALL odds, and
+  next to a case full of specialists — SNARE, CATALYST and DRIFT are all
+  four times better when they apply, and CRADLE never misses — it felt
+  broken even though it wasn't. It's the everyday ball of the set now.
+  Still the cheapest recipe: one Green and one Red Apricorn.
+- Its description says so, and it was one character too wide for the box
+  besides.
+- Confirmed on device: the colour trick reads off the wild Pokémon, not
+  yours — pink for a WIGGLYTUFF, orange for a SLUGMA, red for a SCIZOR,
+  blue for a LAPRAS.
+
+## 0.4.23
+
+- **The CATALYST BALL is magenta now, not dark purple.** It was coming out
+  close enough to the CRADLE BALL to be mistaken for it, which is no good
+  when the two sit next to each other in the BALL CASE. Its evolution-stone
+  flash is the ball's own colour now, with the stone grey as the band.
+- Confirmed on a real Gold throw: SNARE, DRIFT, CRADLE, and the KECLEON
+  BALL taking its target's colours (pink on a SLOWPOKE, yellow on a
+  PIKACHU). Only the ACE BALL is still unseen, since its recipe stays
+  locked until Route Aces.
+
+## 0.4.22
+
+- **"Made a CATALYST BALL!" no longer overflows the BALL CASE message
+  box.** The longest ball names ran past the edge of the box, which made
+  the line wrap and scroll instead of just sitting there. It now reads
+  over two lines, with room for longer names than any ball has today.
+
+## 0.4.21
+
+- **Kurt's parting lines are readable now.** They were flashing past: the
+  text went up while he was still finishing his own dialogue, so the
+  button press you were already making dismissed it instantly. It now
+  waits for him to be properly done before he speaks.
+- The lines were also too long for the text box, which made them wrap and
+  scroll. Rewritten to fit.
+
+## 0.4.20
+
+- **Kurt now gives you the BALL CASE at the right moment** — as you're
+  leaving after rescuing him from Slowpoke Well, right after he hands you
+  the LURE BALL. Previously it could happen at your *first* meeting, as
+  he was heading off to the well, which made no sense.
+- **The badge requirement is gone.** It was standing in for "you've
+  rescued him", and it wasn't a good stand-in — a save could hold the
+  badge with Kurt still stuck down the well. It now waits for the rescue
+  itself, so the case arrives exactly when he's grateful and not before.
+
+## 0.4.19
+- Dev build. The Kurt probe now writes the whole conversation to the
+  desktop log as well as its one-line summary to [ERRS], so a PC test
+  gives the full picture instead of sixteen columns of it.
+
+## 0.4.18
+
+- **Kurt no longer hands over the BALL CASE at the wrong moment.** It was
+  firing on your *first* meeting — the scene where he says apricorns
+  aren't just for his seven balls and then heads off to Slowpoke Well.
+  It should be his parting line when he comes *back*.
+- This is an **interim fix**: it can no longer happen on that first
+  conversation. Pinning it exactly to his return needs one more piece of
+  information from a running game, which this build collects.
+- Dev build otherwise: adds a probe (behind `[DEV] CHEAP BALLS`) that
+  records what Kurt's conversation actually does, so the next build can
+  tie the handover to the real moment instead of to a badge.
+
+## 0.4.17
+
+- **Recipes can now be taught by other mods.** A recipe can be locked
+  until some other mod says you've earned it — hidden until then, rather
+  than shown greyed, so a mod you don't have never looks like something
+  broken.
+- **ACE BALL**, the first of those. **×4 on a target at full HP**, falling
+  away to no bonus at half HP and below — the one ball that rewards
+  catching something cleanly instead of wearing it down. It's worse than
+  a Great Ball against anything you've already softened up, which is the
+  point.
+  - Made from one white + one blue apricorn, and taught by **Route Aces**
+    (a separate mod in development) for beating every Johto route ace and
+    its superboss.
+  - You don't need that mod installed. Without it the recipe simply isn't
+    there, and nothing else changes.
+  - If you already earned it before updating, it appears the next time you
+    open the case.
+- The case list is a little tighter so the extra recipe fits on screen.
+
+## 0.4.16
+
+- **CRADLE BALL** — the capstone craft, four apricorns. It **always
+  catches**, and what it catches **arrives at level 1**.
+  - That's a reward, not a punishment: its DVs and training are
+    untouched, so a Pokémon caught late and started over ends up
+    *stronger* at level 100 than one caught at its original level. The
+    four-apricorn cost is the balance.
+  - Where it was caught is still remembered — only its level restarts.
+- **The BALL CASE can hold your balls now.** *STOW ALL* moves every ball
+  this mod adds out of your bag and into the case; *TAKE BACK* returns
+  them, and shows how many are waiting.
+  - Useful if you want to turn the mod off: stow first and your bag looks
+    completely normal, with everything safe until you turn it back on.
+  - Apricorns stay in your bag — they're ordinary items — and the case
+    never stows itself.
+  - **A full pocket can't cost you anything.** Take back with no room and
+    you get whatever fits; the rest stays in the case.
+- The case list is more compact, so the longer recipe list fits.
+
+## 0.4.15
+
+- **Three new craftable balls**, made in the BALL CASE from apricorns:
+  - **CATALYST BALL** (green + yellow) — 4× on anything that evolves by
+    a stone. Not just the Moon Stone: all of them.
+  - **DRIFT BALL** (white + yellow) — the Heavy Ball's opposite. Best on
+    the light and hard to pin down.
+  - **KECLEON BALL** (green + red + pink) — **best on a target that
+    hasn't been touched**, and poor once you've worn it down. The one
+    ball you throw *first* instead of last.
+- **Every ball has a description now.** They showed a blank box in marts,
+  the PACK and the item PC, which looked broken rather than terse.
+- Recipes are costed for real apricorn supply — seven trees on a daily
+  refill — so nothing needs four apricorns. They're a project, not a
+  grind.
+- *Craft recipes and prices are a first pass and will be retuned once
+  they've been played.*
+
+## 0.4.14
+
+- **Kurt gives you the BALL CASE.** Once you've earned the **HIVE
+  BADGE**, the next time you talk to him he adds a few words of his own
+  and hands it over — apricorns aren't just for his seven balls, so mix
+  them yourself and see what comes out.
+- **His own dialogue is untouched.** Everything he normally says, he
+  still says; this is a coda after it, not a replacement.
+- He only ever gives you one, and won't hand over a second if you already
+  have one.
+- *Why the Hive Badge:* Kurt properly starts making balls after the
+  Slowpoke Well rescue, but that story flag isn't something a mod can
+  read on Gold. The badge comes right after the well in normal play, so
+  it can't let you in early — at most very slightly late.
+- The dev shelf still sells a case while this is being tested.
+
+## 0.4.13
+- **Dev build.** Adds a script-key probe: with `[DEV] CHEAP BALLS` on,
+  talking to any NPC on Gold prints that character's script id to the mod
+  manager's [ERRS] screen, once each. It's how we find Kurt's, which is
+  the last unknown before he can teach ball-making and hand over the case.
+- The Ball Case list lines up properly now — the "can't make this yet"
+  dash sits in its own column instead of shifting the row.
+- Removed before the public release, like the other dev tools.
+
+## 0.4.12
+
+Both 0.4.11 crafting bugs, reported from device.
+
+- **The BALL CASE now goes to KEY ITEMS**, not the ITEMS pocket. A
+  one-word ordering mistake in the code meant the instruction that files
+  it was reading an empty name and quietly doing nothing.
+- **Using the case now actually opens it.** The bag closes itself the
+  instant an item is used, and closing it tore down the case along with
+  it — so the screen was being built and destroyed in the same breath.
+  The case now opens a frame later, over the overworld, once the bag has
+  finished closing.
+- If the screen ever fails to open now, it says so on the mod manager's
+  [ERRS] screen instead of doing nothing.
+
+## 0.4.11
+
+**First crafting build — Gold only, and a dev build.** Everything here is
+behind `[DEV] CHEAP BALLS` until it has an earned source.
+
+- **The BALL CASE.** A key item that opens the mod's own screen. It lists
+  what you can make, marks what you have the apricorns for, and makes one
+  at a time. Key items have their own pocket, so it costs nothing from
+  your ball slots.
+- **The SNARE BALL, the first craftable ball.** Two BLACK APRICORNS. It's
+  a finisher: a **guaranteed** catch on a sleeping or frozen target, and a
+  **dud** on anything else. The dud is the point — it rewards setting the
+  status up rather than being a better ball outright.
+- **Kurt is untouched, and stays that way.** His seven recipes work
+  exactly as before; the case is a second, separate way to make balls, so
+  nothing canon is taken away.
+- **Your apricorns are never eaten on a failed craft.** The ball is added
+  to your bag first, and the apricorns only come out once that worked —
+  so a full pocket costs you nothing.
+- Crafting is Gold-only for now, because apricorns are: Red/Blue/Yellow
+  have none. The Snare Ball itself exists on both, and how you'd earn one
+  in Kanto is still an open question.
+
+## 0.4.10
+- **Dev build. No player-visible change.** With `[DEV] CHEAP BALLS` on,
+  all seven apricorns are sold at every Gold mart for ¥1, so the upcoming
+  apricorn-crafted balls can be tested without giving Kurt a fruit and
+  waiting a real day per ball.
+- Folded into the existing dev toggle rather than adding a second one:
+  mod options can only be changed from a Red boot, so every extra switch
+  is another trip to a Red save.
+- **Removed before the public release**, like the Kurt-ball tool before it.
+
+## 0.4.9
+
+- **Fixed: a GS or Beast Ball you already owned moved to the ITEMS pocket
+  when `[DEV] CHEAP BALLS` was switched off**, showing as a raw name and
+  refusing to be thrown. Those two balls are now always *registered* —
+  they keep their pocket, their name, their colour and their behaviour
+  whatever the flag says. What the flag still controls is whether they are
+  **sold**, which was always the point. Longstanding; not caused by the
+  bag change in 0.4.8.
+- Verified against engine **v0.1.79**: every seam this mod depends on —
+  the catch hook, the mart shelves, the clerk's line, ball colours, the
+  ball pocket — behaves the same as on 0.1.78. Engine line numbers moved;
+  the comments citing them now cite the behaviour instead.
+
+## 0.4.8
+
+- **Your bag now has room for these balls.** Gold's ball pocket only holds
+  twelve different kinds of ball, and the game's own balls — including all
+  seven of Kurt's — already take eleven of those slots. Adding this mod's
+  balls used to mean running out of room and being told you can't carry
+  any more. The pocket now gains **one extra slot per ball this mod adds**,
+  so ours fit alongside the game's instead of competing with them.
+- The same applies on Red/Blue/Yellow, where the bag is one shared list
+  rather than pockets.
+- **Nothing else gets more room**, and nothing you already own is touched.
+  Uninstall the mod and the bag simply goes back to normal — anything over
+  the limit stays in your bag, you just can't add a new *kind* of ball
+  until you're back under it.
+- If you'd rather keep the original limits, there's a **VANILLA BAG
+  LIMITS** option. (Note: mod options can currently only be changed from a
+  Red/Blue/Yellow boot — that's an engine issue, not this mod's.)
+
 ## 0.4.7
 
 **This mod now works on Pokémon Gold, and it has a new name.** Everything

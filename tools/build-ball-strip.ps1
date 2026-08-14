@@ -61,10 +61,41 @@ $balls = @(
   @{ n = "MIRROR"; f = "mirror-ball.png"; now = @(168,180,200); old = @(168,180,200)},
   @{ n = "SILPH";  f = "silph-ball.png";  now = @(120,88,168);  old = @(120,88,168) },
   @{ n = "GS";     f = "gs-ball.png";     now = @(248,224,160); old = @(224,188,76) },
-  @{ n = "BEAST";  f = "beast-ball.png";  now = @(16,24,56);    old = @(44,72,148)  }
+  @{ n = "BEAST";  f = "beast-ball.png";  now = @(16,24,56);    old = @(44,72,148)  },
+  # The craft tier, shot on GOLD -- they cannot be obtained on Red at all,
+  # since Kurt and the apricorns are Johto's.  Colours are the same `body`
+  # values as Gen 1: on Gold the body tone is pal2 of the same palette.
+  @{ n = "SNARE";  f = "snare-ball.png";  now = @(56,104,72);   old = @(56,104,72)  },
+  # CATALYST gets NO fallback, deliberately, and it is the one ball that
+  # must not have one.  The `old` colour here would be the pre-0.4.23
+  # stone grey -- the exact look that was replaced BECAUSE it read as a
+  # second CRADLE on device.  Accepting it would quietly publish the bug.
+  #
+  # This is not hypothetical: the first catalyst-ball.png supplied was
+  # captured on a pre-0.4.23 build and the script resolved it through the
+  # fallback, reporting "pre-0.3.5 palette" -- a line easy to read past.
+  # With `old` equal to `now` a stale screenshot instead prints
+  # "NOT FOUND" and the cell is skipped, which cannot be missed.
+  @{ n = "CATALYST";f= "catalyst-ball.png";now= @(200,72,208);  old = @(200,72,208) },
+  @{ n = "DRIFT";  f = "drift-ball.png";  now = @(152,200,232); old = @(152,200,232)},
+  @{ n = "CRADLE"; f = "cradle-ball.png"; now = @(184,168,216); old = @(184,168,216)}
+  # KECLEON is deliberately absent: on Gold it has no fixed colour to
+  # search for -- it takes the target's palette, which is the whole point
+  # of the ball. It gets the paired before/after shots in the READMEs
+  # instead, which show the effect far better than one grid cell could.
 )
 
-$CROP  = 116   # source pixels around the ball
+# Source pixels around the ball.  DERIVED PER BALL, not fixed, because the
+# ball sprite is not the same size in every screenshot: the Gen 1 captures
+# measure ~100px across and the Gold ones ~60px.  A single crop box made
+# the craft tier render visibly shrunken next to the Kanto balls -- same
+# cell, half the ball.  Scaling the crop to each ball's own flood-filled
+# bounding box makes every ball fill the same fraction of its cell, and
+# DrawImage does the rest.  CROP_MIN keeps a tiny detection from blowing
+# a ball up to fill the frame.
+$CROP_SCALE = 1.35
+$CROP_MIN   = 72
+$CROP_FALLBACK = 116   # when the fill returned nothing to measure
 $LIFT  = 10    # nudge up so the enemy HUD underline falls outside the box
 $CELL  = 200   # rendered cell size
 $LABEL = 34
@@ -199,7 +230,7 @@ $fmt.Alignment = [System.Drawing.StringAlignment]::Center
 $i = 0
 foreach ($ball in $balls) {
   $path = Join-Path $docs $ball.f
-  if (-not (Test-Path $path)) { Write-Output "MISSING $($ball.f)"; $i++; continue }
+  if (-not (Test-Path $path)) { Write-Output "MISSING $($ball.f)"; continue }
   $bmp = New-Object System.Drawing.Bitmap($path)
 
   $hit = Find-Ball $bmp $ball.now
@@ -207,11 +238,20 @@ foreach ($ball in $balls) {
   if ($null -eq $hit) { $hit = Find-Ball $bmp $ball.old; $which = "pre-0.3.5" }
   if ($null -eq $hit) {
     Write-Output "$($ball.n): NOT FOUND -- is $($ball.f) the right ball?"
-    $bmp.Dispose(); $i++; continue
+    $bmp.Dispose(); continue
   }
   $c = Get-BallCentre $bmp $hit.x $hit.y
   Write-Output ("{0}: {1} palette, centre {2},{3}  sprite {4}x{5}" -f `
     $ball.n, $which, $c.x, $c.y, $c.w, $c.h)
+
+  # Per-ball crop, from the ball's own measured size (see CROP_SCALE).
+  $span = [Math]::Max($c.w, $c.h)
+  if ($span -lt 1) {
+    $CROP = $CROP_FALLBACK
+  } else {
+    $CROP = [int][Math]::Max($CROP_MIN, [Math]::Round($span * $CROP_SCALE))
+  }
+  $CROP = [Math]::Min($CROP, [Math]::Min($bmp.Width, $bmp.Height))
 
   # Horizontal: still centred on the bbox centre, as before.
   $sx = [Math]::Max(0, [Math]::Min($bmp.Width - $CROP, $c.x - [Math]::Floor($CROP / 2)))
@@ -244,6 +284,22 @@ foreach ($ball in $balls) {
   $i++
 }
 
+# Trim to the rows that actually rendered.  The canvas is sized from the
+# ball LIST, but a ball whose screenshot is missing or stale draws nothing
+# and no longer consumes a cell -- so the list can be a whole row longer
+# than the output, leaving a band of white at the bottom that looks like a
+# rendering fault rather than a skipped ball.
+$usedRows = [Math]::Max(1, [Math]::Ceiling($i / $COLS))
+$usedH = $usedRows * ($CELL + $LABEL)
+if ($usedH -lt $H) {
+  $trimmed = New-Object System.Drawing.Bitmap($W, $usedH)
+  $tg = [System.Drawing.Graphics]::FromImage($trimmed)
+  $tg.DrawImage($canvas, 0, 0)
+  $tg.Dispose()
+  $canvas.Dispose(); $canvas = $trimmed
+  $H = $usedH
+}
+
 $canvas.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)
 $gfx.Dispose(); $canvas.Dispose(); $font.Dispose()
-Write-Output "wrote $out ($W x $H)"
+Write-Output "wrote $out ($W x $H) -- $i balls"

@@ -1,0 +1,14 @@
+# Dev tooling, never part of the mod.
+#
+# tests/hook_harness.lua names engine modules in string literals (it stubs
+# them), which modkit's scan reports as "unresolved: engine module names
+# spelled in a literal this scan cannot tie to a require".  Sixteen such
+# lines would bury a real finding -- the same reason [ERRS] output is kept
+# terse -- and the file does not ship: both test_build.sh and the release
+# workflow exclude tests/.
+#
+# NOTE: modkit matches these as EXACT relative paths (`rel in ignored`,
+# tools/modkit.py:189) -- NOT prefixes and NOT globs.  A bare "tests/"
+# silently matches nothing, which is how this file spent its first
+# revision doing exactly nothing.  Name each file.
+tests/hook_harness.lua
