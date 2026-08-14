@@ -8,7 +8,7 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
-## 0.4.27
+## 0.4.28
 
 **Updating from 0.4.7?** This is the big one: **you can make your own balls
 now.** Kurt hands you a BALL CASE, and apricorns stop being just his
@@ -79,6 +79,16 @@ options set on a Gold boot — set them from a Red boot and they will stick.*
 
 *Craft recipes and costs are a first pass and will be retuned once they have
 been played.*
+
+**Also new in 0.4.28:** screenshots throughout — Kurt handing the case over,
+the BALL CASE in KEY ITEMS, a Johto mart shelf, the KECLEON BALL taking
+three different targets' colours, and a level 41 DODUO arriving at level
+1 with its level-1 moves. The ball line-up picture now has the craft tier
+in it.
+
+## 0.4.27
+
+- Superseded by 0.4.28 before release; see above.
 
 ## 0.4.26
 

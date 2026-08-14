@@ -50,6 +50,13 @@ And then Kurt does something else. Come back to him from the Slowpoke
 Well and he decides you're worth teaching, and hands over a **BALL
 CASE** — a key item that mixes Apricorns into five more balls:
 
+<table>
+<tr>
+<td><img src="docs/kurt-case1.png" width="300" alt="Kurt saying: APRICORNS aren't just for my seven."></td>
+<td><img src="docs/kurt-case2.png" width="300" alt="Kurt saying: Take this CASE and mix your own."></td>
+</tr>
+</table>
+
 | Ball | Costs | What it does |
 | --- | --- | --- |
 | **KECLEON BALL** | 1 Green + 1 Red Apricorn | Catches as well as a Great Ball — **and turns the colour of whatever you throw it at** |
@@ -80,14 +87,34 @@ it flies. This is the **same ball** in all three:
 
 Throw it at a shiny and the ball is shiny too.
 
-The Cradle Ball is not a punishment. Your catch comes back at level 1
-with level-1 moves, but its DVs and stat experience are untouched — so it
-grows the whole curve from scratch and finishes *stronger* at 100 than
-one caught late. Four Apricorns is the price of that.
+### The Cradle Ball starts your catch over
 
-The case stores balls as well: **STOW ALL** clears this mod's balls out
-of your pack, **TAKE BACK** returns them, and a full pack gets back what
-fits with the rest kept safe. Kurt's own seven recipes are untouched.
+Not a punishment. Its DVs and stat experience are untouched, so it grows
+the whole curve from scratch and finishes *stronger* at 100 than one
+caught late. A level 41 DODUO, caught, and what arrives:
+
+<table>
+<tr>
+<td><img src="docs/cradle-mon-ori.png" width="240" alt="A wild DODUO at level 41"></td>
+<td><img src="docs/cradle-status1.png" width="240" alt="The caught DODUO at level 1 with 11 HP and 1 EXP point"></td>
+<td><img src="docs/cradle-status2.png" width="240" alt="Its moves: PECK and GROWL, the level-1 set, with two empty slots"></td>
+</tr>
+</table>
+
+Level 1, 11 HP, one experience point, and PECK and GROWL in two of four
+move slots — the level-1 set, rebuilt rather than trimmed.
+
+The case is a key item and stays in KEY ITEMS. It stores balls as well:
+**STOW ALL** clears this mod's balls out of your pack, **TAKE BACK**
+returns them, and a full pack gets back what fits with the rest kept
+safe. Kurt's own seven recipes are untouched.
+
+<table>
+<tr>
+<td><img src="docs/ball-case-pocket.png" width="300" alt="The BALL CASE in the KEY ITEMS pocket, described as: Mix APRICORNS into new kinds of ball."></td>
+<td><img src="docs/mart-shelf-gold.png" width="300" alt="A Johto mart shelf listing the mod's balls alongside Gold's own"></td>
+</tr>
+</table>
 
 ## Two mods, one download page
 

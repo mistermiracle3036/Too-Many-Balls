@@ -54,8 +54,18 @@ exactly one after the takeover.
 years. When you come back to him from the Slowpoke Well he decides
 you're worth teaching, and hands over a **BALL CASE**.
 
-The case is a key item. Use it from the pack and it opens a workbench:
-pick a ball, and if you have the Apricorns it's made on the spot.
+<table>
+<tr>
+<td><img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/kurt-case1.png" width="300" alt="Kurt saying: APRICORNS aren't just for my seven."></td>
+<td><img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/kurt-case2.png" width="300" alt="Kurt saying: Take this CASE and mix your own."></td>
+</tr>
+</table>
+
+The case is a key item — it goes to KEY ITEMS and stays there. Use it
+from the pack and it opens a workbench: pick a ball, and if you have the
+Apricorns it's made on the spot.
+
+<img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/ball-case-pocket.png" width="300" alt="The BALL CASE in the KEY ITEMS pocket, described as: Mix APRICORNS into new kinds of ball.">
 
 | Ball | Costs | What it does |
 | ---- | ----- | ------------ |
@@ -91,6 +101,19 @@ it grows the whole curve from scratch and ends up *stronger* at 100 than
 one caught late. Four Apricorns is the price of that, and the downside
 is the joke.
 
+A level 41 DODUO, caught, and what arrives:
+
+<table>
+<tr>
+<td><img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/cradle-mon-ori.png" width="240" alt="A wild DODUO at level 41"></td>
+<td><img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/cradle-status1.png" width="240" alt="The caught DODUO at level 1 with 11 HP and 1 EXP point"></td>
+<td><img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/cradle-status2.png" width="240" alt="Its moves: PECK and GROWL, the level-1 set, with two empty slots"></td>
+</tr>
+</table>
+
+Level 1, 11 HP, one experience point, and PECK and GROWL in two of four
+move slots — the level-1 set, rebuilt from scratch rather than trimmed.
+
 The case also stores balls. **STOW ALL** moves every ball from this mod
 out of your pack and into the case; **TAKE BACK** returns them. Nothing
 is ever lost — if your pack is full you get back what fits and the rest
@@ -120,7 +143,12 @@ ribbon for how something was caught.
 
 ## On Pokémon Gold
 
-Since 0.4.0 the mod loads on a Gold boot too. What's different there:
+Since 0.4.0 the mod loads on a Gold boot too. The bought balls appear on
+Johto shelves that already stock GREAT or ULTRA BALLs:
+
+<img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/mart-shelf-gold.png" width="360" alt="A Johto mart shelf listing the mod's balls alongside Gold's own">
+
+What's different there:
 
 - **The whole craft tier is Gold-only**, because Kurt and the Apricorns
   are. The balls themselves are registered on Red as well, so one that

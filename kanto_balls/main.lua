@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.27"
+  local VERSION = "0.4.28"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -966,7 +966,7 @@ return function(mod)
   -- KECLEON BALL -- a good all-round ball that changes colour to match
   -- what you throw it at.
   --
-  -- IT WAS COSMETIC-ONLY UNTIL 0.4.27, and the developer's device report
+  -- IT WAS COSMETIC-ONLY UNTIL 0.4.28, and the developer's device report
   -- was "it feels worse".  The code was clean -- an unknown ball id gets
   -- `catchRate = opts.catchRate` at Catching.lua:283, arithmetically a
   -- Poke Ball -- so the finding was about the COMPANY it keeps, not a
