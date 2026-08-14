@@ -18,6 +18,14 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.6.1
+
+- **Final release. This mod is retired** — its work now happens inside Too
+  Many Balls, which needs nothing installed alongside it.
+- This version stops checking for updates at all, so it will not keep
+  offering you a download that does not exist. You can remove the mod
+  whenever you like; nothing depends on it.
+
 ## 0.5.0
 
 - **Points at this repo under its original name now**, which is what stops
