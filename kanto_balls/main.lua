@@ -996,6 +996,22 @@ return function(mod)
       mon.maxHp = stats.hp
       mon.hp = stats.hp
 
+      -- DO NOT "TIDY" THIS INTO Mon.refreshStats(mon, data). It is the
+      -- same three lines to look at and is not the same behaviour:
+      -- refreshStats CLAMPS hp (gen2/Mon.lua:109 --
+      -- `if mon.hp == nil or mon.hp > stats.hp`) where this SETS it.
+      -- Identical for a healthy catch; different for a weakened one -- a
+      -- target caught at 5/129 would arrive at 5/11 instead of full. A
+      -- level-1 rebirth is meant to arrive whole, so the outright set is
+      -- the behaviour and not an oversight.
+      --
+      -- It also returns `mon` UNCHANGED when the species has no
+      -- baseStats, where the assert above fails loudly. A silent no-op
+      -- there is a CRADLE catch that quietly did not reset.
+      --
+      -- Suggested by the checker after engine 0.1.84 added refreshStats;
+      -- declined on purpose, recorded here so it is declined once.
+
       -- caughtLevel deliberately keeps the ENCOUNTER level: the engine
       -- preserves it across evolution and daycare independently of the
       -- mon's current level, so resetting it would be a lie about where
