@@ -179,10 +179,16 @@ What's different there:
 This mod adds more kinds of ball than either game left room for, so it
 makes room: **one extra slot per ball it registers**, and no more.
 
-- On **Gold** that goes to the BALLS pocket, which otherwise holds twelve
-  kinds.
-- On **Red, Blue and Yellow** there is only one bag, so it goes there —
-  fifteen slots, one for each ball the mod registers on those games.
+It counts the balls you can actually **get** on the game you're playing,
+not every ball the mod knows about.
+
+- On **Gold** that is eleven, added to the BALLS pocket, which otherwise
+  holds twelve kinds — so a full pocket holds Gold's own twelve kinds and
+  all of ours.
+- On **Red, Blue and Yellow** there is only one bag, and only seven of
+  these balls exist there: the six on shelves plus the Premier Ball. The
+  craft tier needs the BALL CASE, which is Kurt's and so Gold's, so it
+  reserves no room in a Kanto bag.
 
 It is added to whatever the game answers rather than replacing the
 number, so it can never shrink a bag some other mod grew. Nothing but the

@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.29"
+  local VERSION = "0.4.30"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -248,7 +248,40 @@ return function(mod)
   -- favour of it.  Bag.capacity honours `bagSize` for the ITEM pocket
   -- only today (:43-45), which is why Gold has no supported route.
   ----------------------------------------------------------------------
-  local ballSlots = #BALL_IDS
+  -- HEADROOM IS FOR BALLS THE PLAYER CAN ACTUALLY GET, not for every
+  -- registered id.  Those are different sets, and 0.4.8 through 0.4.30
+  -- used `#BALL_IDS` for both.
+  --
+  -- The developer could not confirm the Red bag on device -- Gen 1's bag
+  -- is a scrolling list with no capacity shown -- and "nobody can see it"
+  -- is the reason to check the arithmetic rather than to stop caring.
+  -- On Gen 1 that was vanilla 20 + 15 = 35, a 75% larger bag, of which
+  -- EIGHT slots stood for balls Red cannot obtain by any route: the six
+  -- craft-tier balls (no BALL CASE outside Gold -- see the `if GEN2`
+  -- around it) and the two dev balls. Kanto's bag limit is a real part of
+  -- its economy and this quietly gutted it, having never shipped: public
+  -- is 0.4.7 and the wrap arrived in 0.4.8.
+  --
+  -- Counting the obtainable set instead: 7 on Red (six shelf balls plus
+  -- PREMIER), 11 on Gold, +2 on either under [DEV] CHEAP BALLS. Gold is
+  -- unchanged in the way that matters -- 12 native kinds plus 11 of ours
+  -- is exactly the 23 a full Gold ball pocket now holds.
+  local ballSlots = 0
+  do
+    -- Craft-tier balls exist on Gen 1 so a traded one keeps its pocket
+    -- (0.4.9), but nothing there can make one.
+    local CRAFT_ONLY = {
+      SNARE_BALL = true, CATALYST_BALL = true, DRIFT_BALL = true,
+      KECLEON_BALL = true, CRADLE_BALL = true, ACE_BALL = true,
+    }
+    local DEV_ONLY = { GS_BALL = true, BEAST_BALL = true }
+    for _, id in ipairs(BALL_IDS) do
+      local reachable = true
+      if not GEN2 and CRAFT_ONLY[id] then reachable = false end
+      if not CHEAP and DEV_ONLY[id] then reachable = false end
+      if reachable then ballSlots = ballSlots + 1 end
+    end
+  end
 
   do
     local Bag_ = Bag
@@ -966,7 +999,7 @@ return function(mod)
   -- KECLEON BALL -- a good all-round ball that changes colour to match
   -- what you throw it at.
   --
-  -- IT WAS COSMETIC-ONLY UNTIL 0.4.29, and the developer's device report
+  -- IT WAS COSMETIC-ONLY UNTIL 0.4.30, and the developer's device report
   -- was "it feels worse".  The code was clean -- an unknown ball id gets
   -- `catchRate = opts.catchRate` at Catching.lua:283, arithmetically a
   -- Poke Ball -- so the finding was about the COMPANY it keeps, not a

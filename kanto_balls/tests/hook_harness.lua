@@ -324,6 +324,32 @@ for _, gen in ipairs({ 1, 2 }) do
         end
       end
 
+      -- BAG HEADROOM, asserted as a NUMBER on both generations.
+      --
+      -- 0.4.30 corrected this from "one slot per registered ball" to
+      -- "one slot per OBTAINABLE ball", after Red came out at vanilla
+      -- 20 + 15 = 35 with eight of those slots standing for balls Red
+      -- cannot get -- the six craft-tier balls and the two dev balls.
+      -- The developer could not verify it on device (Gen 1's bag shows
+      -- no capacity), so the arithmetic is pinned here instead.
+      do
+        local Bag_ = rec.stubs["src.inventory.Bag"]
+        local pocket = (gen == 2) and "BALL" or "ITEM"
+        local base = (gen == 2) and 12 or 20
+        -- gen 1: 6 shelf balls + PREMIER.  gen 2: those, less MOON and
+        -- FAST which Gold owns natively, plus the 5 craft balls and ACE.
+        local want = (gen == 2) and 11 or 7
+        if cheap then want = want + 2 end          -- GS and BEAST
+        local got = Bag_.capacity({}, pocket)
+        check(got == base + want,
+          ("%s ball headroom: capacity %s, expected %d (%d + %d)")
+            :format(label, tostring(got), base + want, base, want))
+        -- and it must leave OTHER pockets alone
+        local other = Bag_.capacity({}, "KEY_ITEM")
+        check(other == 20 or other == 25,
+          label .. " headroom leaked into KEY_ITEM: " .. tostring(other))
+      end
+
       -- exports other mods are promised
       check(type(rec.exports.requestBallSlots) == "function",
         label .. " requestBallSlots missing")
