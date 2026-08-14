@@ -9,6 +9,7 @@ return {
   },
   credits = {},
   compat = {
+    "DELIBERATE, DO NOT 'FIX': the manifest github field names the OLD repo name (Shop-Tools---Custom-Balls) while Too Many Balls names the current one (Too-Many-Balls). Both redirect to the same repo. The launcher caches release lists per GITHUB FIELD (options.modUpdateCache[repo]) and stores a zip already resolved for ONE mod id, so two mods sharing one string get served each other's zip -- kanto_balls failed to update with \"zip is for shop_events\". Distinct strings give distinct cache keys. Revert only once the engine keys that cache by mod id as well as repo.",
     "Publishes exports.owns = { shop_events = true } and exports.version.",
     "Known consumer: kanto_balls (Premier Ball bonus).",
   },

@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.4.30"
+  local VERSION = "0.5.0"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -249,7 +249,7 @@ return function(mod)
   -- only today (:43-45), which is why Gold has no supported route.
   ----------------------------------------------------------------------
   -- HEADROOM IS FOR BALLS THE PLAYER CAN ACTUALLY GET, not for every
-  -- registered id.  Those are different sets, and 0.4.8 through 0.4.30
+  -- registered id.  Those are different sets, and 0.4.8 through 0.4.29
   -- used `#BALL_IDS` for both.
   --
   -- The developer could not confirm the Red bag on device -- Gen 1's bag

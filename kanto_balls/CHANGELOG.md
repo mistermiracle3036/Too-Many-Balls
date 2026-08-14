@@ -8,6 +8,18 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.5.0
+
+- **Fixed: updating Too Many Balls from the mod manager failed** with
+  "zip is for shop_events, expected kanto_balls". The download was fetching
+  the wrong file. Updating normally is all you need to do — but see the
+  note below if the update still fails.
+
+**If the update still fails:** update **Shop Events** first, then Too Many
+Balls. The two mods have to be told apart before the fix can take effect,
+and Shop Events was never affected, so it always updates cleanly. Waiting
+a few hours also clears it on its own.
+
 ## 0.4.30
 
 **Updating from 0.4.7?** This is the big one: **you can make your own balls

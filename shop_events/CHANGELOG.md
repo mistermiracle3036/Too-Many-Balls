@@ -8,6 +8,14 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
+## 0.5.0
+
+- **Points at this repo under its original name now**, which is what stops
+  the mod manager confusing this mod's download with Too Many Balls'. Same
+  repo either way — the old address redirects — and nothing about the mod
+  itself changed. Update this one FIRST if Too Many Balls is failing to
+  update.
+
 ## 0.4.30
 
 - No changes to Shop Events itself. It releases in lockstep with Too Many

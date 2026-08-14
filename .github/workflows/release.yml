@@ -49,29 +49,142 @@ jobs:
         if: steps.check.outputs.exists == 'false'
         run: |
           V="${{ steps.ver.outputs.version }}"
+
           # Flat archives: manifest.json at the root of each zip rather than
           # inside a "<mod>/" folder. LauncherMods.locateRoot accepts either
           # shape and names the install folder from manifest.id regardless,
           # but the community mod index requires files at the archive root.
-          # tests/ is dev tooling (kanto_balls/tests/hook_harness.lua) and must
-          # NOT ship: the test-build script excludes it, and a public zip that
-          # disagreed with the tested one is the exact divergence that put an
-          # internal handoff doc inside a pokeball_seals zip in August.
-          (cd shop_events && zip -qr "../shop_events-$V.zip" . -x '*.DS_Store' 'tests/*')
-          (cd kanto_balls && zip -qr "../kanto_balls-$V.zip" . -x '*.DS_Store' 'tests/*')
-          unzip -l "shop_events-$V.zip"
-          unzip -l "kanto_balls-$V.zip"
+          #
+          # `.modkitignore` IS THE SINGLE SOURCE OF TRUTH for what a mod omits
+          # from a package, per the checker's ZIP_EXCLUSIONS_modkitignore.md.
+          # This step used to hardcode `-x 'tests/*'` alongside a
+          # .modkitignore that said the same thing -- two hand-maintained
+          # lists that happened to agree, which is how a docs/ folder reaches
+          # a zip the day they stop agreeing.
+          #
+          # SEMANTICS, and they differ from modkit.py on purpose: modkit's own
+          # reader (mod_files()) does `rel in ignored`, an EXACT relative-path
+          # compare, so a directory entry like "tests/" matches no FILE and is
+          # silently inert. This implements the DIRECTORY-PREFIX meaning
+          # authors intend, so "tests/" drops tests/ and everything under it
+          # while exact file paths keep working. Until modkit.py is fixed,
+          # `modkit pack` and this workflow disagree about directory entries;
+          # this one is stricter and is the correct one.
+          for M in shop_events kanto_balls; do
+            rm -rf "build/$M" && mkdir -p "build/$M"
+            ( cd "$M"
+              for entry in * .[!.]*; do
+                case "$entry" in
+                  .git|.github|.gitignore|.modkitignore|build|*.zip) continue ;;
+                esac
+                [ -e "$entry" ] || continue
+                cp -r "$entry" "../build/$M/"
+              done )
+
+            DROPPED=""
+            if [ -f "$M/.modkitignore" ]; then
+              while IFS= read -r pat || [ -n "$pat" ]; do
+                pat="${pat%%#*}"
+                pat="$(printf '%s' "$pat" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+                [ -n "$pat" ] || continue
+                pat="${pat#/}"
+                target="build/$M/${pat%/}"
+                if [ -e "$target" ]; then
+                  rm -rf "$target"
+                  DROPPED="$DROPPED ${pat%/}"
+                  echo "  $M/.modkitignore: excluded $pat"
+                else
+                  echo "::warning::$M/.modkitignore lists '$pat' but nothing matched it - stale entry?"
+                fi
+              done < "$M/.modkitignore"
+            fi
+
+            # Excluding a FILE leaves its directory behind, and `zip -r`
+            # records an empty directory as a real archive entry -- so
+            # excluding tests/hook_harness.lua still shipped an empty tests/
+            # folder to players. Measured locally, not theorised; the old
+            # `-x 'tests/*'` form had the same hole.
+            #
+            # Pruned here rather than by writing "tests/" in .modkitignore,
+            # because the exact file path is the form modkit.py's own reader
+            # honours -- changing it would silently stop `modkit pack`
+            # excluding anything at all.
+            find "build/$M" -mindepth 1 -type d -empty -delete
+
+            ( cd "build/$M" && zip -qr "../../$M-$V.zip" . -x '*.DS_Store' )
+            echo "--- $M-$V.zip ---"
+            unzip -l "$M-$V.zip"
+
+            # manifest.json must sit at the archive ROOT, or the community
+            # mod index rejects it.
+            unzip -l "$M-$V.zip" | grep -qE ' manifest\.json$' \
+              || { echo "::error::$M-$V.zip: manifest.json is not at the archive root"; exit 1; }
+
+            # PROVE the exclusions took. An exclusion that quietly stops
+            # working is the whole failure mode, and the zip is the only place
+            # it can be checked for certain.
+            for pat in $DROPPED; do
+              if unzip -l "$M-$V.zip" | grep -qE "[ /]${pat}(/|$)"; then
+                echo "::error::$M-$V.zip still contains '$pat' after excluding it"
+                exit 1
+              fi
+            done
+          done
 
       - name: Build combined release notes
         if: steps.check.outputs.exists == 'false'
         run: |
           V="${{ steps.ver.outputs.version }}"
+
+          # Back-ported from the adopted repos' workflow (Apricorn-Farm et
+          # al), which had both of these and this one had neither.
+          #
+          # 1. THE HEADING IS MATCHED ON ITS VERSION TOKEN, not as a regex.
+          #    The old form was `awk "/^## $V/..."`, where $V is
+          #    interpolated straight into a pattern -- so its dots are
+          #    wildcards AND it anchors only at the start. Extracting
+          #    "0.4.3" therefore matches "## 0.4.30", and this repo's
+          #    CHANGELOG contains both of those headings today. Whichever
+          #    came first would win and the release would carry the wrong
+          #    version's notes.
+          #
+          # 2. AN EMPTY BODY IS A HARD FAILURE. Without this a heading that
+          #    does not match, or a version whose section is still blank,
+          #    publishes a release whose notes are nothing but the install
+          #    steps -- silently, with a green tick. That is a live trap
+          #    here: `next` carries the NEXT version's heading with no body
+          #    under it for most of its life.
+          section() {
+            awk -v v="$V" '
+              /^## / {
+                if (found) exit
+                h = $0
+                gsub(/[][]/, "", h)
+                sub(/^##[ \t]*/, "", h)
+                split(h, parts, /[ \t]/)
+                if (parts[1] == v) { found = 1; next }
+              }
+              found { print }
+            ' "$1"
+          }
+
+          # Checked PER MOD, not on the concatenation: this repo ships two
+          # mods in lockstep, so a combined check would pass on one mod's
+          # section while the other silently contributed nothing.
+          for m in shop_events kanto_balls; do
+            section "$m/CHANGELOG.md" > "$m-notes.md"
+            if ! grep -q '[^[:space:]]' "$m-notes.md"; then
+              echo "::error::no CHANGELOG section body for $V in $m/CHANGELOG.md -- refusing to publish empty release notes"
+              exit 1
+            fi
+          done
+
           {
             echo "## Shop Events $V"
-            awk "/^## $V/{flag=1;next}/^## /{flag=0}flag" shop_events/CHANGELOG.md
+            cat shop_events-notes.md
             echo ""
             echo "## Too Many Balls $V"
-            awk "/^## $V/{flag=1;next}/^## /{flag=0}flag" kanto_balls/CHANGELOG.md
+            cat kanto_balls-notes.md
           } > notes.md
 
       - name: Publish release
