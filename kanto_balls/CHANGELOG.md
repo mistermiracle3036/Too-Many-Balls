@@ -10,6 +10,16 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
+## 0.6.1
+
+- **Remove Shop Events.** It was folded into Too Many Balls at 0.6.0 and
+  is no longer published. If you leave it installed it will keep showing
+  an update that can never install — there is no Shop Events download any
+  more, so it sees this mod's version number and offers you that. Nothing
+  is harmed either way, but the badge never goes away until you remove it.
+- Shop Events has one last update of its own that simply stops it looking
+  for new versions. Taking it is optional; removing the mod is tidier.
+
 ## 0.6.0
 
 **Updating from the mod manager works again.** If Too Many Balls has been
