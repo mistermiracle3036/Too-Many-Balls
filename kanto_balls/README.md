@@ -172,7 +172,22 @@ What's different there:
 - **Your BALLS pocket grows to fit.** Gold's ball pocket holds twelve
   kinds, which this mod would fill on its own, so it adds one slot per
   ball it registers. Turn on *VANILLA BAG LIMITS* if you'd rather it
-  didn't.
+  didn't. The same thing happens on Red, Blue and Yellow — see below.
+
+## Bag space
+
+This mod adds more kinds of ball than either game left room for, so it
+makes room: **one extra slot per ball it registers**, and no more.
+
+- On **Gold** that goes to the BALLS pocket, which otherwise holds twelve
+  kinds.
+- On **Red, Blue and Yellow** there is only one bag, so it goes there —
+  fifteen slots, one for each ball the mod registers on those games.
+
+It is added to whatever the game answers rather than replacing the
+number, so it can never shrink a bag some other mod grew. Nothing but the
+ball capacity changes, and **VANILLA BAG LIMITS** switches it off
+entirely if you would rather keep the original limit.
 
 ## Requirements
 

@@ -8,7 +8,7 @@ the SAME version and attaches both zips, even when only one changed (a
 repo has one "latest release" for update-checking purposes, so a
 mismatched tag would point the other mod at the wrong file).
 
-## 0.4.28
+## 0.4.29
 
 **Updating from 0.4.7?** This is the big one: **you can make your own balls
 now.** Kurt hands you a BALL CASE, and apricorns stop being just his
@@ -85,6 +85,14 @@ the BALL CASE in KEY ITEMS, a Johto mart shelf, the KECLEON BALL taking
 three different targets' colours, and a level 41 DODUO arriving at level
 1 with its level-1 moves. The ball line-up picture now has the craft tier
 in it.
+
+**Also new in 0.4.29:** the bag-space note now says what it always did on
+Red, Blue and Yellow as well as Gold — this mod makes room for its own
+balls on every game, not just Johto.
+
+## 0.4.28
+
+- Superseded by 0.4.29 before release; see above.
 
 ## 0.4.27
 

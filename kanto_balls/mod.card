@@ -11,7 +11,7 @@ return {
     "CRADLE BALL (craft: 1 White + 1 Pink + 1 Green + 1 Red Apricorn): never misses, and the catch restarts at level 1 with level-1 moves. DVs and stat experience are kept, so it ends up stronger at 100 than a late catch -- the recipe IS the balance.",
     "ACE BALL: a case recipe that stays hidden until another mod writes save.recipeUnlocks['route_aces:ace_ball']. Not obtainable on its own; ships inert.",
     "GS BALL and BEAST BALL are behind the [DEV] CHEAP BALLS option, but are REGISTERED on every boot so one obtained earlier keeps its pocket and colour.",
-    "Gold's BALLS pocket grows by one slot per ball this mod registers, since twelve kinds is less than this mod alone adds. Turn on VANILLA BAG LIMITS to keep the stock cap.",
+    "Bag capacity grows by one slot per ball this mod registers -- BOTH generations, not just Gold: on Gen 2 that is the BALL pocket, on Gen 1 the single ITEM bag (15 slots there, since MOON, FAST, GS and BEAST are registered too). Additive over whatever the engine answers, so it can never shrink a bag another mod grew via constants.bagSize. Turn on VANILLA BAG LIMITS to keep the stock cap.",
     "PREMIER BALL: not sold; buy 10+ balls in one purchase and the clerk throws in one free per 10 (buy 20, get 2). Announced in the shop text on Gen 1; arrives silently in the BALLS pocket on Gold. Plain 1x catch odds.",
     "NEST BALL (1000): better against low-level targets -- 4x at Lv15 or under, 3x at 25, 2x at 35, 1x above. Sold at the Great/Ultra marts.",
     "MOON BALL (1200): Gen 1 only -- 4x against species that evolve by Moon Stone. Sold at Pewter Mart, before Mt. Moon. Gold has its own native Moon Ball.",
