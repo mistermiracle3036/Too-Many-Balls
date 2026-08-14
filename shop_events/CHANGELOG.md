@@ -10,8 +10,11 @@ mismatched tag would point the other mod at the wrong file).
 
 ## 0.5.0
 
-- Nothing player-visible yet. This is the working version for whatever
-  lands next; 0.4.30 above is what is currently published.
+- **Points at this repo under its original name now**, which is what stops
+  the mod manager confusing this mod's download with Too Many Balls'. Same
+  repo either way — the old address redirects — and nothing about the mod
+  itself changed. Update this one FIRST if Too Many Balls is failing to
+  update.
 
 ## 0.4.30
 

@@ -14,6 +14,6 @@
   "dependencies": [],
   "optional_dependencies": [],
   "conflicts": [],
-  "github": "mistermiracle3036/Too-Many-Balls",
+  "github": "mistermiracle3036/Shop-Tools---Custom-Balls",
   "description": "Library mod: emits a shop.purchased event whenever the player buys something at a mart, since the engine has no purchase event of its own. Does nothing visible by itself."
 }
