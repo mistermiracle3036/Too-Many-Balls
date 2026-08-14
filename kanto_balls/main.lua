@@ -999,7 +999,7 @@ return function(mod)
   -- KECLEON BALL -- a good all-round ball that changes colour to match
   -- what you throw it at.
   --
-  -- IT WAS COSMETIC-ONLY UNTIL 0.5.0, and the developer's device report
+  -- IT WAS COSMETIC-ONLY UNTIL 0.4.30, and the developer's device report
   -- was "it feels worse".  The code was clean -- an unknown ball id gets
   -- `catchRate = opts.catchRate` at Catching.lua:283, arithmetically a
   -- Poke Ball -- so the finding was about the COMPANY it keeps, not a

@@ -10,6 +10,11 @@ mismatched tag would point the other mod at the wrong file).
 
 ## 0.5.0
 
+- Nothing player-visible yet. This is the working version for whatever
+  lands next; 0.4.30 above is what is currently published.
+
+## 0.4.30
+
 **Updating from 0.4.7?** This is the big one: **you can make your own balls
 now.** Kurt hands you a BALL CASE, and apricorns stop being just his
 business.
@@ -90,14 +95,14 @@ in it.
 Red, Blue and Yellow as well as Gold — this mod makes room for its own
 balls on every game, not just Johto.
 
-**Also new in this release:** the extra bag space is sized to the balls you can
+**Also new in 0.4.30:** the extra bag space is sized to the balls you can
 actually get on the game you are playing. On Red, Blue and Yellow that is
 seven rather than fifteen — the craft-tier balls need Kurt's BALL CASE,
 so they no longer reserve room in a Kanto bag they can never reach.
 
 ## 0.4.29
 
-- Superseded by 0.5.0 before release; see above.
+- Superseded by 0.4.30 before release; see above.
 
 ## 0.4.28
 

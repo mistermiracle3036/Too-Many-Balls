@@ -10,6 +10,11 @@ mismatched tag would point the other mod at the wrong file).
 
 ## 0.5.0
 
+- Nothing player-visible yet. This is the working version for whatever
+  lands next; 0.4.30 above is what is currently published.
+
+## 0.4.30
+
 - No changes to Shop Events itself. It releases in lockstep with Too Many
   Balls, so this version exists to keep the two in step — see below for
   what is new.

@@ -66,12 +66,56 @@ jobs:
         if: steps.check.outputs.exists == 'false'
         run: |
           V="${{ steps.ver.outputs.version }}"
+
+          # Back-ported from the adopted repos' workflow (Apricorn-Farm et
+          # al), which had both of these and this one had neither.
+          #
+          # 1. THE HEADING IS MATCHED ON ITS VERSION TOKEN, not as a regex.
+          #    The old form was `awk "/^## $V/..."`, where $V is
+          #    interpolated straight into a pattern -- so its dots are
+          #    wildcards AND it anchors only at the start. Extracting
+          #    "0.4.3" therefore matches "## 0.4.30", and this repo's
+          #    CHANGELOG contains both of those headings today. Whichever
+          #    came first would win and the release would carry the wrong
+          #    version's notes.
+          #
+          # 2. AN EMPTY BODY IS A HARD FAILURE. Without this a heading that
+          #    does not match, or a version whose section is still blank,
+          #    publishes a release whose notes are nothing but the install
+          #    steps -- silently, with a green tick. That is a live trap
+          #    here: `next` carries the NEXT version's heading with no body
+          #    under it for most of its life.
+          section() {
+            awk -v v="$V" '
+              /^## / {
+                if (found) exit
+                h = $0
+                gsub(/[][]/, "", h)
+                sub(/^##[ \t]*/, "", h)
+                split(h, parts, /[ \t]/)
+                if (parts[1] == v) { found = 1; next }
+              }
+              found { print }
+            ' "$1"
+          }
+
+          # Checked PER MOD, not on the concatenation: this repo ships two
+          # mods in lockstep, so a combined check would pass on one mod's
+          # section while the other silently contributed nothing.
+          for m in shop_events kanto_balls; do
+            section "$m/CHANGELOG.md" > "$m-notes.md"
+            if ! grep -q '[^[:space:]]' "$m-notes.md"; then
+              echo "::error::no CHANGELOG section body for $V in $m/CHANGELOG.md -- refusing to publish empty release notes"
+              exit 1
+            fi
+          done
+
           {
             echo "## Shop Events $V"
-            awk "/^## $V/{flag=1;next}/^## /{flag=0}flag" shop_events/CHANGELOG.md
+            cat shop_events-notes.md
             echo ""
             echo "## Too Many Balls $V"
-            awk "/^## $V/{flag=1;next}/^## /{flag=0}flag" kanto_balls/CHANGELOG.md
+            cat kanto_balls-notes.md
           } > notes.md
 
       - name: Publish release

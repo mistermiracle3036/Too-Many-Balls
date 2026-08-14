@@ -326,7 +326,7 @@ for _, gen in ipairs({ 1, 2 }) do
 
       -- BAG HEADROOM, asserted as a NUMBER on both generations.
       --
-      -- 0.5.0 corrected this from "one slot per registered ball" to
+      -- 0.4.30 corrected this from "one slot per registered ball" to
       -- "one slot per OBTAINABLE ball", after Red came out at vanilla
       -- 20 + 15 = 35 with eight of those slots standing for balls Red
       -- cannot get -- the six craft-tier balls and the two dev balls.
