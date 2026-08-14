@@ -2,11 +2,33 @@
 
 All notable changes to Kanto Balls are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com); the top heading always
-matches the version in `manifest.json`. Kanto Balls and Shop Events
-share this repo and release IN LOCKSTEP -- every release retags both to
-the SAME version and attaches both zips, even when only one changed (a
-repo has one "latest release" for update-checking purposes, so a
-mismatched tag would point the other mod at the wrong file).
+matches the version in `manifest.json`.
+
+Until 0.6.0 this repo also published **Shop Events** and the two released
+in lockstep, same version and both zips on one release. That is over: two
+zips on one release is what broke the in-launcher updater, because the
+engine caches release assets per REPO and could not tell them apart. Shop
+Events was folded in; there is one mod and one zip now.
+
+## 0.6.0
+
+**Updating from the mod manager works again.** If Too Many Balls has been
+refusing to update with *"zip is for shop_events, expected kanto_balls"*,
+this release is the fix and you should not have to do anything special.
+
+- **Shop Events is now part of Too Many Balls.** It was a separate library
+  mod that existed so other ball authors could react to a mart purchase;
+  nobody ever did, and this mod was its only user. It is not a separate
+  download any more.
+  - **You can remove Shop Events** from your mods list whenever you like.
+    Nothing breaks if you leave it — Too Many Balls notices it and steps
+    aside so the Premier Ball bonus is never awarded twice.
+  - The Premier Ball bonus works exactly as before either way.
+- **Why this fixes the updater:** the launcher could not tell the two
+  downloads apart when both came from one release, and handed Too Many
+  Balls the wrong file. There is only one download now, so there is
+  nothing left to confuse.
+- Too Many Balls no longer requires any other mod to be installed.
 
 ## 0.5.0
 

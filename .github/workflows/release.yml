@@ -1,16 +1,23 @@
 name: Release
 
-# Fires on every push to main. Reads the version straight out of each
-# mod's manifest.json, so nothing here needs updating when a ball is
+# Fires on every push to main. Reads the version straight out of
+# kanto_balls/manifest.json, so nothing here needs updating when a ball is
 # added -- only the version-bump-and-push you already do.
+#
+# ONE MOD, ONE ZIP, and that is load-bearing rather than tidiness. This
+# repo used to publish shop_events alongside kanto_balls, and the engine
+# caches release lists per REPO while storing an asset already resolved
+# for ONE mod id (ModUpdate.lua:352 vs :397) -- so the in-launcher updater
+# handed Too Many Balls the shop_events zip and refused to install it.
+# Two mods on one release cannot be made safe from this side. shop_events
+# was folded into kanto_balls at 0.6.0; with a single asset there is
+# nothing left to pick wrongly, whatever the engine caches.
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - "shop_events/**"
       - "kanto_balls/**"
-
 
 permissions:
   contents: write
@@ -21,18 +28,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Read versions and enforce lockstep
+      - name: Read version
         id: ver
         run: |
-          SE=$(jq -r .version shop_events/manifest.json)
-          KB=$(jq -r .version kanto_balls/manifest.json)
-          echo "shop_events version: $SE"
-          echo "kanto_balls version: $KB"
-          if [ "$SE" != "$KB" ]; then
-            echo "::error::Version mismatch -- shop_events is $SE, kanto_balls is $KB. This repo shares one release stream: both manifests must carry the SAME version before pushing to main (see each mod's CHANGELOG preamble for why)."
-            exit 1
-          fi
-          echo "version=$SE" >> "$GITHUB_OUTPUT"
+          V=$(jq -r .version kanto_balls/manifest.json)
+          echo "kanto_balls version: $V"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
 
       - name: Skip if this version was already released
         id: check
@@ -45,154 +46,126 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Build release zips
+      - name: Build the release zip
         if: steps.check.outputs.exists == 'false'
         run: |
           V="${{ steps.ver.outputs.version }}"
+          M=kanto_balls
 
-          # Flat archives: manifest.json at the root of each zip rather than
-          # inside a "<mod>/" folder. LauncherMods.locateRoot accepts either
-          # shape and names the install folder from manifest.id regardless,
-          # but the community mod index requires files at the archive root.
+          # Flat archive: manifest.json at the root rather than inside a
+          # "<mod>/" folder. LauncherMods.locateRoot accepts either shape and
+          # names the install folder from manifest.id regardless, but the
+          # community mod index requires files at the archive root.
           #
-          # `.modkitignore` IS THE SINGLE SOURCE OF TRUTH for what a mod omits
-          # from a package, per the checker's ZIP_EXCLUSIONS_modkitignore.md.
-          # This step used to hardcode `-x 'tests/*'` alongside a
-          # .modkitignore that said the same thing -- two hand-maintained
-          # lists that happened to agree, which is how a docs/ folder reaches
-          # a zip the day they stop agreeing.
+          # `.modkitignore` IS THE SINGLE SOURCE OF TRUTH for what is omitted,
+          # per briefs/ZIP_EXCLUSIONS_modkitignore.md. This step used to
+          # hardcode `-x 'tests/*'` alongside a .modkitignore saying the same
+          # thing -- two hand-maintained lists that happened to agree, which is
+          # how a docs/ folder reaches a zip the day they stop agreeing.
           #
-          # SEMANTICS, and they differ from modkit.py on purpose: modkit's own
-          # reader (mod_files()) does `rel in ignored`, an EXACT relative-path
-          # compare, so a directory entry like "tests/" matches no FILE and is
-          # silently inert. This implements the DIRECTORY-PREFIX meaning
-          # authors intend, so "tests/" drops tests/ and everything under it
-          # while exact file paths keep working. Until modkit.py is fixed,
-          # `modkit pack` and this workflow disagree about directory entries;
-          # this one is stricter and is the correct one.
-          for M in shop_events kanto_balls; do
-            rm -rf "build/$M" && mkdir -p "build/$M"
-            ( cd "$M"
-              for entry in * .[!.]*; do
-                case "$entry" in
-                  .git|.github|.gitignore|.modkitignore|build|*.zip) continue ;;
-                esac
-                [ -e "$entry" ] || continue
-                cp -r "$entry" "../build/$M/"
-              done )
+          # SEMANTICS, differing from modkit.py on purpose: modkit's own reader
+          # (mod_files()) does `rel in ignored`, an EXACT relative-path compare,
+          # so a directory entry matches no FILE and is silently inert. This
+          # implements the DIRECTORY-PREFIX meaning authors intend, while exact
+          # file paths keep working. Until modkit.py is fixed, `modkit pack` and
+          # this workflow disagree about directory entries; this one is stricter
+          # and is the correct one.
+          rm -rf "build/$M" && mkdir -p "build/$M"
+          ( cd "$M"
+            for entry in * .[!.]*; do
+              case "$entry" in
+                .git|.github|.gitignore|.modkitignore|build|*.zip) continue ;;
+              esac
+              [ -e "$entry" ] || continue
+              cp -r "$entry" "../build/$M/"
+            done )
 
-            DROPPED=""
-            if [ -f "$M/.modkitignore" ]; then
-              while IFS= read -r pat || [ -n "$pat" ]; do
-                pat="${pat%%#*}"
-                pat="$(printf '%s' "$pat" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-                [ -n "$pat" ] || continue
-                pat="${pat#/}"
-                target="build/$M/${pat%/}"
-                if [ -e "$target" ]; then
-                  rm -rf "$target"
-                  DROPPED="$DROPPED ${pat%/}"
-                  echo "  $M/.modkitignore: excluded $pat"
-                else
-                  echo "::warning::$M/.modkitignore lists '$pat' but nothing matched it - stale entry?"
-                fi
-              done < "$M/.modkitignore"
-            fi
-
-            # Excluding a FILE leaves its directory behind, and `zip -r`
-            # records an empty directory as a real archive entry -- so
-            # excluding tests/hook_harness.lua still shipped an empty tests/
-            # folder to players. Measured locally, not theorised; the old
-            # `-x 'tests/*'` form had the same hole.
-            #
-            # Pruned here rather than by writing "tests/" in .modkitignore,
-            # because the exact file path is the form modkit.py's own reader
-            # honours -- changing it would silently stop `modkit pack`
-            # excluding anything at all.
-            find "build/$M" -mindepth 1 -type d -empty -delete
-
-            ( cd "build/$M" && zip -qr "../../$M-$V.zip" . -x '*.DS_Store' )
-            echo "--- $M-$V.zip ---"
-            unzip -l "$M-$V.zip"
-
-            # manifest.json must sit at the archive ROOT, or the community
-            # mod index rejects it.
-            unzip -l "$M-$V.zip" | grep -qE ' manifest\.json$' \
-              || { echo "::error::$M-$V.zip: manifest.json is not at the archive root"; exit 1; }
-
-            # PROVE the exclusions took. An exclusion that quietly stops
-            # working is the whole failure mode, and the zip is the only place
-            # it can be checked for certain.
-            for pat in $DROPPED; do
-              if unzip -l "$M-$V.zip" | grep -qE "[ /]${pat}(/|$)"; then
-                echo "::error::$M-$V.zip still contains '$pat' after excluding it"
-                exit 1
+          DROPPED=""
+          if [ -f "$M/.modkitignore" ]; then
+            while IFS= read -r pat || [ -n "$pat" ]; do
+              pat="${pat%%#*}"
+              pat="$(printf '%s' "$pat" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+              [ -n "$pat" ] || continue
+              pat="${pat#/}"
+              target="build/$M/${pat%/}"
+              if [ -e "$target" ]; then
+                rm -rf "$target"
+                DROPPED="$DROPPED ${pat%/}"
+                echo "  .modkitignore: excluded $pat"
+              else
+                echo "::warning::.modkitignore lists '$pat' but nothing matched it - stale entry?"
               fi
-            done
-          done
+            done < "$M/.modkitignore"
+          fi
 
-      - name: Build combined release notes
-        if: steps.check.outputs.exists == 'false'
-        run: |
-          V="${{ steps.ver.outputs.version }}"
+          # Excluding a FILE leaves its directory behind, and `zip -r` records
+          # an empty directory as a real archive entry -- so excluding
+          # tests/hook_harness.lua still shipped an empty tests/ folder.
+          # Measured, not theorised; the old `-x 'tests/*'` had the same hole.
+          find "build/$M" -mindepth 1 -type d -empty -delete
 
-          # Back-ported from the adopted repos' workflow (Apricorn-Farm et
-          # al), which had both of these and this one had neither.
-          #
-          # 1. THE HEADING IS MATCHED ON ITS VERSION TOKEN, not as a regex.
-          #    The old form was `awk "/^## $V/..."`, where $V is
-          #    interpolated straight into a pattern -- so its dots are
-          #    wildcards AND it anchors only at the start. Extracting
-          #    "0.4.3" therefore matches "## 0.4.30", and this repo's
-          #    CHANGELOG contains both of those headings today. Whichever
-          #    came first would win and the release would carry the wrong
-          #    version's notes.
-          #
-          # 2. AN EMPTY BODY IS A HARD FAILURE. Without this a heading that
-          #    does not match, or a version whose section is still blank,
-          #    publishes a release whose notes are nothing but the install
-          #    steps -- silently, with a green tick. That is a live trap
-          #    here: `next` carries the NEXT version's heading with no body
-          #    under it for most of its life.
-          section() {
-            awk -v v="$V" '
-              /^## / {
-                if (found) exit
-                h = $0
-                gsub(/[][]/, "", h)
-                sub(/^##[ \t]*/, "", h)
-                split(h, parts, /[ \t]/)
-                if (parts[1] == v) { found = 1; next }
-              }
-              found { print }
-            ' "$1"
-          }
+          ( cd "build/$M" && zip -qr "../../$M-$V.zip" . -x '*.DS_Store' )
+          echo "--- $M-$V.zip ---"
+          unzip -l "$M-$V.zip"
 
-          # Checked PER MOD, not on the concatenation: this repo ships two
-          # mods in lockstep, so a combined check would pass on one mod's
-          # section while the other silently contributed nothing.
-          for m in shop_events kanto_balls; do
-            section "$m/CHANGELOG.md" > "$m-notes.md"
-            if ! grep -q '[^[:space:]]' "$m-notes.md"; then
-              echo "::error::no CHANGELOG section body for $V in $m/CHANGELOG.md -- refusing to publish empty release notes"
+          # manifest.json must sit at the archive ROOT, or the community mod
+          # index rejects it.
+          unzip -l "$M-$V.zip" | grep -qE ' manifest\.json$' \
+            || { echo "::error::$M-$V.zip: manifest.json is not at the archive root"; exit 1; }
+
+          # THE ASSET NAME IS WHAT THE UPDATER LOOKS FOR. ModUpdate.pickZipAsset
+          # prefers "<id>-<version>.zip" exactly; a name built from anything but
+          # the manifest id silently falls back to "any zip on the release".
+          ID=$(jq -r .id "$M/manifest.json")
+          [ -f "$ID-$V.zip" ] \
+            || { echo "::error::expected $ID-$V.zip (from manifest id), not $M-$V.zip"; exit 1; }
+
+          # PROVE the exclusions took. An exclusion that quietly stops working
+          # is the whole failure mode, and the zip is the only place it can be
+          # checked for certain.
+          for pat in $DROPPED; do
+            if unzip -l "$M-$V.zip" | grep -qE "[ /]${pat}(/|$)"; then
+              echo "::error::$M-$V.zip still contains '$pat' after excluding it"
               exit 1
             fi
           done
 
-          {
-            echo "## Shop Events $V"
-            cat shop_events-notes.md
-            echo ""
-            echo "## Too Many Balls $V"
-            cat kanto_balls-notes.md
-          } > notes.md
+      - name: Build release notes
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          V="${{ steps.ver.outputs.version }}"
+
+          # THE HEADING IS MATCHED ON ITS VERSION TOKEN, not as a regex. The
+          # old form was `awk "/^## $V/..."`, interpolating the version into a
+          # pattern -- so its dots are wildcards and it anchors only at the
+          # start. Asking for "0.4.3" therefore matched "## 0.4.30", and this
+          # CHANGELOG contains both headings.
+          awk -v v="$V" '
+            /^## / {
+              if (found) exit
+              h = $0
+              gsub(/[][]/, "", h)
+              sub(/^##[ \t]*/, "", h)
+              split(h, parts, /[ \t]/)
+              if (parts[1] == v) { found = 1; next }
+            }
+            found { print }
+          ' kanto_balls/CHANGELOG.md > notes.md
+
+          # AN EMPTY BODY IS A HARD FAILURE. Without this, a heading that does
+          # not match -- or a version whose section is still blank on `next` --
+          # publishes a release whose notes are nothing at all, silently, with
+          # a green tick.
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "::error::no CHANGELOG section body for $V in kanto_balls/CHANGELOG.md -- refusing to publish empty release notes"
+            exit 1
+          fi
 
       - name: Publish release
         if: steps.check.outputs.exists == 'false'
         run: |
           V="${{ steps.ver.outputs.version }}"
           gh release create "v$V" \
-            "shop_events-$V.zip" \
             "kanto_balls-$V.zip" \
             --title "Too Many Balls $V" \
             --notes-file notes.md

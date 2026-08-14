@@ -1,8 +1,8 @@
 # Too Many Balls
 
 **New Poké Balls for gen1recomp** — on Red / Blue / Yellow **and Pokémon
-Gold** since 0.4.0 — sold on real mart shelves, plus the small library mod
-that makes one of them possible.
+Gold** since 0.4.0 — sold on real mart shelves, and on Gold made by hand
+out of Apricorns.
 
 *(Called **Kanto Balls** until 0.4.3. Renamed once the balls reached
 Johto and "Kanto" stopped being true. Same mod, same ids, same downloads —
@@ -116,25 +116,32 @@ safe. Kurt's own seven recipes are untouched.
 </tr>
 </table>
 
-## Two mods, one download page
+## One download
 
-| Mod | What it does |
-| --- | --- |
-| **[kanto_balls](kanto_balls/)** | All fourteen balls, and the BALL CASE. **Requires shop_events.** |
-| **[shop_events](shop_events/)** | Library mod. Emits `shop.purchased` whenever you buy something at a mart, because the engine has no purchase event of its own. Does nothing visible by itself. |
+**[kanto_balls](kanto_balls/)** is the whole mod — all fourteen balls and
+the BALL CASE, with no dependencies.
 
-**Install both**, even if you only want the balls — the Premier Ball's
-bonus is built entirely on shop_events.
+It used to ship alongside a small library mod, **shop_events**, which
+emitted a `shop.purchased` event so other ball authors could react to a
+mart purchase. Nobody ever did, and shipping two mods from one release
+broke the in-launcher updater: the launcher could not tell the two
+downloads apart and handed Too Many Balls the wrong file. shop_events was
+folded in at 0.6.0. The event still exists and is still emitted, just
+from inside this mod, so anything listening for it keeps working.
 
-> **Development Preview:** both mods are in active development. Bug
-> reports and ideas are welcome in [Issues](../../issues) — say which
-> mod, include the version from your load log, and list your other mods.
+If you still have Shop Events installed you can remove it. Leaving it is
+harmless — Too Many Balls notices and steps aside rather than awarding
+the Premier bonus twice.
+
+> **Development Preview:** this mod is in active development. Bug
+> reports and ideas are welcome in [Issues](../../issues) — include the
+> version from your load log and list your other mods.
 
 ## Also for mod authors
 
 `kanto_balls/main.lua` is written to be read and copied. Each ball is a
 *different* technique, deliberately: no catch code at all, reacting to
-another mod's event, multiplying the rate from live battle state,
+a purchase event, multiplying the rate from live battle state,
 querying species data, reading base stats, reading your own side of the
 battle, replacing the catch roll outright, a ball whose whole effect is a
 palette rather than maths, and one that rewrites the caught Pokémon after
@@ -152,9 +159,9 @@ this started life as **Example Balls**.
 
 ## Installation
 
-1. Download **both** zips from the [latest release](../../releases/latest):
-   `kanto_balls-X.Y.Z.zip` and `shop_events-X.Y.Z.zip`.
-2. Launcher → **MODS** → **Import mod .zip**, once per zip.
+1. Download `kanto_balls-X.Y.Z.zip` from the
+   [latest release](../../releases/latest).
+2. Launcher → **MODS** → **Import mod .zip**.
 3. Fully quit and relaunch.
 
 **Upgrading from Kanto Balls?** Nothing to do — that was this mod's old
@@ -166,16 +173,6 @@ first. That one was a real id change back at 0.2.0, and because a new id
 installs to its own folder, nothing stops both running at once and
 registering overlapping balls.
 
-## Why one repo, two mods
-
-They're released together, but they're **not one mod** — each has its own
-manifest, its own id, and its own on/off toggle in the mod browser.
-shop_events is meant to be reusable by other authors independent of the
-ball pack, so keeping it a separate install matters.
-
-The one consequence of sharing a repo: **every release retags and re-zips
-both mods to the same version number**, even when only one of them
-actually changed. See each mod's CHANGELOG for why.
 
 ## Compatibility
 

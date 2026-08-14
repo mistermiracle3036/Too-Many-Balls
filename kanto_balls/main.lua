@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.5.0"
+  local VERSION = "0.6.0"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -420,6 +420,138 @@ return function(mod)
   local function boost(ctx, mult)
     local rate = ctx.rateOverride or ctx.targetDef.catchRate or 45
     ctx.rateOverride = math.min(255, rate * mult)
+  end
+
+  ----------------------------------------------------------------------
+  -- PURCHASE DETECTION -- was the separate `shop_events` mod until 0.6.0.
+  --
+  -- WHY IT MOVED IN.  shop_events existed so OTHER ball authors could
+  -- react to a mart purchase; nobody ever did, and this mod was its only
+  -- consumer.  Meanwhile shipping two mods from one repo broke the
+  -- in-launcher updater outright: the engine caches release lists per
+  -- REPO and stores an asset already resolved for ONE mod id
+  -- (ModUpdate.lua:352 vs :397), so updating Too Many Balls downloaded
+  -- shop_events' zip and was refused -- "zip is for shop_events, expected
+  -- kanto_balls".  Two mods, one release, one cache slot.  ONE MOD MEANS
+  -- ONE ZIP on the release and there is nothing left to pick wrongly,
+  -- whatever the engine caches.  That is the actual fix; the earlier
+  -- attempt at distinct `github` fields was a workaround and did not hold.
+  --
+  -- THE EVENT CONTRACT SURVIVES.  This still emits `shop.purchased` with
+  -- the same payload on the same bus, so the listener further down is
+  -- unchanged and any future author can still listen for it.  Only the
+  -- delivery vehicle changed.
+  --
+  -- IF THE STANDALONE shop_events IS STILL INSTALLED this block does
+  -- nothing and defers to it.  Both wrapping Bag.add and Sound.play would
+  -- emit each purchase TWICE and award two Premier Balls per ten bought.
+  -- Nobody has to uninstall anything for this to be safe.
+  ----------------------------------------------------------------------
+  do
+    if mod.find("shop_events") then
+      mod.log:info("shop_events installed; deferring purchase detection")
+    else
+      -- Both till sounds.  "Purchase" is Gen 1's (ShopMenu.lua:75),
+      -- "Sfx_Transaction" is Gold's (MartMenu.lua:670).  Sound.GEN2_ALIASES
+      -- maps one onto the other for CALLERS, but a wrap sees the literal
+      -- name each call site passed, so both spellings must be here.
+      local PURCHASE_SOUNDS = { Purchase = true, Sfx_Transaction = true }
+      local Sound = require("src.core.Sound")
+
+      local shop = { pending = nil, game = nil, emitting = false,
+                     snapshot = nil }
+
+      local function inventoryOf()
+        local g = shop.game
+        return g and g.save and g.save.inventory or nil
+      end
+
+      local function snapshot()
+        local inv = inventoryOf()
+        if not inv then return nil end
+        local copy = {}
+        for id, n in pairs(inv) do copy[id] = n end
+        return copy
+      end
+
+      -- what went UP since the snapshot is what was just bought
+      local function diffGained(before)
+        local inv = inventoryOf()
+        if not inv then return nil end
+        local gained = {}
+        for id, n in pairs(inv) do
+          local was = (before and before[id]) or 0
+          if type(n) == "number" and n > was then
+            gained[#gained + 1] = { id = id, qty = n - was }
+          end
+        end
+        return gained
+      end
+
+      -- Stash-originals under OUR OWN key.  shop_events used
+      -- `_seOriginals`; a separate key means that even if both somehow
+      -- load, neither rebuilds from the other's stash and unwraps it.
+      Bag._kbShopOriginals = Bag._kbShopOriginals or { add = Bag.add }
+      local vanillaAdd = Bag._kbShopOriginals.add
+      Bag.add = function(save, id, qty, data)
+        local ok = vanillaAdd(save, id, qty, data)
+        if ok and not shop.emitting then
+          shop.pending = { id = id, qty = qty or 1, save = save, data = data }
+        end
+        return ok
+      end
+
+      local function emitPurchase(id, qty, save, data)
+        shop.emitting = true
+        local ok, err = pcall(Runtime.emit, "shop.purchased",
+          { id = id, qty = qty, game = shop.game,
+            save = save or (shop.game and shop.game.save),
+            data = data or (shop.game and shop.game.data) })
+        shop.emitting = false
+        if not ok then
+          mod.log:warn("shop.purchased listener error: %s", tostring(err))
+        end
+      end
+
+      Sound._kbShopOriginals = Sound._kbShopOriginals or { play = Sound.play }
+      local vanillaPlay = Sound._kbShopOriginals.play
+      Sound.play = function(data, name)
+        if PURCHASE_SOUNDS[name] then
+          local before = shop.snapshot
+          local p = shop.pending
+          shop.pending = nil
+          if p then
+            emitPurchase(p.id, p.qty, p.save, p.data)
+          else
+            local gained = diffGained(before)
+            if gained and #gained > 0 then
+              for _, g in ipairs(gained) do
+                emitPurchase(g.id, g.qty, nil, nil)
+              end
+            end
+            -- Nothing gained on Gold is a SELL, which rings the same till
+            -- and is not a fault.  Silent either way: that screen is for
+            -- real errors.
+          end
+          shop.snapshot = snapshot()
+        elseif not shop.emitting then
+          -- Every other sound refreshes the baseline AND clears the fast
+          -- path: a real mart buy is followed by the till in the SAME
+          -- callback with no sound between, so a `pending` surviving to
+          -- another sound was a script gift or a pickup.  Letting it
+          -- linger would report that gift as a purchase the next time the
+          -- player sold something on Gold.
+          shop.pending = nil
+          shop.snapshot = snapshot()
+        end
+        return vanillaPlay(data, name)
+      end
+
+      mod.events:on("game.ready", function(p)
+        shop.game = p.game
+        shop.snapshot = snapshot()
+      end)
+    end
   end
 
   ----------------------------------------------------------------------

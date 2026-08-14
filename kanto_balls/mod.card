@@ -24,7 +24,7 @@ return {
   },
   credits = { "Mart-shelf mechanism follows Custom Poke Balls by magalvao (github.com/magalvao/custom-pokeballs)." },
   compat = {
-    "Requires: shop_events (the Premier bonus listens to its shop.purchased event).",
+    "No dependencies. The purchase detection behind the Premier bonus was the separate shop_events mod until 0.6.0 and now lives here; it still EMITS shop.purchased on the same bus, so any other mod listening for it keeps working. If the standalone shop_events is still installed this mod defers to it rather than wrapping Bag.add/Sound.play a second time, which would award the bonus twice.",
     "Runs on Gen 1 (Red/Blue/Yellow) and Gen 2 (Gold) since 0.4.0.",
     "Optional: pokeball_colors, on BOTH generations. Gen 1: this mod owns its ball records AND their colors, and registers them on game.ready; Pokeball Colors must not carry entries for these ids.",
     "Gold: this mod owns the THROW colour (its own battleObjects palettes plus a BattleState:ballPalette wrap) and Pokeball Colors 0.1.22+ owns the POKEMON CENTER heal machine, reading each ball's colour back out of ballPalette/battleObjects and the mon.caughtBall mark. The two do not overlap. Other ball mods should call exports.registerBallPalette(ballId, paletteName, row) instead of adding a second wrap; that also gets them onto the heal machine. Gold's native MOON and FAST BALL colours are left alone.",
