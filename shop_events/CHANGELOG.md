@@ -1,5 +1,15 @@
 # Changelog
 
+> **DEPRECATED as of Too Many Balls 0.6.0.** Shop Events has been folded
+> into Too Many Balls and is no longer published as a separate download.
+> Nothing replaces it — the `shop.purchased` event still exists and is
+> still emitted, just from inside Too Many Balls, so any mod listening for
+> it keeps working. If you have this installed you can remove it; if you
+> leave it, Too Many Balls defers to it and nothing is awarded twice.
+>
+> It lived here until 0.5.0. The source below stays for history.
+
+
 All notable changes to Shop Events are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com); the top heading always
 matches the version in `manifest.json`. Shop Events and Kanto Balls

@@ -197,8 +197,10 @@ entirely if you would rather keep the original limit.
 
 ## Requirements
 
-- **[shop_events](../shop_events/)** (hard dependency — the Premier
-  bonus listens to it; lives in this same repo)
+- Nothing. This mod has no dependencies as of 0.6.0 — the purchase
+  detection the Premier bonus needs is built in. (It used to require a
+  separate **Shop Events** mod; that was folded in, and you can remove it
+  if you still have it.)
 - gen1recomp 0.1.38+ (Gold support needs 0.1.78+, which is when the
   engine gained Gen 2)
 
@@ -206,18 +208,16 @@ entirely if you would rather keep the original limit.
 
 **First install**
 
-1. Download both zips from the [latest release](../../releases/latest)
-   -- `shop_events-X.Y.Z.zip` and `kanto_balls-X.Y.Z.zip`. Both are
-   required.
-2. Launcher MODS -> **Import mod .zip**, once per zip (iOS: delete any
-   older downloaded copies from Files first).
+1. Download `kanto_balls-X.Y.Z.zip` from the
+   [latest release](../../releases/latest). That is the whole mod.
+2. Launcher MODS -> **Import mod .zip** (iOS: delete any older downloaded
+   copies from Files first).
 3. Fully quit and relaunch.
 
 **Updates**
 
 After the first install, the mod browser checks this repo's releases
-automatically for each. Update both together when either shows
-"available" -- see the note in Shop Events' README on why.
+automatically and updates in place.
 
 ## Options
 

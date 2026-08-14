@@ -1,7 +1,7 @@
 {
   "id": "kanto_balls",
   "name": "Too Many Balls",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
@@ -11,7 +11,7 @@
   "priority": 150,
   "affects_link": false,
   "permissions": ["engine_internals"],
-  "dependencies": ["shop_events"],
+  "dependencies": [],
   "optional_dependencies": ["pokeball_colors", "custom_pokeballs"],
   "conflicts": ["example_balls"],
   "github": "mistermiracle3036/Too-Many-Balls",

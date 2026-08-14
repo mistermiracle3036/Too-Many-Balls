@@ -58,7 +58,14 @@ local function engineStubs(generation)
     ["src.core.GameVersion"] = {
       generation = function() return generation end,
     },
-    ["src.inventory.ItemEffects"] = { BALLS = {} },
+    -- The engine's Gen 1 ball set. NOT empty: the PREMIER award is gated
+    -- on "is the thing bought a ball", and an empty table made every
+    -- vanilla ball fail that test, so the award path could not be
+    -- exercised at all.
+    ["src.inventory.ItemEffects"] = {
+      BALLS = { POKE_BALL = true, GREAT_BALL = true, ULTRA_BALL = true,
+                MASTER_BALL = true, SAFARI_BALL = true },
+    },
     ["src.pokemon.Pokemon"] = {
       heal = function(mon) mon.hp = 999 end,
     },
@@ -85,6 +92,10 @@ local function engineStubs(generation)
       end,
     },
     ["src.core.Game2"] = { update = function() end },
+    -- The purchase detection folded in from shop_events at 0.6.0 wraps
+    -- BOTH Bag.add and Sound.play; without this stub the mod cannot even
+    -- load, which is how the gap announced itself.
+    ["src.core.Sound"] = { play = function() end },
     ["src.ui.gen2.MartMenu"] = {
       completePurchase = function(self) self.message = { pages = {} } end,
     },
@@ -192,6 +203,13 @@ local function loadMod(generation, options)
   local chunk = assert(loadfile("main.lua"))
   local entry = chunk()
   local mod, rec = makeModApi(options)
+  -- Runtime.emit was a no-op stub, which was fine while shop_events was a
+  -- separate mod and this one only LISTENED. Now that the emit side lives
+  -- here too, a no-op would let the whole purchase path "pass" while
+  -- delivering nothing. Dispatch it to the registered listeners instead.
+  stubs["src.mods.Runtime"].emit = function(name, payload)
+    for _, fn in ipairs(rec.events[name] or {}) do fn(payload) end
+  end
   local ok, err = pcall(entry, mod)
   _G.require = realRequire
   rec.stubs = stubs
@@ -244,6 +262,42 @@ for _, gen in ipairs({ 1, 2 }) do
         pcheck(label .. " shop.purchased", fn,
           { id = "POKE_BALL", qty = 10, game = game,
             save = game.save, data = game.data })
+      end
+
+      -- THE WHOLE PURCHASE PATH, END TO END, through the detection folded
+      -- in from shop_events at 0.6.0.  The loop above hands the listener a
+      -- payload directly, which proves the AWARD but says nothing about
+      -- whether anything still produces that payload now the emitting half
+      -- lives here.  This buys through the wrapped Bag.add, rings the
+      -- wrapped till, and asks whether a PREMIER BALL actually appeared.
+      do
+        local g2 = fakeGame()
+        for id in pairs(items) do g2.data.items[id] = { id = id, price = 1 } end
+        -- Gold decides "is a ball" from the item's POCKET, so a vanilla
+        -- POKE BALL needs the field the ROM extractor gives it.
+        g2.data.items.POKE_BALL = { id = "POKE_BALL", price = 200,
+                                    pocket = "BALL" }
+        for _, fn in ipairs(rec.events["game.ready"] or {}) do
+          pcall(fn, { game = g2 })
+        end
+        local Bag_ = rec.stubs["src.inventory.Bag"]
+        local Sound_ = rec.stubs["src.core.Sound"]
+        local before = g2.save.inventory.PREMIER_BALL or 0
+        Bag_.add(g2.save, "POKE_BALL", 10, g2.data)   -- through the wrap
+        pcheck(label .. " till rings", Sound_.play, g2.data, "Purchase")
+        local after = g2.save.inventory.PREMIER_BALL or 0
+        check(after == before + 1,
+          ("%s buying 10 balls awarded %d PREMIER (expected 1)")
+            :format(label, after - before))
+
+        -- And a SELL must not award anything. Gold rings the same till on
+        -- a sell, which is why the emitting half diffs the inventory
+        -- instead of trusting the sound.
+        local was = g2.save.inventory.PREMIER_BALL or 0
+        Bag_.remove(g2.save, "POKE_BALL", 5)
+        pcheck(label .. " till on sell", Sound_.play, g2.data, "Purchase")
+        check((g2.save.inventory.PREMIER_BALL or 0) == was,
+          label .. " a SELL awarded a PREMIER BALL")
       end
 
       -- every Gen 1 ball's attempt(), including the ones that replace
