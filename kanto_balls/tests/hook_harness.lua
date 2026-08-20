@@ -90,6 +90,9 @@ local function engineStubs(generation)
         local owned = save and save.player and save.player.badges
         return (owned and owned[badge]) and true or false
       end,
+      isSurfing = function(state)
+        return state == "surf" or state == "surf_pika"
+      end,
     },
     ["src.core.Game2"] = { update = function() end },
     -- The purchase detection folded in from shop_events at 0.6.0 wraps
@@ -104,7 +107,7 @@ end
 
 -- The mod API surface, capturing everything the mod registers so the
 -- harness can call it back.
-local function makeModApi(options)
+local function makeModApi(options, foundMods)
   local rec = {
     options = options or {},
     events = {}, hooks = {}, registries = {}, exports = {},
@@ -150,7 +153,7 @@ local function makeModApi(options)
       info = function(_, ...) rec.logged[#rec.logged + 1] = { ... } end,
       warn = function(_, ...) rec.logged[#rec.logged + 1] = { ... } end,
     },
-    find = function() return nil end,
+    find = function(id) return foundMods and foundMods[id] or nil end,
     -- Real storage: the once-only guard on Kurt's handover is only
     -- meaningful if get/set actually round-trip.
     save = {
@@ -163,16 +166,20 @@ local function makeModApi(options)
   -- (src/mods/Loader.lua), so they are here too -- and mod.game must be
   -- swappable mid-test, which is what rec.modGame is for.
   rec.queued = {}
+  rec.worldLive = {
+    daytime = "DAY",
+    map = { def = { environment = "ROUTE" } },
+  }
+  rec.defaultWorld = {
+    overworld = function() return rec.worldLive end,
+    queueScript = function(_, rows)
+      rec.queued[#rec.queued + 1] = rows
+      return true
+    end,
+  }
   setmetatable(mod, { __index = function(_, key)
     if key == "game" then return rec.modGame end
-    if key == "world" then
-      return {
-        queueScript = function(_, rows)
-          rec.queued[#rec.queued + 1] = rows
-          return true
-        end,
-      }
-    end
+    if key == "world" then return rec.modWorld or rec.defaultWorld end
     return nil
   end })
   return mod, rec
@@ -192,7 +199,7 @@ local function fakeGame()
   }
 end
 
-local function loadMod(generation, options)
+local function loadMod(generation, options, foundMods)
   local stubs = engineStubs(generation)
   local realRequire = require
   _G.require = function(name)
@@ -202,7 +209,7 @@ local function loadMod(generation, options)
   end
   local chunk = assert(loadfile("main.lua"))
   local entry = chunk()
-  local mod, rec = makeModApi(options)
+  local mod, rec = makeModApi(options, foundMods)
   -- Runtime.emit was a no-op stub, which was fine while shop_events was a
   -- separate mod and this one only LISTENED. Now that the emit side lives
   -- here too, a no-op would let the whole purchase path "pass" while
@@ -221,7 +228,8 @@ end
 for _, gen in ipairs({ 1, 2 }) do
   for _, cheap in ipairs({ false, true }) do
     local label = ("gen%d cheap=%s"):format(gen, tostring(cheap))
-    local ok, err, rec = loadMod(gen, { cheap_balls = cheap })
+    local ok, err, rec = loadMod(gen,
+      { cheap_balls = cheap, canon_balls = true })
     check(ok, label .. " entry chunk -> " .. tostring(err))
     if ok then
       -- every ball that got an items record must also have a colour, or
@@ -229,8 +237,55 @@ for _, gen in ipairs({ 1, 2 }) do
       local items = rec.registries.items or {}
       check(next(items) ~= nil, label .. " registered no items")
 
+      local canonOption
+      for _, row in ipairs(rec.optionRows or {}) do
+        if row.key == "canon_balls" then canonOption = row end
+      end
+      check(canonOption and canonOption.default == true,
+        label .. " CANON BALL SET option missing or not default-on")
+      check(canonOption and type(canonOption.description) == "string",
+        label .. " CANON BALL SET has no compatibility description")
+
+      local NEW_BALLS = {
+        "LUXURY_BALL", "CHERISH_BALL", "QUICK_BALL", "TIMER_BALL",
+        "NET_BALL", "DUSK_BALL", "REPEAT_BALL", "DREAM_BALL", "DIVE_BALL",
+      }
+      local GOLD_ONLY = {
+        "QUICK_BALL", "TIMER_BALL", "NET_BALL", "DUSK_BALL",
+        "REPEAT_BALL", "DREAM_BALL", "DIVE_BALL",
+      }
+      for _, id in ipairs(NEW_BALLS) do
+        local record = items[id]
+        if gen == 1 and id ~= "LUXURY_BALL" and id ~= "CHERISH_BALL" then
+          check(record == nil, label .. " registered Gold-only " .. id)
+        else
+          check(record ~= nil, label .. " did not register " .. id)
+          if record then
+            local lines = {}
+            for line in tostring(record.description):gmatch("[^\n]+") do
+              lines[#lines + 1] = line
+              check(#line <= 18,
+                ("%s %s mart description is %d cols: %s")
+                  :format(label, id, #line, line))
+            end
+            check(#lines == 2,
+              label .. " " .. id .. " mart description is not two lines")
+          end
+        end
+      end
+      if gen == 1 then
+        local exported = {}
+        for _, id in ipairs(rec.exports.balls or {}) do exported[id] = true end
+        for _, id in ipairs(GOLD_ONLY) do
+          check(not exported[id], label .. " exported Gold-only " .. id)
+          check((rec.registries.balls or {})[id] == nil,
+            label .. " made a Gen 1 ball record for " .. id)
+        end
+      end
+
       -- game.ready listeners: the pocket stamp, the shelves, the colours
       local game = fakeGame()
+      rec.modGame = game
       for id in pairs(items) do
         game.data.items[id] = { id = id, price = 1 }
       end
@@ -248,6 +303,27 @@ for _, gen in ipairs({ 1, 2 }) do
             ("%s %s pocket=%s want %s")
               :format(label, id, tostring(def.pocket), want))
         end
+        local stock = {}
+        for _, id in ipairs(game.data.gen2Marts.lists[1]) do stock[id] = true end
+        check(stock.LUXURY_BALL, label .. " Gold mart lacks LUXURY BALL")
+        check(not stock.CHERISH_BALL,
+          label .. " Gold mart incorrectly sells CHERISH BALL")
+        for _, id in ipairs(GOLD_ONLY) do
+          check(stock[id], label .. " Gold mart lacks " .. id)
+        end
+      end
+
+      if not cheap then
+        check(items.LUXURY_BALL and items.LUXURY_BALL.price == 3000,
+          label .. " LUXURY BALL price is not 3000")
+        check(items.CHERISH_BALL and items.CHERISH_BALL.price == 0,
+          label .. " CHERISH BALL should have no sale price")
+        if gen == 2 then
+          for _, id in ipairs(GOLD_ONLY) do
+            check(items[id] and items[id].price == 1000,
+              label .. " " .. id .. " price is not 1000")
+          end
+        end
       end
 
       -- pokemon.caught: HEAL restores, the mark gets written
@@ -255,6 +331,20 @@ for _, gen in ipairs({ 1, 2 }) do
         pcheck(label .. " pokemon.caught", fn,
           { ball = "HEAL_BALL", mon = { hp = 1, stats = { hp = 20 },
             moves = {}, status = "SLP" }, species = "PIDGEY", game = game })
+      end
+
+      local luxury = { hp = 1 }
+      for _, fn in ipairs(rec.events["pokemon.caught"] or {}) do
+        pcheck(label .. " luxury caught", fn,
+          { ball = "LUXURY_BALL", mon = luxury,
+            species = "EEVEE", game = game })
+      end
+      if gen == 2 then
+        check(luxury.happiness == 120,
+          label .. " LUXURY catch did not start at 120 happiness")
+      else
+        check(luxury.happiness == nil,
+          label .. " LUXURY wrote a non-existent Gen 1 happiness field")
       end
 
       -- shop.purchased: the Premier award path
@@ -378,6 +468,101 @@ for _, gen in ipairs({ 1, 2 }) do
         end
       end
 
+      -- Outcome coverage for every 0.7.0 Gold catch arm.  Each assertion
+      -- checks the rate byte the engine consumes, not merely that the hook
+      -- returned without crashing.
+      if gen == 2 and hook then
+        local function rateFor(ball, extra, def)
+          local o = { catchRate = BASE_RATE, species = "MAGIKARP",
+                      status = nil, battle = { turn = 2 } }
+          for k, v in pairs(extra or {}) do o[k] = v end
+          -- `battle = false` means REMOVE it. A nil in `extra` cannot say
+          -- that -- pairs() never yields a nil value, so the seeded default
+          -- silently survives and a "field absent" case ends up testing the
+          -- default instead of the absence. The first draft of the QUICK
+          -- no-battle check did exactly that and passed for the wrong reason.
+          if o.battle == false then o.battle = nil end
+          o.def = def or { types = { "NORMAL" } }
+          hook(function() return false, o.catchRate end,
+            ball, nil, o.def, o)
+          return o.catchRate
+        end
+
+        check(rateFor("QUICK_BALL", { battle = { turn = 1 } }) == 180,
+          label .. " QUICK BALL did not reach 4x on turn 1")
+        check(rateFor("QUICK_BALL", { battle = { turn = 2 } }) == BASE_RATE,
+          label .. " QUICK BALL stayed boosted after turn 1")
+        -- NO BATTLE AT ALL must not boost. The obvious spelling,
+        -- `(o.battle and o.battle.turn) or 0`, defaults to turn 0, which
+        -- satisfies `<= 1` -- so an engine that stops passing `battle`
+        -- would turn QUICK into a universal 4x and nothing here noticed:
+        -- this suite passed identically before and after that was fixed,
+        -- which is the whole reason the case is pinned now.
+        check(rateFor("QUICK_BALL", { battle = false }) == BASE_RATE,
+          label .. " QUICK BALL boosted with no battle in opts")
+        check(rateFor("QUICK_BALL", { battle = {} }) == BASE_RATE,
+          label .. " QUICK BALL boosted with a battle carrying no turn")
+        check(rateFor("TIMER_BALL", { battle = { turn = 0 } }) == BASE_RATE,
+          label .. " TIMER BALL was not 1x on turn 0")
+        check(rateFor("TIMER_BALL", { battle = { turn = 5 } }) == 90,
+          label .. " TIMER BALL did not reach 2x on turn 5")
+        check(rateFor("TIMER_BALL", { battle = { turn = 20 } }) == 180,
+          label .. " TIMER BALL did not cap at 4x on turn 20")
+        check(rateFor("NET_BALL", nil, { types = { "WATER" } }) == 135,
+          label .. " NET BALL missed literal WATER type")
+        check(rateFor("NET_BALL", nil, { types = { "BUG", "POISON" } }) == 135,
+          label .. " NET BALL missed literal BUG type")
+        check(rateFor("NET_BALL", nil, { types = { "FIRE" } }) == BASE_RATE,
+          label .. " NET BALL boosted an unrelated type")
+
+        rec.worldLive.daytime = "NITE"
+        rec.worldLive.map.def.environment = "ROUTE"
+        check(rateFor("DUSK_BALL") == 135,
+          label .. " DUSK BALL missed NITE")
+        rec.worldLive.daytime = "DAY"
+        rec.worldLive.map.def.environment = "CAVE"
+        check(rateFor("DUSK_BALL") == 135,
+          label .. " DUSK BALL missed CAVE")
+        rec.worldLive.map.def.environment = "DUNGEON"
+        check(rateFor("DUSK_BALL") == 135,
+          label .. " DUSK BALL missed DUNGEON")
+        rec.worldLive.map.def.environment = "ROUTE"
+        check(rateFor("DUSK_BALL") == BASE_RATE,
+          label .. " DUSK BALL boosted a daytime route")
+        rec.modWorld = {}
+        check(rateFor("DUSK_BALL") == BASE_RATE,
+          label .. " DUSK BALL failed with no live world")
+        rec.modWorld = nil
+
+        game.save.pokedex.caught.MAGIKARP = true
+        check(rateFor("REPEAT_BALL") == 135,
+          label .. " REPEAT BALL missed caught species")
+        game.save.pokedex.caught.MAGIKARP = nil
+        check(rateFor("REPEAT_BALL") == BASE_RATE,
+          label .. " REPEAT BALL boosted an uncaught species")
+
+        check(rateFor("DREAM_BALL", { status = "sleep" }) == 180,
+          label .. " DREAM BALL missed sleep")
+        check(rateFor("DREAM_BALL", { status = "SLP" }) == 180,
+          label .. " DREAM BALL missed SLP compatibility status")
+        check(rateFor("DREAM_BALL", { status = "freeze" }) == BASE_RATE,
+          label .. " DREAM BALL incorrectly boosted freeze")
+
+        check(rateFor("DIVE_BALL", { fishing = true }) == 135,
+          label .. " DIVE BALL missed fishing")
+        game.save.playerState = "surf"
+        check(rateFor("DIVE_BALL") == 135,
+          label .. " DIVE BALL missed surf")
+        game.save.playerState = "walk"
+        check(rateFor("DIVE_BALL") == BASE_RATE,
+          label .. " DIVE BALL boosted on land")
+
+        check(rateFor("LUXURY_BALL") == BASE_RATE,
+          label .. " LUXURY BALL changed catch odds")
+        check(rateFor("CHERISH_BALL") == BASE_RATE,
+          label .. " CHERISH BALL changed catch odds")
+      end
+
       -- BAG HEADROOM, asserted as a NUMBER on both generations.
       --
       -- 0.4.30 corrected this from "one slot per registered ball" to
@@ -390,9 +575,9 @@ for _, gen in ipairs({ 1, 2 }) do
         local Bag_ = rec.stubs["src.inventory.Bag"]
         local pocket = (gen == 2) and "BALL" or "ITEM"
         local base = (gen == 2) and 12 or 20
-        -- gen 1: 6 shelf balls + PREMIER.  gen 2: those, less MOON and
-        -- FAST which Gold owns natively, plus the 5 craft balls and ACE.
-        local want = (gen == 2) and 11 or 7
+        -- gen 1: seven shelf balls + PREMIER. Gold adds LUXURY, CHERISH,
+        -- the craft tier and the seven canon balls.
+        local want = (gen == 2) and 20 or 8
         if cheap then want = want + 2 end          -- GS and BEAST
         local got = Bag_.capacity({}, pocket)
         check(got == base + want,
@@ -548,6 +733,8 @@ for _, gen in ipairs({ 1, 2 }) do
         kurtTalk(rescue, KEY, "LURE_BALL")
         check(rescue.save.inventory.BALL_CASE == 1,
           label .. " KURT DID NOT GIVE THE CASE ON HIS RETURN")
+        check(rescue.save.inventory.CHERISH_BALL == 1,
+          label .. " KURT DID NOT GIVE ONE CHERISH BALL WITH THE CASE")
 
         -- ...and only ever once, however many gifts follow.
         kurtTalk(rescue, KEY, "MOON_BALL")
@@ -555,6 +742,29 @@ for _, gen in ipairs({ 1, 2 }) do
         check(rescue.save.inventory.BALL_CASE == 1,
           ("%s kurt gave %s cases, want exactly 1")
             :format(label, tostring(rescue.save.inventory.BALL_CASE)))
+        check(rescue.save.inventory.CHERISH_BALL == 1,
+          ("%s kurt gave %s cherish balls, want exactly 1")
+            :format(label, tostring(rescue.save.inventory.CHERISH_BALL)))
+
+        -- A full BALL pocket may reject CHERISH, but that must never roll
+        -- back or block the KEY ITEM.  This models the two Bag.add calls
+        -- independently and proves the second one's failure is ignored.
+        rec.saveStore.caseGiven = nil
+        local Bag_ = rec.stubs["src.inventory.Bag"]
+        local liveAdd = Bag_.add
+        Bag_.add = function(save, id, qty, data)
+          if id == "CHERISH_BALL" then return false end
+          return liveAdd(save, id, qty, data)
+        end
+        local fullGift = fakeGame()
+        kurtTalk(fullGift, KEY, "LURE_BALL")
+        Bag_.add = liveAdd
+        check(fullGift.save.inventory.BALL_CASE == 1,
+          label .. " full BALL pocket blocked Kurt's CASE")
+        check(fullGift.save.inventory.CHERISH_BALL == nil,
+          label .. " failed CHERISH add nevertheless changed inventory")
+        check(rec.saveStore.caseGiven == true,
+          label .. " failed CHERISH add left the CASE handover unrecorded")
 
         -- THE CODA MUST NOT BE SPOKEN INSIDE script.ended.
         -- Reported from device at 0.4.20: both lines flashed past,
@@ -875,6 +1085,54 @@ for _, gen in ipairs({ 1, 2 }) do
         end
       end
     end
+  end
+end
+
+---------------------------------------------------------------- coexistence
+
+-- Gold must yield all seven shared ids either when the player disables the
+-- set or when a Gold-capable Custom Poke Balls mod is present.  LUXURY and
+-- CHERISH remain ours, and the reduced headroom is 12 native + 13 ours.
+for _, mode in ipairs({ "option-off", "custom-pokeballs" }) do
+  local options = { cheap_balls = false, canon_balls = mode ~= "option-off" }
+  local found = mode == "custom-pokeballs"
+    and { custom_pokeballs = { exports = {} } } or nil
+  local label = "gen2 coexistence " .. mode
+  local ok, err, rec = loadMod(2, options, found)
+  check(ok, label .. " entry chunk -> " .. tostring(err))
+  if ok then
+    local ids = {
+      "QUICK_BALL", "TIMER_BALL", "NET_BALL", "DUSK_BALL",
+      "REPEAT_BALL", "DREAM_BALL", "DIVE_BALL",
+    }
+    local items = rec.registries.items or {}
+    local exported = {}
+    for _, id in ipairs(rec.exports.balls or {}) do exported[id] = true end
+    check(items.LUXURY_BALL ~= nil, label .. " lost LUXURY BALL")
+    check(items.CHERISH_BALL ~= nil, label .. " lost CHERISH BALL")
+    for _, id in ipairs(ids) do
+      check(items[id] == nil, label .. " registered shared id " .. id)
+      check(not exported[id], label .. " exported shared id " .. id)
+    end
+
+    local game = fakeGame()
+    rec.modGame = game
+    for id in pairs(items) do game.data.items[id] = { id = id, price = 1 } end
+    for _, fn in ipairs(rec.events["game.ready"] or {}) do
+      pcheck(label .. " game.ready", fn, { game = game })
+    end
+    local stock = {}
+    for _, id in ipairs(game.data.gen2Marts.lists[1]) do stock[id] = true end
+    check(stock.LUXURY_BALL, label .. " mart lost LUXURY BALL")
+    check(not stock.CHERISH_BALL, label .. " mart sells CHERISH BALL")
+    for _, id in ipairs(ids) do
+      check(not stock[id], label .. " stocked shared id " .. id)
+    end
+
+    local cap = rec.stubs["src.inventory.Bag"].capacity({}, "BALL")
+    check(cap == 25,
+      ("%s headroom is %s, expected 25 (12 + 13)")
+        :format(label, tostring(cap)))
   end
 end
 

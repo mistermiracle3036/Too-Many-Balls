@@ -1,8 +1,9 @@
 # Too Many Balls
 
 Custom Poké Balls for gen1recomp — on **Red/Blue/Yellow and, since
-0.4.0, Pokémon Gold**. Fourteen of them now, which is where the name
-came from. `main.lua` is commented to be read and copied: every ball is
+0.4.0, Pokémon Gold**. The collection keeps growing, which is where the
+name came from. `main.lua` is commented to be read and copied: every ball
+is
 one self-contained pattern with the engine file and line it was verified
 against, on both generations.
 
@@ -29,7 +30,22 @@ feature — Kurt gives you the case, and it is worth having.
 | MIRROR BALL (¥1200) | Great/Ultra marts | 4× when the wild Pokémon is the same species as the one you have out |
 | MOON BALL (¥1200) | Pewter Mart, before Mt. Moon — *Gen 1 only* | 4× vs species that evolve by Moon Stone |
 | FAST BALL (¥1000) | Great/Ultra marts — *Gen 1 only* | 4× vs species with base Speed ≥ 100 |
+| LUXURY BALL (¥3000) | Great/Ultra marts | Plain odds; on Gold the catch starts at 120 happiness |
 | SILPH BALL (¥9800) | Saffron Mart (Gold: "PROTO BALL", Ultra-tier marts) | Guaranteed catch — except one throw in **two** fizzles, and the ball is spent either way |
+
+Gold also sells seven familiar later-generation balls at Great/Ultra
+marts. Every one has a two-line description in the mart, so its condition
+is visible before you buy it.
+
+| Gold-only ball | Price | What it does |
+| -------------- | ----- | ------------ |
+| QUICK BALL | ¥1000 | 4× on the first battle turn; normal afterward |
+| TIMER BALL | ¥1000 | Starts at 1×, then gains 1× every five turns up to 4× |
+| NET BALL | ¥1000 | 3× on WATER- or BUG-type Pokémon |
+| DUSK BALL | ¥1000 | 3× at night or inside a cave/dungeon |
+| REPEAT BALL | ¥1000 | 3× on a species already marked caught in your Pokédex |
+| DREAM BALL | ¥1000 | 4× on a sleeping Pokémon; freeze does not count |
+| DIVE BALL | ¥1000 | 3× while fishing or surfing |
 
 <img src="https://raw.githubusercontent.com/mistermiracle3036/Too-Many-Balls/main/docs/mart-shelf.png" width="360" alt="A Kanto mart's ball shelf listing NEST, HEAL, FAST, MIRROR and SILPH BALLs with prices">
 
@@ -52,7 +68,10 @@ exactly one after the takeover.
 
 *Pokémon Gold only.* Kurt has been making balls out of Apricorns for
 years. When you come back to him from the Slowpoke Well he decides
-you're worth teaching, and hands over a **BALL CASE**.
+you're worth teaching, and hands over a **BALL CASE**. Once the key item
+is safely in your bag, he also gives you one **CHERISH BALL** as a
+keepsake. It has plain catch odds and is not sold. If the BALL pocket is
+full, the Cherish Ball may not fit, but the Case is never blocked or lost.
 
 <table>
 <tr>
@@ -150,6 +169,11 @@ Johto shelves that already stock GREAT or ULTRA BALLs:
 
 What's different there:
 
+- **Quick, Timer, Net, Dusk, Repeat, Dream and Dive are Gold-only here.**
+  They use Gold's live turn count, species types, Pokédex, time of day and
+  fishing/surfing state. Red keeps those shared ids available to Custom
+  Poké Balls instead.
+
 - **The whole craft tier is Gold-only**, because Kurt and the Apricorns
   are. The balls themselves are registered on Red as well, so one that
   arrives from elsewhere still works and still sorts correctly — there's
@@ -170,23 +194,23 @@ What's different there:
   **Pokeball Colors** and those same colours show up on the Pokémon
   Center heal machine as well.
 - **Your BALLS pocket grows to fit.** Gold's ball pocket holds twelve
-  kinds, which this mod would fill on its own, so it adds one slot per
-  ball it registers. Turn on *VANILLA BAG LIMITS* if you'd rather it
+  kinds, so the mod adds one slot per obtainable ball. Turn on
+  *VANILLA BAG LIMITS* if you'd rather it
   didn't. The same thing happens on Red, Blue and Yellow — see below.
 
 ## Bag space
 
 This mod adds more kinds of ball than either game left room for, so it
-makes room: **one extra slot per ball it registers**, and no more.
+makes room: **one extra slot per obtainable ball**, and no more.
 
 It counts the balls you can actually **get** on the game you're playing,
 not every ball the mod knows about.
 
-- On **Gold** that is eleven, added to the BALLS pocket, which otherwise
-  holds twelve kinds — so a full pocket holds Gold's own twelve kinds and
-  all of ours.
-- On **Red, Blue and Yellow** there is only one bag, and only seven of
-  these balls exist there: the six on shelves plus the Premier Ball. The
+- On **Gold** that is twenty with the canon set active, added to the BALLS
+  pocket's native twelve. If the shared seven are disabled or deferred to
+  Custom Poké Balls, the addition is thirteen.
+- On **Red, Blue and Yellow** there is only one bag, and eight obtainable
+  balls reserve room: the seven on shelves plus the Premier Ball. The
   craft tier needs the BALL CASE, which is Kurt's and so Gold's, so it
   reserves no room in a Kanto bag.
 
@@ -225,6 +249,11 @@ automatically and updates in place.
   widens the Gold shelves to every mart. For testing.
 - **VANILLA BAG LIMITS** — keeps Gold's stock twelve-kind ball pocket
   instead of growing it.
+- **CANON BALL SET** — Gold only, on by default. Turn it off if a Gold
+  version of **Custom Poké Balls** should own Quick, Timer, Net, Dusk,
+  Repeat, Dream and Dive instead. If you switch it off while holding any
+  of those seven, they appear as raw items in the ITEMS pocket until you
+  enable the set again; they are not deleted.
 
 *A note for Gold players:* the engine currently doesn't persist mod
 options set on a Gold boot. Set these from a Red boot and they'll stick.
@@ -251,8 +280,10 @@ options set on a Gold boot. Set these from a Red boot and they'll stick.
   by the heal machine too. There's a matching
   `exports.requestBallSlots(n)` if your mod needs pocket headroom of its
   own.
-- **Custom Poké Balls** by magalvao — coexists; both mods append to the
-  same mart shelves, and no ball is duplicated between them.
+- **Custom Poké Balls** by magalvao — the shared ids are intentional.
+  Custom Poké Balls owns Quick, Timer, Net, Dusk, Repeat, Dream and Dive
+  on Red; Too Many Balls supplies them on Gold unless a Gold port of that
+  mod is loaded. The **CANON BALL SET** option is the manual fallback.
 
 ## Using this as a template
 

@@ -77,7 +77,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.6.1"
+  local VERSION = "0.7.0"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -126,6 +126,9 @@ return function(mod)
     -- fit in the bag.
     { key = "vanilla_bag_limits", type = "toggle",
       label = "VANILLA BAG LIMITS", default = false },
+    { key = "canon_balls", type = "toggle",
+      label = "CANON BALL SET", default = true,
+      description = "Turn OFF if using Custom Poke Balls' Gold version." },
   })
 
   -- Everything this flag changes -- prices, which balls exist, which
@@ -134,6 +137,16 @@ return function(mod)
   -- every entry chunk in Loader:load).  Nothing re-reads it later, so
   -- toggling the option takes effect only after a full quit and relaunch.
   local CHEAP = mod.options:get("cheap_balls") == true
+
+  -- The seven ids below belong to Custom Poke Balls on Gen 1.  On Gold
+  -- they are ours only while that mod has no Gold build loaded and the
+  -- player has left CANON BALL SET enabled.  `custom_pokeballs` is an
+  -- optional dependency in manifest.json specifically to order its entry
+  -- chunk first without requiring it (Loader.lua:_order, 744-748), so this
+  -- load-time mod.find cannot race a future Gold port.
+  local CANON_BALLS = GEN2
+    and mod.options:get("canon_balls") ~= false
+    and mod.find("custom_pokeballs") == nil
 
   -- Ownership, declared so other mods (notably pokeball_colors) can
   -- check at runtime instead of via a handoff note.  This mod owns
@@ -157,11 +170,19 @@ return function(mod)
     -- and for the same reason, it is registered rather than gated, or a
     -- traded/imported one would fall to the ITEMS pocket (see 0.4.9).
     "SNARE_BALL", "CATALYST_BALL", "DRIFT_BALL", "KECLEON_BALL",
-    "CRADLE_BALL", "ACE_BALL",
+    "CRADLE_BALL", "ACE_BALL", "LUXURY_BALL", "CHERISH_BALL",
   }
   if not GEN2 then
     BALL_IDS[#BALL_IDS + 1] = "MOON_BALL"
     BALL_IDS[#BALL_IDS + 1] = "FAST_BALL"
+  end
+  if CANON_BALLS then
+    for _, id in ipairs({
+      "QUICK_BALL", "TIMER_BALL", "NET_BALL", "DUSK_BALL",
+      "REPEAT_BALL", "DREAM_BALL", "DIVE_BALL",
+    }) do
+      BALL_IDS[#BALL_IDS + 1] = id
+    end
   end
   -- GS and BEAST are ALWAYS registered, and only their SHELVES are gated
   -- on the dev flag.  Through 0.4.8 the registration itself was gated,
@@ -262,10 +283,11 @@ return function(mod)
   -- its economy and this quietly gutted it, having never shipped: public
   -- is 0.4.7 and the wrap arrived in 0.4.8.
   --
-  -- Counting the obtainable set instead: 7 on Red (six shelf balls plus
-  -- PREMIER), 11 on Gold, +2 on either under [DEV] CHEAP BALLS. Gold is
-  -- unchanged in the way that matters -- 12 native kinds plus 11 of ours
-  -- is exactly the 23 a full Gold ball pocket now holds.
+  -- Counting the obtainable set instead: 8 on Red (seven shelf balls plus
+  -- PREMIER), 20 on Gold with the canon set active, +2 on either under
+  -- [DEV] CHEAP BALLS.  The Gold arithmetic is the old 11 + LUXURY +
+  -- CHERISH + the seven canon balls = 20.  If the toggle or the
+  -- custom_pokeballs defer removes those seven, Gold asks for 13 instead.
   local ballSlots = 0
   do
     -- Craft-tier balls exist on Gen 1 so a traded one keeps its pocket
@@ -274,10 +296,14 @@ return function(mod)
       SNARE_BALL = true, CATALYST_BALL = true, DRIFT_BALL = true,
       KECLEON_BALL = true, CRADLE_BALL = true, ACE_BALL = true,
     }
+    -- Not a recipe: registered on both generations so an imported one
+    -- stays a ball, but its only acquisition is Kurt's Gold-only gift.
+    local GOLD_GIFT_ONLY = { CHERISH_BALL = true }
     local DEV_ONLY = { GS_BALL = true, BEAST_BALL = true }
     for _, id in ipairs(BALL_IDS) do
       local reachable = true
       if not GEN2 and CRAFT_ONLY[id] then reachable = false end
+      if not GEN2 and GOLD_GIFT_ONLY[id] then reachable = false end
       if not CHEAP and DEV_ONLY[id] then reachable = false end
       if reachable then ballSlots = ballSlots + 1 end
     end
@@ -373,6 +399,15 @@ return function(mod)
     KECLEON_BALL = "A good ball that\nmimics its target.",
     CRADLE_BALL  = "The catch begins\nagain at level 1.",
     ACE_BALL     = "Best on a target\nstill at full HP.",
+    LUXURY_BALL  = "A finer catch with\na happier start.",
+    CHERISH_BALL = "A rare keepsake.\nPlain catch odds.",
+    QUICK_BALL   = "Best at the start\nof a wild battle.",
+    TIMER_BALL   = "Grows stronger as\nthe battle drags.",
+    NET_BALL     = "Good on WATER and\nBUG-type POKeMON.",
+    DUSK_BALL    = "Good at night or\ninside dark caves.",
+    REPEAT_BALL  = "Good on a species\nyou caught before.",
+    DREAM_BALL   = "Best on a sleeping\nPOKeMON.",
+    DIVE_BALL    = "Good while fishing\nor while surfing.",
   }
 
   ----------------------------------------------------------------------
@@ -785,6 +820,41 @@ return function(mod)
       mod.log:info("HEAL BALL: %s caught fully healed", tostring(p.species))
     end
   end)
+
+  ----------------------------------------------------------------------
+  -- LUXURY + CHERISH BALLS -- shared ids, deliberately plain odds.
+  -- LUXURY is sold in both generations.  Gold's engine stores friendship
+  -- as mon.happiness (src/battle/gen2/Mon.lua:364; Happiness.lua:166), so
+  -- a Gold catch starts at 120.  Canon's doubled future gains have no
+  -- stable catch-ball seam in engine 0.2.4; this is an approximation.
+  -- TODO/CONFIRM the 120 starting value and palette on a real Gold catch.
+  -- CHERISH is registered on both generations so an imported one remains
+  -- throwable, but Kurt's Gold-only handover below is its sole source.
+  ----------------------------------------------------------------------
+  registerBall("LUXURY_BALL", "LUXURY BALL", 3000, {})
+  registerBall("CHERISH_BALL", "CHERISH BALL", 0, {})
+
+  if GEN2 then
+    mod.events:on("pokemon.caught", function(p)
+      if p.ball == "LUXURY_BALL" and p.mon then
+        p.mon.happiness = 120
+      end
+    end)
+  end
+
+  -- Later-generation canon balls.  These records exist only on Gold and
+  -- only while CANON_BALLS owns the ids; the single catch.rate wrap below
+  -- supplies their behavior.  Their mart descriptions are BALL_DESC rows
+  -- above (two lines, eighteen columns or fewer).
+  if CANON_BALLS then
+    registerBall("QUICK_BALL",  "QUICK BALL",  1000, {})
+    registerBall("TIMER_BALL",  "TIMER BALL",  1000, {})
+    registerBall("NET_BALL",    "NET BALL",    1000, {})
+    registerBall("DUSK_BALL",   "DUSK BALL",   1000, {})
+    registerBall("REPEAT_BALL", "REPEAT BALL", 1000, {})
+    registerBall("DREAM_BALL",  "DREAM BALL",  1000, {})
+    registerBall("DIVE_BALL",   "DIVE BALL",   1000, {})
+  end
 
   ----------------------------------------------------------------------
   -- THE MARK -- which ball caught this Pokemon, recorded on the Pokemon.
@@ -1365,9 +1435,17 @@ return function(mod)
   -- the roll, returning `caught, rate` replaces it.  Our ball ids are
   -- unknown to Gold's ball table, so recordFor answers nil and the rate
   -- math uses o.catchRate untouched -- exactly the seam we need.
-  -- Probe-confirmed field inventory on device: catchRate, level,
-  -- species, playerSpecies, evolveItem, weight, gender present; no
-  -- base stats, no mon/def/battle.
+  -- Field inventory probe-confirmed on device during 0.4.x:
+  -- catchRate, level, species, playerSpecies, evolveItem, weight,
+  -- gender.
+  --
+  -- STALE IN ONE DIRECTION as of engine 0.2.4: it ALSO passes
+  -- `battle`, `mon` and `def` now (gen2 BattleState:catchOptions,
+  -- :2969), which is what QUICK/TIMER (battle.turn) and NET
+  -- (def.types) read. Still no BASE STATS, so a Fast-alike stays
+  -- impossible here. Every arm still guards its own field: an older
+  -- engine omitting one must mean "condition not met", never an
+  -- error and never a boost.
   --
   -- Native balls (incl. Gold's own MOON and FAST) never match an arm
   -- here and pass straight through to vanilla.  On Gen 1 this wrap is
@@ -1377,6 +1455,8 @@ return function(mod)
   -- would double-boost Red.
   ----------------------------------------------------------------------
   if GEN2 then
+    local FieldMoves = require("src.world.gen2.FieldMoves")
+
     -- edit-in-place twin of boost(): Gold reads o.catchRate where
     -- Gen 1's attempt ctx reads rateOverride
     local function boostFlat(o, mult)
@@ -1390,6 +1470,36 @@ return function(mod)
     local function oneIn(o, n)
       if o.random then return o.random(n) == 0 end
       return love.math.random(n) == 1
+    end
+
+    local function hasType(def, wanted)
+      -- Gold's extractor maps ROM type bytes through typeById, and the
+      -- manifest ids are uppercase (including WATER and BUG).  No loaded
+      -- species table is committed with the engine checkout, so one live
+      -- species still needs device confirmation. TODO/CONFIRM on device.
+      for _, id in pairs((def and def.types) or {}) do
+        if id == wanted then return true end
+      end
+      return false
+    end
+
+    -- DREAM deliberately excludes FREEZE.  Gold's native status ids are
+    -- lower-case (`sleep`); SLP is accepted for mod-authored compatibility.
+    local function isAsleep(status)
+      if type(status) ~= "string" then return false end
+      local s = status:lower()
+      return s == "sleep" or s == "slp"
+    end
+
+    local function inDarkPlace()
+      local world = mod.world
+      if world and world.overworld then
+        world = world:overworld() or world
+      end
+      local env = world and world.map and world.map.def
+        and world.map.def.environment
+      return (world and world.daytime == "NITE")
+        or env == "CAVE" or env == "DUNGEON"
     end
 
     mod.hooks:wrap("catch.rate", function(next_, ball, mon, def, o)
@@ -1417,6 +1527,52 @@ return function(mod)
       elseif ball == "ACE_BALL" then
         local mult = aceMultiplier(o.hp, o.maxHp)
         if mult > 1 then boostFlat(o, mult) end
+
+      elseif ball == "QUICK_BALL" then
+
+        -- FAILS CLOSED, and that is the point of writing it this way.
+
+        -- `(o.battle and o.battle.turn) or 0` reads naturally and is
+
+        -- wrong: a missing battle defaults to 0, 0 satisfies <= 1, and
+
+        -- QUICK silently becomes a universal x4 -- the strongest ball in
+
+        -- the mod, by accident, on any engine that stops passing
+
+        -- `battle`. Boost only when the turn is actually KNOWN. TIMER
+
+        -- below degrades to x1 on its own arithmetic and needs no twin.
+
+        local turn = o.battle and o.battle.turn
+
+        if turn and turn <= 1 then boostFlat(o, 4) end
+
+      elseif ball == "TIMER_BALL" then
+        local turn = (o.battle and o.battle.turn) or 0
+        boostFlat(o, math.min(4, 1 + math.floor(turn / 5)))
+
+      elseif ball == "NET_BALL" then
+        local targetDef = o.def or def
+        if hasType(targetDef, "WATER") or hasType(targetDef, "BUG") then
+          boostFlat(o, 3)
+        end
+
+      elseif ball == "DUSK_BALL" then
+        if inDarkPlace() then boostFlat(o, 3) end
+
+      elseif ball == "REPEAT_BALL" then
+        local save = mod.game and mod.game.save
+        local caught = save and save.pokedex and save.pokedex.caught
+        if o.species and caught and caught[o.species] then boostFlat(o, 3) end
+
+      elseif ball == "DREAM_BALL" then
+        if isAsleep(o.status) then boostFlat(o, 4) end
+
+      elseif ball == "DIVE_BALL" then
+        local save = mod.game and mod.game.save
+        local surfing = save and FieldMoves.isSurfing(save.playerState)
+        if o.fishing or surfing then boostFlat(o, 3) end
 
       elseif ball == "CATALYST_BALL" then
         -- presence of evolveItem IS "evolves by an item" on Gold
@@ -1457,7 +1613,7 @@ return function(mod)
         boostFlat(o, KECLEON_MULT)
       end
 
-      -- PREMIER, HEAL, GS: no catch code by design.
+      -- PREMIER, HEAL, LUXURY, CHERISH, GS: no rate code by design.
       return next_(ball, mon, def, o)
     end)
   end
@@ -1477,8 +1633,18 @@ return function(mod)
   -- rom_manifest_yellow.json -- Yellow renames objects on some maps, and
   -- a wrong constant fails SILENTLY (vanilla shelf, no error).
   ----------------------------------------------------------------------
-  local SHELF = { "NEST_BALL", "HEAL_BALL", "MIRROR_BALL" }
+  local SHELF = {
+    "NEST_BALL", "HEAL_BALL", "MIRROR_BALL", "LUXURY_BALL",
+  }
   if not GEN2 then SHELF[#SHELF + 1] = "FAST_BALL" end
+  if CANON_BALLS then
+    for _, id in ipairs({
+      "QUICK_BALL", "TIMER_BALL", "NET_BALL", "DUSK_BALL",
+      "REPEAT_BALL", "DREAM_BALL", "DIVE_BALL",
+    }) do
+      SHELF[#SHELF + 1] = id
+    end
+  end
 
   -- [DEV] CHEAP BALLS puts the two dev balls on every ball shelf. With
   -- the flag off they were never registered above, so there is nothing to
@@ -2242,6 +2408,12 @@ return function(mod)
       if not Bag.add(save, CASE_ID, 1, game.data) then return end
       mod.save:set("caseGiven", true)
 
+      -- A commemorative extra, only after the CASE itself is safely in
+      -- hand.  Failure is intentionally non-fatal: a full BALL pocket must
+      -- never undo or block the KEY ITEM handover.  We do not retry, so a
+      -- repeat conversation cannot duplicate a successful gift.
+      Bag.add(save, "CHERISH_BALL", 1, game.data)
+
       -- His coda, DEFERRED until the world is quiet -- see the drain in
       -- the Game2.update wrap above.  Queued rather than spoken here
       -- because script.ended fires while the VM is still unwinding and
@@ -2328,10 +2500,23 @@ return function(mod)
     CRADLE_BALL  = { body = { 184, 168, 216 }, accent = { 248, 232, 200 } },
     -- ACE: trophy blue under a gold band. TODO/CONFIRM on a real throw.
     ACE_BALL     = { body = {  56,  88, 176 }, accent = { 240, 192,  64 } },
+    -- First-pass canon colours. TODO/CONFIRM each on a real device throw.
+    LUXURY_BALL  = { body = {  32,  32,  40 }, accent = { 232, 192,  64 } },
+    CHERISH_BALL = { body = { 224,  48,  56 }, accent = {  88,  24,  40 } },
   }
   if not GEN2 then
     COLORS.MOON_BALL = { body = {  60,  68, 128 }, accent = { 232, 208,  96 } }
     COLORS.FAST_BALL = { body = { 232, 148,  48 }, accent = { 248, 232, 152 } }
+  end
+  if CANON_BALLS then
+    -- First-pass body/accent pairs. TODO/CONFIRM every one on device.
+    COLORS.QUICK_BALL  = { body = { 72,176,232 }, accent = { 240,208, 64 } }
+    COLORS.TIMER_BALL  = { body = {232,232,240 }, accent = { 200, 64, 72 } }
+    COLORS.NET_BALL    = { body = { 72,160,176 }, accent = {  32, 72, 96 } }
+    COLORS.DUSK_BALL   = { body = { 64,120, 72 }, accent = {  32, 40, 48 } }
+    COLORS.REPEAT_BALL = { body = {232,176, 48 }, accent = { 208, 56, 56 } }
+    COLORS.DREAM_BALL  = { body = {224,144,200 }, accent = { 120, 72,152 } }
+    COLORS.DIVE_BALL   = { body = { 64,136,216 }, accent = { 176,224,248 } }
   end
 
   -- GS and BEAST are registered on every boot now, so their colours are
@@ -2443,7 +2628,28 @@ return function(mod)
     -- ACE is the one craft ball still unseen, because it stays hidden
     -- until Route Aces unlocks the recipe.
     PAL_KB_ACE     = { {255,255,255}, {240,192, 64}, { 56, 88,176}, {24,24,24} },
+    -- First-pass canon rows. Third entry is always the body tone.
+    -- TODO/CONFIRM both on a real Gold throw.
+    PAL_KB_LUXURY  = { {255,255,255}, {232,192, 64}, { 32, 32, 40}, {24,24,24} },
+    PAL_KB_CHERISH = { {255,255,255}, {248,128,128}, {224, 48, 56}, {24,24,24} },
   }
+  if CANON_BALLS then
+    -- First-pass canon rows. TODO/CONFIRM every one on a real Gold throw.
+    BALL_PALETTE_ROWS.PAL_KB_QUICK =
+      { {255,255,255}, {240,208, 64}, { 72,176,232}, {24,24,24} }
+    BALL_PALETTE_ROWS.PAL_KB_TIMER =
+      { {255,255,255}, {255,255,255}, {232,232,240}, {24,24,24} }
+    BALL_PALETTE_ROWS.PAL_KB_NET =
+      { {255,255,255}, {128,216,224}, { 72,160,176}, {24,24,24} }
+    BALL_PALETTE_ROWS.PAL_KB_DUSK =
+      { {255,255,255}, {120,176,104}, { 64,120, 72}, {24,24,24} }
+    BALL_PALETTE_ROWS.PAL_KB_REPEAT =
+      { {255,255,255}, {248,216, 96}, {232,176, 48}, {24,24,24} }
+    BALL_PALETTE_ROWS.PAL_KB_DREAM =
+      { {255,255,255}, {248,200,232}, {224,144,200}, {24,24,24} }
+    BALL_PALETTE_ROWS.PAL_KB_DIVE =
+      { {255,255,255}, {176,224,248}, { 64,136,216}, {24,24,24} }
+  end
   -- ball id -> palette name.  MOON and FAST are deliberately ABSENT: they
   -- are the cart's own Kurt balls on Gold and already get real colours
   -- there, which is what a Gold player expects them to look like.  We do
@@ -2460,7 +2666,18 @@ return function(mod)
     KECLEON_BALL = "PAL_KB_KECLEON",
     CRADLE_BALL  = "PAL_KB_CRADLE",
     ACE_BALL     = "PAL_KB_ACE",
+    LUXURY_BALL  = "PAL_KB_LUXURY",
+    CHERISH_BALL = "PAL_KB_CHERISH",
   }
+  if CANON_BALLS then
+    BALL_PALETTES.QUICK_BALL  = "PAL_KB_QUICK"
+    BALL_PALETTES.TIMER_BALL  = "PAL_KB_TIMER"
+    BALL_PALETTES.NET_BALL    = "PAL_KB_NET"
+    BALL_PALETTES.DUSK_BALL   = "PAL_KB_DUSK"
+    BALL_PALETTES.REPEAT_BALL = "PAL_KB_REPEAT"
+    BALL_PALETTES.DREAM_BALL  = "PAL_KB_DREAM"
+    BALL_PALETTES.DIVE_BALL   = "PAL_KB_DIVE"
+  end
   do
     -- GS: the pale cream carried over from Gen 1 did not read as GOLD on
     -- device (0.4.2 report), because on Gen 1 the pale value was there to

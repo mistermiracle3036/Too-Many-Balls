@@ -10,6 +10,36 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
+## 0.7.0
+
+**Updating from 0.6.1?** Gold gets seven familiar later-generation balls,
+Luxury and Cherish Balls join both games, and every new Gold mart entry now
+explains its effect in the shop. No recipes or existing ball effects changed.
+
+- **Seven canon balls come to Gold:** Quick, Timer, Net, Dusk, Repeat,
+  Dream and Dive Balls are sold beside Great and Ultra Balls for ¥1000.
+  Their effects use Gold's live battle, Pokédex, time-of-day and overworld
+  state rather than fixed species lists.
+- **Every new Gold ball has a mart description.** Each description is two
+  lines sized for Gold's 18-column item box, so the player can understand
+  the condition before buying.
+- **Luxury Ball** is sold at Great/Ultra marts in both generations for
+  ¥3000. It keeps normal catch odds; on Gold its catch starts at 120
+  happiness. This approximates its later-game friendship benefit because
+  engine 0.2.4 has no stable seam for doubling future happiness gains.
+- **Cherish Ball** has normal odds and is not sold. On Gold, Kurt gives one
+  only after the Ball Case safely enters KEY ITEMS. A full BALL pocket may
+  reject the bonus ball, but can never block or undo the case.
+- **Custom Poké Balls coexistence:** the seven shared ids intentionally
+  remain that mod's on Red. On Gold, Too Many Balls supplies them unless a
+  Gold version of Custom Poké Balls is loaded or **CANON BALL SET** is off.
+  Turning the option off while holding them moves their raw items to the
+  ITEMS pocket until the set is enabled again.
+- Bag headroom now matches the obtainable set: +8 on Red/Blue/Yellow and
+  +20 on Gold with the canon set, or +13 when the shared seven are deferred.
+  The [DEV] option still adds two more.
+- The new throw palettes are a first pass and still need device tuning.
+
 ## 0.6.1
 
 - **Remove Shop Events.** It was folded into Too Many Balls at 0.6.0 and

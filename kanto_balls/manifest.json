@@ -1,7 +1,7 @@
 {
   "id": "kanto_balls",
   "name": "Too Many Balls",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
@@ -15,5 +15,5 @@
   "optional_dependencies": ["pokeball_colors", "custom_pokeballs"],
   "conflicts": ["example_balls"],
   "github": "mistermiracle3036/Too-Many-Balls",
-  "description": "Custom Poke Balls for Red/Blue/Yellow AND Gold: Premier (free with bulk ball purchases), Nest, Heal, Mirror and the prototype ball, plus Moon and Fast on Gen 1 (Gold has its own). Each one is written to be readable as a template for your own ball. Colors register into Pokeball Colors when installed."
+  "description": "Custom Poke Balls for Red/Blue/Yellow and Gold, including a Gold-only canon set with Quick, Timer, Net, Dusk, Repeat, Dream and Dive Balls. Luxury is sold in both generations; Kurt gives a Cherish Ball with the Gold Ball Case. Every Gold mart entry includes a short effect description."
 }
