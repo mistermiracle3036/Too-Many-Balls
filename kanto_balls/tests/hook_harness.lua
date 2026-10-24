@@ -115,9 +115,34 @@ local function engineStubs(generation, versionId, engineLine)
     ["src.battle.BattleState"] = {
       ballMissMessage = function() return "vanilla miss" end,
     },
-    ["src.ui.gen2.Chrome"] = {
-      box = function() end, print = function() end, cursor = function() end,
-    },
+    -- EVERY function the real engine Chrome defines (engine v0.3.96,
+    -- src/ui/gen2/Chrome.lua), and NOTHING else. This used to stub only
+    -- box/print/cursor, so the 0.8.10 Ball Case UI -- which draws with
+    -- paletteBox, paletteFill, printThrough, printRightThrough and
+    -- cursorThrough, all real -- failed 8 checks on a fixture gap, not a
+    -- bug. Listing the real set (not a catch-all __index) keeps an invented
+    -- or misspelt primitive failing here, the way it would on a device.
+    ["src.ui.gen2.Chrome"] = (function()
+      local C = {}
+      for _, name in ipairs({
+        "box", "clear", "coinBalanceBox", "cursor", "cursorThrough",
+        "letterbox", "moneyAndCoinBalanceBox", "moneyBalanceBox",
+        "paletteBox", "paletteFill", "print", "printInverted", "printRight",
+        "printRightThrough", "printThrough", "printWrapped", "textbox",
+        "withClip", "withPanel", "positionLift",
+      }) do C[name] = function() end end
+      C.fitScale = function() return 1 end
+      C.fitScaleFor = function() return 1 end
+      C.fitOrigin = function() return 0, 0 end
+      C.fitOriginFor = function() return 0, 0 end
+      C.number = function(v) return tostring(v) end
+      C.money = function(v) return "Y" .. tostring(v) end
+      C.wrap = function(text) return { tostring(text) } end
+      C.throughPalette = function() return {} end
+      C.rawPalette = function() return {} end
+      C.paletteGlyphs = function() return {} end
+      return C
+    end)(),
     ["src.ui.Screens"] = {
       push = function(game, id) pushed[#pushed + 1] = id return {} end,
       _pushed = pushed,
