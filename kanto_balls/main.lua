@@ -78,7 +78,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.8.9"
+  local VERSION = "0.8.10"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -2500,6 +2500,9 @@ return function(mod)
     return moved, countStored(stowed)
   end
 
+  -- Forward-declared for the case; assigned once by the shared colour table
+  -- below before any screen can draw. Do not duplicate the ball colours.
+  local COLORS
   if GEN2 then
     -- The case itself.  A KEY ITEM: its own 25-slot pocket, so it costs
     -- nothing from the twelve ball slots this mod is already stretching.
@@ -2524,12 +2527,47 @@ return function(mod)
     Case.__index = Case
     Case.isOpaque = true
 
+    -- Approved workbench design, authored by Codex in a loose-mode phone
+    -- build. Palette pattern follows Trainer Journey; no shared recolour.
+    Case.paper = { {255,248,231}, {220,232,232}, {86,126,156}, {39,56,73} }
+    Case.selected = { {220,232,232}, {220,232,232}, {86,126,156}, {39,56,73} }
+    Case.short = { {240,215,189}, {220,232,232}, {86,126,156}, {39,56,73} }
+    Case.apricorns = { "WHT", "PNK", "GRN", "RED", "YLW", "BLK", "BLU" }
+
+    function Case:readiness(recipe)
+      local materials = math.huge
+      for id, need in pairs(recipe.inputs) do
+        materials = math.min(materials, math.floor(held(self.save, id) / need))
+      end
+      if materials < 1 then return "NEED APRICORNS", false end
+      -- Read-only mirror of Bag.add's new-slot and 99-per-stack checks.
+      -- Use LIVE helpers: this mod and its consumers grow pocket capacity.
+      -- Award still goes through craft() and can refuse without spending.
+      local ok, room = pcall(function()
+        local pocket = Bag.pocketOf(recipe.id, self.data)
+        local existing = self.save.inventory[recipe.id]
+        if not existing and Bag.slots(self.save, self.data, pocket)
+            >= Bag.capacity(self.data, pocket) then return 0 end
+        return math.max(0, 99 - (existing or 0))
+      end)
+      if not ok or type(room) ~= "number" then
+        return "MATERIALS FOR " .. tostring(math.min(materials, 999)), true
+      end
+      if room < 1 then return "PACK FULL", false end
+      return "CAN MAKE " .. tostring(math.min(materials, room)), true
+    end
+
+    function Case.rowKey(row)
+      return row and (row.recipe and row.recipe.id or row.kind)
+    end
+
     function Case.new(game)
       local self = setmetatable({}, Case)
       self.game = game
       self.save = game and game.save
       self.data = game and game.data
       self.index = 1
+      self.scroll = 0
       self.message = nil
       return self
     end
@@ -2538,6 +2576,7 @@ return function(mod)
     -- (index == #rows + 1) and the two new actions could not be told
     -- apart that way.  Anything reading a row must switch on `kind`.
     function Case:rows()
+      local selectedKey = self.lastRows and Case.rowKey(self.lastRows[self.index])
       local rows = {}
       for _, recipe in ipairs(RECIPES) do
         -- Read the LIVE screen save every build: unlocks earned in this
@@ -2551,7 +2590,18 @@ return function(mod)
       rows[#rows + 1] = { kind = "stow", label = "STOW ALL" }
       rows[#rows + 1] = { kind = "take",
         label = "TAKE BACK (" .. tostring(countStored(stowedBalls())) .. ")" }
+      if #rows[#rows].label > 16 then rows[#rows].label = "TAKE BACK" end
       rows[#rows + 1] = { kind = "cancel", label = "CANCEL" }
+      if selectedKey then
+        for i, row in ipairs(rows) do
+          if Case.rowKey(row) == selectedKey then self.index = i break end
+        end
+      end
+      self.index = math.max(1, math.min(self.index, #rows))
+      self.lastRows = rows
+      self.scroll = math.max(0, math.min(self.scroll, #rows - 4))
+      if self.index <= self.scroll then self.scroll = self.index - 1 end
+      if self.index > self.scroll + 4 then self.scroll = self.index - 4 end
       return rows
     end
 
@@ -2605,7 +2655,7 @@ return function(mod)
         elseif row.kind == "stow" then
           local moved = stowAll(self.save)
           if moved > 0 then
-            self.message = { "Stowed " .. tostring(moved) .. " balls." }
+            self.message = { "Stowed balls:", tostring(moved) }
           else
             self.message = { "Nothing to stow." }
           end
@@ -2618,64 +2668,90 @@ return function(mod)
             if remaining > 0 then
               self.message = { "No room for the", "rest." }
             else
-              self.message = { "Took " .. tostring(moved) .. " back." }
+              self.message = { "Took back:", tostring(moved) }
             end
           end
         end
       end
     end
 
-    -- ROW SPACING IS 1, NOT 2, AND THAT IS A FIX RATHER THAN A STYLE
-    -- CHOICE.  The screen is 18 tile rows (144px / 8), and the returned
-    -- patch kept the old two-row spacing while adding three rows.  With
-    -- five recipes that is eight rows from y=3 at stride 2 -- y=17,
-    -- which is the box's own bottom border, off the usable area.  It
-    -- only breaks once CRADLE lands, so the two returns were each fine
-    -- alone and wrong together.
-    --
-    -- Stride 1 puts eight rows at y=3..10, well clear of the message
-    -- box at y=12, and leaves room for several more recipes before this
-    -- needs scrolling.
+    -- Four visible rows, scrolled explicitly: the old nine-row ceiling is
+    -- gone. Costs/status live above the permanent two-line effect panel.
     function Case:draw()
       local rows = self:rows()
-      Chrome.box(0, 0, 20, 12)
-      Chrome.print("BALL CASE", 1, 1)
-      -- ROWS START AT 2, NOT 3, AND THAT IS CAPACITY, NOT TASTE.
-      -- Font.drawBox puts its bottom border at ty + th - 1
-      -- (src/render/Font.lua:549), so this 12-tall box borders at row 11
-      -- and its interior is rows 1..10.  With ACE BALL LOCKED there are
-      -- eight rows and y=3 fits; the moment Route Aces unlocks it there
-      -- are nine, and the last would land on 11 -- the border itself.
-      -- Starting at 2 fits all nine.
-      --
-      -- The next recipe after that does NOT fit, and the harness asserts
-      -- exactly this, so it will fail loudly rather than overflowing on
-      -- someone's phone.  When that day comes the answer is a scrolling
-      -- list, not another row of shaving.
-      local y = 2
-      for i, row in ipairs(rows) do
-        -- A row that would do nothing is marked, in its OWN column so
-        -- every label shares a left edge (the ragged edge the developer
-        -- spotted on device at 0.4.12).
-        local doesNothing = false
-        if row.kind == "recipe" then
-          doesNothing = not canCraft(self.save, row.recipe)
-        elseif row.kind == "stow" then
-          doesNothing = countOwnedInBag(self.save) == 0
-        elseif row.kind == "take" then
-          doesNothing = countStored(stowedBalls()) == 0
-        end
-        if doesNothing then Chrome.print("-", 2, y) end
-        Chrome.print(row.label, 3, y)
-        if i == self.index then Chrome.cursor(1, y) end
-        y = y + 1
+      local function text(value, x, y, palette)
+        Chrome.printThrough(value, x, y, palette or Case.paper)
       end
-      if self.message then
-        Chrome.box(0, 12, 20, 6)
-        for i, line in ipairs(self.message) do
-          Chrome.print(line, 1, 13 + i)
+      Chrome.paletteBox(0, 0, 20, 12, Case.paper)
+      Chrome.paletteBox(0, 12, 20, 6, Case.paper)
+      text("BALL CASE", 1, 1)
+      Chrome.printRightThrough(tostring(self.index) .. "/" .. tostring(#rows),
+        19, 1, Case.paper)
+      for visible = 1, 4 do
+        local i = self.scroll + visible
+        local row = rows[i]
+        if row then
+          local y = 2 + visible
+          local palette = i == self.index and Case.selected or Case.paper
+          if i == self.index then
+            -- paletteFill is PIXELS, unlike paletteBox/printThrough.
+            Chrome.paletteFill(8, y * 8, 144, 8, palette)
+            Chrome.cursorThrough(1, y, palette)
+          end
+          text(row.label, 3, y, palette)
         end
       end
+      local row = rows[self.index]
+      local detail, controls
+      if row.kind == "recipe" then
+        local recipe = row.recipe
+        local status, ready = self:readiness(recipe)
+        text(status, 1, 7)
+        text("APRICORN HAVE/NEED", 1, 8)
+        local n = 0
+        for _, colour in ipairs(Case.apricorns) do
+          local id = colour .. "_APRICORN"
+          local need = recipe.inputs[id]
+          if need then
+            local have = held(self.save, id)
+            -- Engine stacks cap at 99. LOT is an explicit nonnumeric
+            -- overflow label for imported/edited saves, never a fake count.
+            local amount = have > 999 and "LOT" or tostring(math.floor(have))
+            local label = colour .. " " .. amount .. "/" .. tostring(need)
+            text(label, 1 + (n % 2) * 9, 9 + math.floor(n / 2),
+              have < need and Case.short or Case.paper)
+            n = n + 1
+          end
+        end
+        local c = COLORS and COLORS[recipe.id]
+        if c then
+          Chrome.paletteFill(8, 104, 144, 2,
+            { c.body, Case.paper[2], Case.paper[3], Case.paper[4] })
+        end
+        detail = {}
+        for line in (BALL_DESC[recipe.id] or ""):gmatch("[^\n]+") do
+          detail[#detail + 1] = line
+        end
+        controls = ready and "A MAKE   B CLOSE" or "A INFO   B CLOSE"
+      elseif row.kind == "stow" then
+        local count = countOwnedInBag(self.save)
+        text(count == 0 and "NOTHING TO STOW" or "PACK BALLS", 1, 7)
+        text(tostring(count), 1, 9)
+        detail = { "STORE MOD BALLS.", "KEEP APRICORNS." }
+        controls = "A MOVE   B CLOSE"
+      elseif row.kind == "take" then
+        local count = countStored(stowedBalls())
+        text(count == 0 and "CASE EMPTY" or "STORED BALLS", 1, 7)
+        text(tostring(count), 1, 9)
+        detail = { "RETURN WHAT FITS.", "THE REST STAYS." }
+        controls = "A MOVE   B CLOSE"
+      else
+        detail = { "CLOSE THE CASE.", "NOTHING IS MOVED." }
+        controls = "A CLOSE  B CLOSE"
+      end
+      local lines = self.message or detail
+      for i = 1, math.min(2, #lines) do text(lines[i], 1, 13 + i) end
+      text(self.message and "A/B CONTINUE" or controls, 1, 16)
     end
 
     mod.content.screens:register("KbBallCase", { new = Case.new })
@@ -3107,7 +3183,7 @@ return function(mod)
   -- throw (the Master/Ultra strobe) -- deliberate: it should look like
   -- a Master Ball with something wrong with it.
   ----------------------------------------------------------------------
-  local COLORS = {
+  COLORS = {
     PREMIER_BALL = { body = { 240, 240, 240 }, accent = { 200,  48,  48 } },
     -- bright spring green, NOT the olive it used to be: at 132,172,84 it
     -- sat 5.9 dE from the native SAFARI BALL, which every player has

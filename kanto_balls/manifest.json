@@ -1,7 +1,7 @@
 {
   "id": "kanto_balls",
   "name": "Too Many Balls",
-  "version": "0.8.9",
+  "version": "0.8.10",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
@@ -15,5 +15,5 @@
   "optional_dependencies": ["pokeball_colors", "custom_pokeballs"],
   "conflicts": ["example_balls"],
   "github": "mistermiracle3036/Too-Many-Balls",
-  "description": "Custom Poke Balls for Red/Blue/Yellow and Gold/Silver/Crystal. Version 0.8.1 adds Cage, Crystal, Strange and Origin Balls for quests, supports every Gen 2 game, and preserves Crystal's native GS Ball story item."
+  "description": "Custom Poke Balls for Red/Blue/Yellow and Gold/Silver/Crystal. Version 0.8.10 redesigns the Gen 2 Ball Case with scrolling, recipe costs, catch descriptions and clear crafting readiness."
 }

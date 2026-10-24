@@ -10,6 +10,24 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
+## 0.8.10
+
+**Updating from 0.8.8?** The Ball Case now has a Gen 2 workbench screen,
+and Kurt's full-ball-pocket handover fix from 0.8.9 is included. Talk to
+him again if he previously withheld the case after Slowpoke Well.
+
+**New in this phone test:** warm paper colours, four-row scrolling, live
+Apricorn have/need quantities, catch descriptions, and a ball-colour accent.
+Recipe names no longer carry a dash. CAN MAKE includes current pocket and
+stack limits; NEED APRICORNS highlights the missing ingredients, and PACK
+FULL explains why a ball cannot fit. A still crafts one; B acknowledges
+results before closing. Storage counts remain visible and transfers retain
+their existing no-loss behavior. Gold, Silver and Crystal share the screen;
+Red/Blue/Yellow behavior is unchanged.
+
+Also included from 0.8.9: Crystal Ball's Gen 1 description no longer
+promises the Gen 2-only keep-or-release review.
+
 ## 0.8.9
 
 - **Fixed: Kurt could still withhold the Ball Case if your BALL pocket was

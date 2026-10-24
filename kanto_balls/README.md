@@ -66,6 +66,13 @@ exactly one after the takeover.
 
 ## Balls you make — the BALL CASE
 
+The case shows the selected recipe's Apricorn **HAVE/NEED** amounts and
+catch effect. **CAN MAKE** includes current pocket and stack room; it is
+not a batch command. **A** makes one ball, or explains a shortage/full pack.
+Missing ingredients are highlighted without marking or dimming recipe
+names. Scroll down for **STOW ALL**, **TAKE BACK**, and **CANCEL**. After an
+action, **A or B** acknowledges the result; another B closes the case.
+
 *Gold, Silver and Crystal.* Kurt has been making balls out of Apricorns for
 years. When you come back to him from the Slowpoke Well he decides
 you're worth teaching, and hands over a **BALL CASE**. Once the key item
