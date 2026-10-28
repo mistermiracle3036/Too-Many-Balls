@@ -78,7 +78,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.8.10"
+  local VERSION = "0.8.11"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -544,15 +544,11 @@ return function(mod)
   -- unchanged and any future author can still listen for it.  Only the
   -- delivery vehicle changed.
   --
-  -- IF THE STANDALONE shop_events IS STILL INSTALLED this block does
-  -- nothing and defers to it.  Both wrapping Bag.add and Sound.play would
-  -- emit each purchase TWICE and award two Premier Balls per ten bought.
-  -- Nobody has to uninstall anything for this to be safe.
+  -- 0.8.11 dropped the 0.6.0 deferral to a still-installed standalone
+  -- shop_events (REQUESTS 271): that mod was retired at 0.6.0.
   ----------------------------------------------------------------------
   do
-    if mod.find("shop_events") then
-      mod.log:info("shop_events installed; deferring purchase detection")
-    else
+    do
       -- Both till sounds.  "Purchase" is Gen 1's (ShopMenu.lua:75),
       -- "Sfx_Transaction" is Gold's (MartMenu.lua:670).  Sound.GEN2_ALIASES
       -- maps one onto the other for CALLERS, but a wrap sees the literal
@@ -2893,38 +2889,10 @@ return function(mod)
     local KURT_SCRIPTS = {}
     local kurtIdentityReported = false
 
-    -- DEVICE PROBE, 0.8.3.  0.8.2 fixed a real bug -- 0.8.1's resolver
-    -- could not have worked on any ROM -- and the case still does not
-    -- arrive, so an assumption further down is also false and none of
-    -- the ones left can be settled from the extracted data: they are all
-    -- about what the VM actually emits during his conversation.
-    --
-    -- So this reports the run to [ERRS] instead of guessing again.  Rows
-    -- are terse because that screen wraps at 16 columns over 11 rows and
-    -- every other mod is writing to it too.  KURT_PROBE = false turns
-    -- the whole thing off in one line once the answer is in.
-    -- OFF: the handover is device-confirmed on Crystal (0.8.4, "E kurt
-    -- CASE OK").  The machinery stays because this bug took four rounds
-    -- and the next Gen 2 game or engine bump may need it again -- flip
-    -- this to true and the rows come back.
-    local KURT_PROBE = false
-    local probeLeft = 10
-    local function probe(msg)
-      if not KURT_PROBE or probeLeft <= 0 then return end
-      probeLeft = probeLeft - 1
-      Runtime.reportError("kanto_balls", msg)
-    end
-
-    -- KURT'S HOUSE IS GROUP 8, MAP 4 in Gold and in Crystal (read from
-    -- the imported map records, both lineages agree).  The probe reports
-    -- every script that runs in that room, whoever owns it, because "the
-    -- key we match is not the key his talk runs under" and "no script
-    -- event arrives at all" are different failures and look identical
-    -- from here.
-    local function inKurtsHouse(ctx)
-      return ctx and ctx.mapGroup == 8 and ctx.mapNumber == 4
-    end
-
+    -- 0.8.11: the 0.8.3 [ERRS] device probe (KURT_PROBE, off since the
+    -- handover was device-confirmed on Crystal in 0.8.4) is removed per
+    -- REQUESTS 271. It lives in git history (0.8.3-0.8.10) if a future
+    -- engine bump needs it again.
     local function isKurtScript(ctx)
       local key = ctx and ctx.scriptKey
       return type(key) == "string" and KURT_SCRIPTS[key] == true
@@ -2997,8 +2965,6 @@ return function(mod)
           KURT_SCRIPTS[obj.scriptKey] = true
         end
       end
-      probe(("KURT n%d f%s %s"):format(found, tostring(KURT_FLAG),
-        mod.save:get("caseGiven") and "DONE" or "OPEN"))
       if found > 0 then return end
       if not kurtIdentityReported then
         kurtIdentityReported = true
@@ -3047,10 +3013,6 @@ return function(mod)
 
     mod.events:on("script.started", function(p)
       local ctx = p and p.ctx
-      if inKurtsHouse(ctx) then
-        probe(("S %s %s"):format(tostring(ctx.scriptKey),
-          isKurtScript(ctx) and "K" or "-"))
-      end
       -- ONLY a Kurt run clears the snapshot, deliberately.  The old code
       -- wiped it on EVERY script.started, which meant any nested run
       -- during his conversation -- a MAPCALLBACK_OBJECTS rebuild fired by
@@ -3071,27 +3033,21 @@ return function(mod)
 
     mod.events:on("script.ended", function(p)
       local ctx = p and p.ctx
-      if inKurtsHouse(ctx) and not isKurtScript(ctx) then
-        probe(("E %s -"):format(tostring(ctx.scriptKey)))
-      end
       if not isKurtScript(ctx) then return end
       local snap = kurtBag
       kurtBag = nil
 
-      -- Every bail below says WHY on the probe build.  A silent return is
-      -- what made this cost two rounds: the failure and the fix look the
-      -- same from the player's side, which is an empty pack either way.
-      if not p.completed then return probe("E kurt !done") end
-      if mod.save:get("caseGiven") then return probe("E kurt given") end
+      if not p.completed then return end
+      if mod.save:get("caseGiven") then return end
 
       local game = mod.game
       local save = game and game.save
-      if not save then return probe("E kurt !save") end
+      if not save then return end
 
       -- The flag answers on its own, so a missing snapshot is only fatal
       -- on the fallback path.
       local rescued = rescueDone()
-      if not rescued and not snap then return probe("E kurt !snap") end
+      if not rescued and not snap then return end
 
       -- FALLBACK: did anything in the bag go UP during his conversation?
       -- Checked before we add the case ourselves, so our own gift cannot
@@ -3107,18 +3063,15 @@ return function(mod)
       -- real condition and the one that works on a save already past the
       -- gift; the bag diff stays as the fallback for a ROM whose script
       -- the flag walk could not read.
-      if not (rescued or gained) then return probe("E kurt !gift") end
+      if not (rescued or gained) then return end
       -- Already carrying one (the dev shelf, or a previous save): mark
       -- it done rather than handing over a second.
       if (save.inventory and save.inventory[CASE_ID]) then
         mod.save:set("caseGiven", true)
-        return probe("E kurt hasone")
+        return
       end
-      if not Bag.add(save, CASE_ID, 1, game.data) then
-        return probe("E kurt !bagadd")
-      end
+      if not Bag.add(save, CASE_ID, 1, game.data) then return end
       mod.save:set("caseGiven", true)
-      probe("E kurt CASE OK")
 
       -- A commemorative extra, only after the CASE itself is safely in
       -- hand.  Failure is intentionally non-fatal: a full BALL pocket must

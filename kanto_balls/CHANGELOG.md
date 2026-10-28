@@ -10,6 +10,18 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
+## 0.8.11
+
+**Updating from 0.8.8?** The Ball Case has a new Gen 2 workbench screen
+(0.8.10), and Kurt's full-ball-pocket handover fix (0.8.9) is included. Talk
+to him again if he previously withheld the case after Slowpoke Well.
+
+**New in 0.8.11:** a clean-up with nothing new to see. Leftover developer
+code is gone: a disabled debug report around Kurt's gift, and a fallback
+for the old Shop Events mod, which was merged into this one at 0.6.0 (if
+you somehow still have Shop Events installed, remove it). The warning for
+the even older Example Balls mod stays.
+
 ## 0.8.10
 
 **Updating from 0.8.8?** The Ball Case now has a Gen 2 workbench screen,
