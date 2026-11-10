@@ -1318,7 +1318,31 @@ for _, gen in ipairs({ 1, 2 }) do
                     s.message = nil
                     local before = apricornTotal(game.save)
                     local hadBall = game.save.inventory[recipe.id] or 0
+                    -- 0.8.12 (REQUESTS 740): A asks "Make this ball?"
+                    -- first.  B, and NO + A, must spend nothing.
+                    s.confirm = nil
+                    for _, back in ipairs({ { "b" }, { "down", "a" } }) do
+                      _G.__PRESS = "a"
+                      pcheck(label .. " ask " .. tostring(recipe.id), s.update, s)
+                      check(s.confirm ~= nil,
+                        label .. " A on a stocked recipe asked nothing: "
+                          .. tostring(recipe.id))
+                      for _, key in ipairs(back) do
+                        _G.__PRESS = key
+                        pcheck(label .. " decline " .. key, s.update, s)
+                        pcheck(label .. " draw while asking", s.draw, s)
+                      end
+                      _G.__PRESS = nil
+                      check(s.confirm == nil and s.message == nil,
+                        label .. " declining left a question or message")
+                      check(apricornTotal(game.save) == before
+                          and (game.save.inventory[recipe.id] or 0) == hadBall,
+                        label .. " declining " .. back[#back] .. " spent or made: "
+                          .. tostring(recipe.id))
+                    end
                     _G.__PRESS = "a"
+                    pcheck(label .. " ask " .. tostring(recipe.id), s.update, s)
+                    pcheck(label .. " draw the question", s.draw, s)
                     pcheck(label .. " craft " .. tostring(recipe.id),
                       s.update, s)
                     _G.__PRESS = nil
@@ -1442,9 +1466,17 @@ for _, gen in ipairs({ 1, 2 }) do
                 for i = 1, math.max(1, rowCount) do
                   s2.index = i
                   s2.message = nil
+                  s2.confirm = nil
                   _G.__PRESS = "a"
                   pcheck(label .. " case craft when pack full",
                     s2.update, s2)
+                  -- 0.8.12: the first A may only ask; YES + A crafts.
+                  if s2.confirm then
+                    pcheck(label .. " case craft when pack full (YES)",
+                      s2.update, s2)
+                    check(s2.message ~= nil,
+                      label .. " YES with a full pack said nothing")
+                  end
                   _G.__PRESS = nil
                 end
                 check(apricornTotal(full.save) == stocked,
@@ -1500,8 +1532,16 @@ for _, gen in ipairs({ 1, 2 }) do
           keepGame.save.party[1] = keepMon
           local keep = reviewFor(keepGame, keepMon)
           pcheck(label .. " crystal details draw", keep.draw, keep)
-          press(keep, "right")
+          -- 0.8.12: KEEP / RELEASE / MOVES; MOVES is a page, B comes back.
+          press(keep, "up")
+          check(keep.choice == 3, label .. " up from KEEP did not wrap to MOVES")
+          press(keep, "a")
+          check(keep.page == 2, label .. " MOVES opened no page")
           pcheck(label .. " crystal moves draw", keep.draw, keep)
+          press(keep, "b")
+          check(keep.page == 1, label .. " B on MOVES did not come back")
+          press(keep, "down")
+          check(keep.choice == 1, label .. " down from MOVES did not wrap to KEEP")
           press(keep, "a")
           check(keepGame.save.party[1] == keepMon,
             label .. " KEEP changed the caught Pokemon")
@@ -1521,9 +1561,18 @@ for _, gen in ipairs({ 1, 2 }) do
             label .. " selecting RELEASE removed before confirmation")
           check(releaseGame.save.inventory.CRYSTAL_BALL == nil,
             label .. " selecting RELEASE refunded before confirmation")
+          pcheck(label .. " crystal release question draw", release.draw, release)
           press(release, "b")
           check(releaseGame.save.party[1] == releaseMon,
             label .. " cancelling RELEASE changed the catch")
+          -- 0.8.12: the game's YES/NO -- NO + A backs out too.
+          press(release, "a")
+          press(release, "down")
+          press(release, "a")
+          check(releaseGame.save.party[1] == releaseMon
+              and releaseGame.save.inventory.CRYSTAL_BALL == nil
+              and not release.confirm and not release.message,
+            label .. " NO on the RELEASE question changed the catch")
           press(release, "a")
           press(release, "a")
           check(#releaseGame.save.party == 0,

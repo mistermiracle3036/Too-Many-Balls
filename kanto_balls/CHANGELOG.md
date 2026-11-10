@@ -10,6 +10,27 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
+## 0.8.12
+
+**Updating from 0.8.8?** The Ball Case and the Crystal Ball's keep-or-release
+screen now look like the game's own menus (below). Kurt's full-ball-pocket
+handover fix (0.8.9) is included: talk to him again if he previously
+withheld the case after Slowpoke Well. Leftover developer code is gone
+(0.8.11).
+
+**New in 0.8.12 (Gold, Silver and Crystal):**
+- **The Ball Case is laid out like a Poké Mart.** Black on white, the
+  balls in a list with the game's cursor, what the lit ball needs under
+  it (a count you are short of shows in red), and its description in the
+  text box. Making a ball now asks "Make this ball?" with the game's
+  YES/NO first; NO spends nothing.
+- **The Crystal Ball screen is a question.** Your new Pokémon's picture,
+  name, level and DVs, "Keep <NAME>?" in the text box, and KEEP / RELEASE /
+  MOVES beside it. MOVES shows its moves and PP; B comes back. RELEASE
+  asks with the game's YES/NO.
+- Nothing about what the case or the Crystal Ball does has changed: making,
+  stowing, taking back and releasing work exactly as before.
+
 ## 0.8.11
 
 **Updating from 0.8.8?** The Ball Case has a new Gen 2 workbench screen

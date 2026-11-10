@@ -78,7 +78,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.8.11"
+  local VERSION = "0.8.12"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -1874,7 +1874,33 @@ return function(mod)
       local ups = tonumber(move.ppUps) or 0
       maxPp = base + ups * math.floor(base / 5)
     end
-    return fit(name, 10) .. " " .. tostring(pp) .. "/" .. tostring(maxPp)
+    return fit(name, 12), tostring(pp) .. "/" .. tostring(maxPp)
+  end
+
+  -- The front, drawn by the engine's own summary-page code
+  -- (SummaryMenu:drawPic -> drawPicBlock, a 7x7 block at 0,0 with the pic
+  -- padded in, through the species' palette, shiny row when shiny) on a
+  -- stand-in that carries only the fields those methods read.  Gen 2 only;
+  -- a failed require or draw leaves the block white, never an error.
+  local SummaryMenuPic
+  local function drawFront(screen)
+    if SummaryMenuPic == nil then
+      local ok, m = pcall(require, "src.ui.gen2.SummaryMenu")
+      SummaryMenuPic = (ok and type(m) == "table") and m or false
+    end
+    if not SummaryMenuPic then return end
+    if not screen.picProxy then
+      local data = screen.game and screen.game.data or {}
+      screen.picProxy = setmetatable({
+        mon = screen.mon, game = screen.game, pokemon = data.pokemon,
+        palettes = data.gen2Palettes, picCache = {},
+      }, { __index = SummaryMenuPic })
+    end
+    local ok, err = pcall(SummaryMenuPic.drawPic, screen.picProxy)
+    if not ok and not screen.picFailed then
+      screen.picFailed = true
+      Runtime.reportError("kanto_balls", "CRYSTAL front: " .. tostring(err))
+    end
   end
 
   function CrystalReview.new(game, opts)
@@ -1899,9 +1925,17 @@ return function(mod)
       if pressed("a") or pressed("b") then self:close() end
       return
     end
+    -- REQUESTS 740: RELEASE asks through the game's YES/NO (YES first,
+    -- as YesNoBox has it).  Only YES + A reaches releaseCaught, which is
+    -- unchanged; NO + A and B both back out with nothing touched.
     if self.confirm then
-      if pressed("b") then self.confirm = false return end
-      if pressed("a") then
+      if pressed("up") or pressed("down") then
+        self.yes = not self.yes
+      elseif pressed("b") then
+        self.confirm = false
+      elseif pressed("a") then
+        self.confirm = false
+        if not self.yes then return end
         local ok, why = releaseCaught(self)
         if ok then
           self.message = { "Ball returned.", "POKEMON released." }
@@ -1913,63 +1947,103 @@ return function(mod)
       end
       return
     end
-    if pressed("left") or pressed("right") then
-      self.page = self.page == 1 and 2 or 1
-    elseif pressed("up") or pressed("down") then
-      self.choice = self.choice == 1 and 2 or 1
+    -- MOVES is a second page; B (or A) comes back to the question.
+    if self.page == 2 then
+      if pressed("a") or pressed("b") then self.page = 1 end
+      return
+    end
+    if pressed("up") then
+      self.choice = self.choice == 1 and 3 or self.choice - 1
+    elseif pressed("down") then
+      self.choice = self.choice == 3 and 1 or self.choice + 1
     elseif pressed("b") then
       self:close()
     elseif pressed("a") then
-      if self.choice == 1 then self:close() else self.confirm = true end
+      if self.choice == 1 then
+        self:close()
+      elseif self.choice == 2 then
+        self.confirm, self.yes = true, true
+      else
+        self.page = 2
+      end
     end
   end
 
+  -- REQUESTS 740: Crystal View as a question, from Crystal's own parts.
+  -- The front top left (7x7 at 0,0, as the summary page), name, level
+  -- and shiny / gender beside it, "DVs/" and the five values under the
+  -- picture; KEEP / RELEASE / MOVES in a box above the text box on the
+  -- right, two rows apart; the question in the text box (rows 14 / 16).
+  -- MOVES is a second page; RELEASE asks with the game's YES/NO box
+  -- (MartMenu:drawYesNo, 6x5 at 14,7).
+  local REVIEW_CHOICES = { "KEEP", "RELEASE", "MOVES" }
+
   function CrystalReview:draw()
-    Chrome.box(0, 0, 20, 18)
-    Chrome.print("CRYSTAL VIEW", 1, 1)
     local mon = self.mon or {}
     local def = speciesDef(self) or {}
-    if self.page == 1 then
-      Chrome.print(fit(mon.nickname or def.name or mon.species, 18), 1, 3)
-      Chrome.print(fit(def.name or mon.species, 11)
-        .. " Lv" .. tostring(mon.level or 0), 1, 4)
-      if GEN2 then
-        local traits = {}
-        if mon.shiny == true or ReviewMon.vanillaShiny(mon.dvs or {}) then
-          traits[#traits + 1] = "SHINY"
-        end
-        local gender = mon.gender
-          or ReviewMon.vanillaGender(def, mon.dvs or {})
-        if gender and gender ~= "unknown" then
-          traits[#traits + 1] = tostring(gender):upper()
-        end
-        Chrome.print(fit(table.concat(traits, " "), 18), 1, 5)
+    local name = fit(mon.nickname or def.name or mon.species, 10)
+    Chrome.clear()
+    drawFront(self)
+    Chrome.print(name, 8, 1)
+    Chrome.print("<LV>" .. tostring(mon.level or 0), 8, 2)
+    if GEN2 then
+      local traits = {}
+      if mon.shiny == true or ReviewMon.vanillaShiny(mon.dvs or {}) then
+        traits[#traits + 1] = "SHINY"
       end
-      local d = mon.dvs or {}
-      Chrome.print("DVs", 1, 7)
-      Chrome.print(("HP %02d AT %02d"):format(d.hp or 0, d.attack or 0), 1, 8)
-      Chrome.print(("DF %02d SP %02d"):format(d.defense or 0, d.speed or 0), 1, 9)
-      Chrome.print(("SC %02d"):format(d.special or 0), 1, 10)
-      Chrome.print("< MOVES >", 1, 12)
-    else
-      Chrome.print("MOVES / PP", 1, 3)
-      for i = 1, 4 do
-        Chrome.print(moveLine(self, mon.moves and mon.moves[i]), 1, 3 + i)
+      local gender = mon.gender
+        or ReviewMon.vanillaGender(def, mon.dvs or {})
+      if gender and gender ~= "unknown" then
+        traits[#traits + 1] = tostring(gender):upper()
       end
-      Chrome.print("< DETAILS >", 1, 12)
+      Chrome.print(fit(table.concat(traits, " "), 12), 8, 3)
     end
-    Chrome.print("KEEP", 3, 14)
-    Chrome.print("RELEASE", 3, 15)
-    Chrome.cursor(1, self.choice == 1 and 14 or 15)
 
+    if self.page == 2 then
+      Chrome.box(0, 7, 20, 11)
+      Chrome.print("MOVES", 1, 8)
+      Chrome.printRight("PP", 19, 8)
+      for i = 1, 4 do
+        local moveName, pp = moveLine(self, mon.moves and mon.moves[i])
+        local y = 8 + i * 2
+        Chrome.print(moveName, 1, y)
+        if pp then Chrome.printRight(pp, 19, y) end
+      end
+      return
+    end
+
+    local d = mon.dvs or {}
+    Chrome.print("DVs/", 1, 8)
+    Chrome.print(("HP%02d AT%02d"):format(d.hp or 0, d.attack or 0), 1, 9)
+    Chrome.print(("DF%02d SP%02d"):format(d.defense or 0, d.speed or 0), 1, 10)
+    Chrome.print(("SC%02d"):format(d.special or 0), 1, 11)
+
+    -- While RELEASE asks, its YES/NO takes the choices' place.
+    if not self.confirm then
+      Chrome.box(10, 5, 10, 7)
+      for i, label in ipairs(REVIEW_CHOICES) do
+        Chrome.print(label, 12, 4 + i * 2)
+      end
+      Chrome.cursor(11, 4 + self.choice * 2)
+    end
+
+    Chrome.box(0, 12, 20, 6)
+    local lines
+    if self.message then
+      lines = self.message
+    elseif self.confirm then
+      lines = { "Release", name .. "?" }
+    else
+      lines = { "Keep " .. name .. "?" }
+    end
+    for i = 1, math.min(2, #lines) do
+      Chrome.print(lines[i], 1, 12 + i * 2)
+    end
     if self.confirm then
-      Chrome.box(1, 5, 18, 6)
-      Chrome.print("Release it?", 2, 6)
-      Chrome.print("A:YES  B:NO", 2, 8)
-    elseif self.message then
-      Chrome.box(1, 5, 18, 6)
-      Chrome.print(self.message[1], 2, 6)
-      Chrome.print(self.message[2], 2, 8)
+      Chrome.box(14, 7, 6, 5)
+      Chrome.print("YES", 16, 8)
+      Chrome.print("NO", 16, 10)
+      Chrome.cursor(15, self.yes and 8 or 10)
     end
   end
 
@@ -2523,12 +2597,17 @@ return function(mod)
     Case.__index = Case
     Case.isOpaque = true
 
-    -- Approved workbench design, authored by Codex in a loose-mode phone
-    -- build. Palette pattern follows Trainer Journey; no shared recolour.
-    Case.paper = { {255,248,231}, {220,232,232}, {86,126,156}, {39,56,73} }
-    Case.selected = { {220,232,232}, {220,232,232}, {86,126,156}, {39,56,73} }
-    Case.short = { {240,215,189}, {220,232,232}, {86,126,156}, {39,56,73} }
+    -- REQUESTS 740 (0.8.12): Crystal's own parts, laid out like the Mart's
+    -- buy list (src/ui/gen2/MartMenu.lua drawBuyList / drawDescription /
+    -- drawYesNo).  Black on white, the game's cursor alone, no highlight
+    -- bar.  The ONE colour on the screen is a short apricorn count, in
+    -- the red UI Theme's VANILLA check uses for "short" (ui_theme
+    -- lib/look.lua CRYSTAL.fail = 216,0,0).
+    Case.short = { {255,255,255}, {255,255,255}, {255,255,255}, {216,0,0} }
     Case.apricorns = { "WHT", "PNK", "GRN", "RED", "YLW", "BLK", "BLU" }
+    -- charmap.asm ▲ / ▼, the scrolling menu's own arrow tiles.
+    Case.UP_ARROW = "\xe2\x96\xb2"
+    Case.DOWN_ARROW = "\xe2\x96\xbc"
 
     function Case:readiness(recipe)
       local materials = math.huge
@@ -2601,6 +2680,24 @@ return function(mod)
       return rows
     end
 
+    -- The one place a ball is made from the case (moved out of update
+    -- unchanged in 0.8.12 so the YES/NO can reach it).
+    function Case:make(recipe)
+      local ok, reason = craft(self.save, self.data, recipe)
+      if ok then
+        -- TWO lines, always.  The message box is 20 wide with
+        -- borders, so 18 columns of text, and "Made a CATALYST
+        -- BALL!" is 21 -- it soft-wrapped and scrolled on device.
+        -- Splitting at the label keeps the longest craft line at
+        -- 14 ("CATALYST BALL!") with room for a longer name later.
+        self.message = { "Made a", recipe.label .. "!" }
+      elseif reason == "pack full" then
+        self.message = { "No room for it." }
+      else
+        self.message = { "Not enough", "APRICORNS." }
+      end
+    end
+
     function Case:close()
       local stack = self.game and self.game.stack
       if stack and stack.pop then stack:pop() end
@@ -2614,6 +2711,22 @@ return function(mod)
       if self.message then
         if input:wasPressed("a") or input:wasPressed("b") then
           self.message = nil
+        end
+        return
+      end
+      -- "Make this ball?" -- the game's YES/NO (MartMenu:drawYesNo), YES
+      -- first as YesNoBox has it.  Only YES reaches craft(); NO and B
+      -- spend nothing.  craft() itself is unchanged and still refuses
+      -- without spending.
+      if self.confirm then
+        local c = self.confirm
+        if input:wasPressed("up") or input:wasPressed("down") then
+          c.choice = c.choice == 1 and 2 or 1
+        elseif input:wasPressed("b") then
+          self.confirm = nil
+        elseif input:wasPressed("a") then
+          self.confirm = nil
+          if c.choice == 1 then self:make(c.recipe) end
         end
         return
       end
@@ -2633,19 +2746,13 @@ return function(mod)
           return self:close()
 
         elseif row.kind == "recipe" then
-          local recipe = row.recipe
-          local ok, reason = craft(self.save, self.data, recipe)
-          if ok then
-            -- TWO lines, always.  The message box is 20 wide with
-            -- borders, so 18 columns of text, and "Made a CATALYST
-            -- BALL!" is 21 -- it soft-wrapped and scrolled on device.
-            -- Splitting at the label keeps the longest craft line at
-            -- 14 ("CATALYST BALL!") with room for a longer name later.
-            self.message = { "Made a", recipe.label .. "!" }
-          elseif reason == "pack full" then
-            self.message = { "No room for it." }
+          -- Ask only when it can be made; otherwise craft() refuses
+          -- (spending nothing) and says why, exactly as before.
+          local _, ready = self:readiness(row.recipe)
+          if ready then
+            self.confirm = { recipe = row.recipe, choice = 1 }
           else
-            self.message = { "Not enough", "APRICORNS." }
+            self:make(row.recipe)
           end
 
         elseif row.kind == "stow" then
@@ -2673,38 +2780,34 @@ return function(mod)
 
     -- Four visible rows, scrolled explicitly: the old nine-row ceiling is
     -- gone. Costs/status live above the permanent two-line effect panel.
+    -- REQUESTS 740: the Mart's buy-list layout.  A cleared white field
+    -- (BlankScreen), "BALL CASE" and the position top row, the rows two
+    -- apart from row 3 (4 visible, ▲ / ▼ the scrolling menu's own), what
+    -- the lit ball needs on row 11 (rows 10-11 for a four-apricorn
+    -- ball), and every word the case says in the text box (0,12,20,6),
+    -- lines on rows 14 and 16 as MartMenu's TEXT_Y / TEXT_LINE.
     function Case:draw()
       local rows = self:rows()
-      local function text(value, x, y, palette)
-        Chrome.printThrough(value, x, y, palette or Case.paper)
-      end
-      Chrome.paletteBox(0, 0, 20, 12, Case.paper)
-      Chrome.paletteBox(0, 12, 20, 6, Case.paper)
-      text("BALL CASE", 1, 1)
-      Chrome.printRightThrough(tostring(self.index) .. "/" .. tostring(#rows),
-        19, 1, Case.paper)
+      Chrome.clear()
+      Chrome.print("BALL CASE", 1, 1)
+      Chrome.printRight(tostring(self.index) .. "/" .. tostring(#rows), 19, 1)
       for visible = 1, 4 do
         local i = self.scroll + visible
         local row = rows[i]
         if row then
-          local y = 2 + visible
-          local palette = i == self.index and Case.selected or Case.paper
-          if i == self.index then
-            -- paletteFill is PIXELS, unlike paletteBox/printThrough.
-            Chrome.paletteFill(8, y * 8, 144, 8, palette)
-            Chrome.cursorThrough(1, y, palette)
-          end
-          text(row.label, 3, y, palette)
+          local y = 1 + visible * 2
+          if i == self.index then Chrome.cursor(1, y) end
+          Chrome.print(row.label, 2, y)
         end
       end
+      if self.scroll > 0 then Chrome.print(Case.UP_ARROW, 18, 3) end
+      if self.scroll + 4 < #rows then Chrome.print(Case.DOWN_ARROW, 18, 9) end
+
       local row = rows[self.index]
-      local detail, controls
+      local detail
       if row.kind == "recipe" then
         local recipe = row.recipe
-        local status, ready = self:readiness(recipe)
-        text(status, 1, 7)
-        text("APRICORN HAVE/NEED", 1, 8)
-        local n = 0
+        local needs = {}
         for _, colour in ipairs(Case.apricorns) do
           local id = colour .. "_APRICORN"
           local need = recipe.inputs[id]
@@ -2713,41 +2816,47 @@ return function(mod)
             -- Engine stacks cap at 99. LOT is an explicit nonnumeric
             -- overflow label for imported/edited saves, never a fake count.
             local amount = have > 999 and "LOT" or tostring(math.floor(have))
-            local label = colour .. " " .. amount .. "/" .. tostring(need)
-            text(label, 1 + (n % 2) * 9, 9 + math.floor(n / 2),
-              have < need and Case.short or Case.paper)
-            n = n + 1
+            needs[#needs + 1] = { colour .. " " .. amount .. "/" .. tostring(need),
+              have < need }
           end
         end
-        local c = COLORS and COLORS[recipe.id]
-        if c then
-          Chrome.paletteFill(8, 104, 144, 2,
-            { c.body, Case.paper[2], Case.paper[3], Case.paper[4] })
+        -- Two to a row; a four-apricorn ball (CRADLE) takes rows 10-11.
+        local top = 11 - math.floor((#needs - 1) / 2)
+        for n, item in ipairs(needs) do
+          local x, y = 1 + ((n - 1) % 2) * 9, top + math.floor((n - 1) / 2)
+          if item[2] then
+            Chrome.printThrough(item[1], x, y, Case.short)
+          else
+            Chrome.print(item[1], x, y)
+          end
         end
         detail = {}
         for line in (BALL_DESC[recipe.id] or ""):gmatch("[^\n]+") do
           detail[#detail + 1] = line
         end
-        controls = ready and "A MAKE   B CLOSE" or "A INFO   B CLOSE"
       elseif row.kind == "stow" then
-        local count = countOwnedInBag(self.save)
-        text(count == 0 and "NOTHING TO STOW" or "PACK BALLS", 1, 7)
-        text(tostring(count), 1, 9)
-        detail = { "STORE MOD BALLS.", "KEEP APRICORNS." }
-        controls = "A MOVE   B CLOSE"
+        Chrome.print("IN PACK " .. tostring(countOwnedInBag(self.save)), 1, 11)
+        detail = { "Puts this mod's", "balls in the case." }
       elseif row.kind == "take" then
-        local count = countStored(stowedBalls())
-        text(count == 0 and "CASE EMPTY" or "STORED BALLS", 1, 7)
-        text(tostring(count), 1, 9)
-        detail = { "RETURN WHAT FITS.", "THE REST STAYS." }
-        controls = "A MOVE   B CLOSE"
+        Chrome.print("IN CASE " .. tostring(countStored(stowedBalls())), 1, 11)
+        detail = { "Returns what fits", "to the PACK." }
       else
-        detail = { "CLOSE THE CASE.", "NOTHING IS MOVED." }
-        controls = "A CLOSE  B CLOSE"
+        detail = {}
       end
-      local lines = self.message or detail
-      for i = 1, math.min(2, #lines) do text(lines[i], 1, 13 + i) end
-      text(self.message and "A/B CONTINUE" or controls, 1, 16)
+
+      Chrome.box(0, 12, 20, 6)
+      local lines = (self.confirm and { "Make this ball?" })
+        or self.message or detail
+      for i = 1, math.min(2, #lines) do
+        Chrome.print(lines[i], 1, 12 + i * 2)
+      end
+      if self.confirm then
+        -- MartMenu:drawYesNo: a 6x5 box at (14,7).
+        Chrome.box(14, 7, 6, 5)
+        Chrome.print("YES", 16, 8)
+        Chrome.print("NO", 16, 10)
+        Chrome.cursor(15, self.confirm.choice == 1 and 8 or 10)
+      end
     end
 
     mod.content.screens:register("KbBallCase", { new = Case.new })
