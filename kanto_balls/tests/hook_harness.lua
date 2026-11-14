@@ -1618,6 +1618,55 @@ for _, gen in ipairs({ 1, 2 }) do
               and fullReview.message[2] == "POKEMON kept.",
             label .. " failed refund did not say the catch was kept")
 
+          -- 0.8.13 (REQUESTS 932): a held item comes back with the ball,
+          -- from the party and from a box; no room for the item refuses the
+          -- release and leaves the save exactly as it was.
+          local function itemCase(where)
+            local g = fakeGame()
+            addDisplayData(g)
+            local m = { species = "PIKACHU", level = 9, dvs = {}, moves = {},
+              item = "METAL_COAT" }
+            if where == "box" then
+              g.save.boxes = g.save.boxes or {}
+              g.save.boxes[1] = { m }
+            else
+              g.save.party[1] = m
+            end
+            return g, m
+          end
+          for _, where in ipairs({ "party", "box" }) do
+            local g, m = itemCase(where)
+            local r = reviewFor(g, m)
+            press(r, "down"); press(r, "a"); press(r, "a")
+            local gone = where == "box" and #(g.save.boxes[1]) == 0
+              or where == "party" and #g.save.party == 0
+            check(gone, label .. " " .. where .. " RELEASE with item left the catch")
+            check(g.save.inventory.CRYSTAL_BALL == 1
+                and g.save.inventory.METAL_COAT == 1,
+              label .. " " .. where .. " RELEASE did not return ball AND item")
+            check(r.message and r.message[1] == "Ball and item"
+                and r.message[2] == "returned.",
+              label .. " " .. where .. " RELEASE with item said the wrong thing")
+          end
+          do
+            local g, m = itemCase("party")
+            local r = reviewFor(g, m)
+            local liveAdd = rec.stubs["src.inventory.Bag"].add
+            rec.stubs["src.inventory.Bag"].add = function(save, id, qty, data)
+              if id == "METAL_COAT" then return false end
+              return liveAdd(save, id, qty, data)
+            end
+            press(r, "down"); press(r, "a"); press(r, "a")
+            rec.stubs["src.inventory.Bag"].add = liveAdd
+            check(g.save.party[1] == m and m.item == "METAL_COAT",
+              label .. " full item pocket still released the catch")
+            check(g.save.inventory.CRYSTAL_BALL == nil
+                and g.save.inventory.METAL_COAT == nil,
+              label .. " full item pocket left a refund behind")
+            check(r.message and r.message[2] == "POKEMON kept.",
+              label .. " full item pocket did not say the catch was kept")
+          end
+
           -- Ambiguous identity must fail safe before either mutation.
           local duplicateGame = fakeGame()
           addDisplayData(duplicateGame)

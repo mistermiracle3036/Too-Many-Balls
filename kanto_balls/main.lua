@@ -78,7 +78,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.8.12"
+  local VERSION = "0.8.13"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -1828,9 +1828,31 @@ return function(mod)
       return false, "BALL pocket full"
     end
 
+    -- REQUESTS 932 (developer's card pick 2026-11-14, "1: give it back
+    -- with the ball"): the catch's held item comes back with the ball.
+    -- No room for it = the release is refused and the Pokemon is kept,
+    -- with the ball refund undone, so nothing is ever lost.
+    local item = mon.item
+    if item ~= nil and item ~= "" and item ~= "NO_ITEM" then
+      suppressPurchaseTracking = true
+      local itemOk, itemBack = pcall(Bag.add, game.save, item, 1, game.data)
+      suppressPurchaseTracking = false
+      if not (itemOk and itemBack) then
+        Bag.remove(game.save, "CRYSTAL_BALL", 1, game.data)
+        return false, itemOk and "item pocket full"
+          or ("item refund error: " .. tostring(itemBack))
+      end
+    else
+      item = nil
+    end
+    local function undoRefunds()
+      Bag.remove(game.save, "CRYSTAL_BALL", 1, game.data)
+      if item then Bag.remove(game.save, item, 1, game.data) end
+    end
+
     -- Revalidate after the refund and before the irreversible step.
     if where.list[where.slot] ~= mon then
-      Bag.remove(game.save, "CRYSTAL_BALL", 1, game.data)
+      undoRefunds()
       return false, "catch moved during review"
     end
 
@@ -1842,18 +1864,18 @@ return function(mod)
         ok, removed = ReviewBoxes.release(game.save, where.box, where.slot)
       end
       if not ok or removed ~= mon then
-        Bag.remove(game.save, "CRYSTAL_BALL", 1, game.data)
+        undoRefunds()
         return false, "engine release refused exact catch"
       end
     else
       local removed = table.remove(where.list, where.slot)
       if removed ~= mon then
-        Bag.remove(game.save, "CRYSTAL_BALL", 1, game.data)
+        undoRefunds()
         if removed then table.insert(where.list, where.slot, removed) end
         return false, "release removed a different catch"
       end
     end
-    return true
+    return true, item
   end
 
   local function speciesDef(screen)
@@ -1937,7 +1959,10 @@ return function(mod)
         self.confirm = false
         if not self.yes then return end
         local ok, why = releaseCaught(self)
-        if ok then
+        if ok and why then
+          -- REQUESTS 932: the held item came back too (`why` is its id).
+          self.message = { "Ball and item", "returned." }
+        elseif ok then
           self.message = { "Ball returned.", "POKEMON released." }
         else
           Runtime.reportError("kanto_balls",

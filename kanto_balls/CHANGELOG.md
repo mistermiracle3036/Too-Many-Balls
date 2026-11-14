@@ -10,6 +10,19 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
+## 0.8.13
+
+**Updating from 0.8.8?** The Ball Case and the Crystal Ball's keep-or-release
+screen now look like the game's own menus (0.8.12, below), and releasing a
+Crystal Ball catch gives back what it was holding. Kurt's full-ball-pocket
+handover fix (0.8.9) is included: talk to him again if he previously
+withheld the case after Slowpoke Well.
+
+**New in 0.8.13:** a wild Pokémon can be holding an item when you catch it.
+If you RELEASE it from the Crystal Ball screen, the item now comes back with
+the ball ("Ball and item returned."). If your PACK has no room for the item,
+the release is refused and you keep the Pokémon. Nothing is lost either way.
+
 ## 0.8.12
 
 **Updating from 0.8.8?** The Ball Case and the Crystal Ball's keep-or-release
