@@ -10,6 +10,19 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
+## 0.8.14
+
+**Updating from 0.8.8?** The Ball Case and the Crystal Ball's keep-or-release
+screen now look like the game's own menus (0.8.12), releasing a Crystal Ball
+catch gives back what it was holding (0.8.13), and Kurt's full-ball-pocket
+handover fix (0.8.9) is included: talk to him again if he previously
+withheld the case after Slowpoke Well.
+
+**New in 0.8.14:** TAKE BACK in the Ball Case now returns every kind of ball
+that fits. Before, one kind with a full stack in your PACK stopped it, and
+every kind after it stayed in the case (nothing was lost; it just needed
+emptying first).
+
 ## 0.8.13
 
 **Updating from 0.8.8?** The Ball Case and the Crystal Ball's keep-or-release

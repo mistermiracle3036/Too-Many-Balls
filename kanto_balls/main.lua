@@ -78,7 +78,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.8.13"
+  local VERSION = "0.8.14"
   mod.exports.version = VERSION
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
@@ -2569,7 +2569,11 @@ return function(mod)
     local before = countStored(stowed)
     if before == 0 or not save then return 0, before end
 
-    local moved, blocked = 0, false
+    -- 0.8.14 (REQUESTS 947 #1): a type that will not fit is SKIPPED, not
+    -- the end of the walk -- one full stack used to leave every later type
+    -- in the case.  Each type has its own stack, so a refusal for one says
+    -- nothing about the next.
+    local moved = 0
     for _, id in ipairs(BALL_IDS) do
       local n = stowed[id]
       if type(n) ~= "number" or n < 1 then n = 0 end
@@ -2583,12 +2587,11 @@ return function(mod)
       -- balls against a full pocket, which is the one failure here that
       -- costs something real.
       while n > 0 do
-        if not Bag.add(save, id, 1, data) then blocked = true break end
+        if not Bag.add(save, id, 1, data) then break end
         n = n - 1
         moved = moved + 1
         if n > 0 then stowed[id] = n else stowed[id] = nil end
       end
-      if blocked then break end
     end
 
     mod.save:set(STOWED_KEY, stowed)

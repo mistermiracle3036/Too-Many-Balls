@@ -1440,6 +1440,39 @@ for _, gen in ipairs({ 1, 2 }) do
                   ("%s FULL POCKET LOST BALLS: %d of %d came back")
                     :format(label, recovered, ballsBefore))
 
+                -- 0.8.14 (REQUESTS 947 #1): ONE blocked type must not
+                -- strand the types after it.  Block the first stowed type
+                -- only; every other type comes back, the blocked one stays
+                -- in the case and returns on the next TAKE BACK.
+                local held = {}
+                for _, id in ipairs(rec.exports.balls or {}) do
+                  if (game.save.inventory[id] or 0) > 0 then held[#held + 1] = id end
+                end
+                if #held >= 2 then
+                  local first = held[1]
+                  press("stow")
+                  rec.stubs["src.inventory.Bag"].add = function(save, id, qty, data)
+                    if id == first then return false end
+                    return vanillaAdd(save, id, qty, data)
+                  end
+                  press("take")
+                  rec.stubs["src.inventory.Bag"].add = vanillaAdd
+                  local later = 0
+                  for i = 2, #held do later = later + (game.save.inventory[held[i]] or 0) end
+                  check(later > 0 and (game.save.inventory[first] or 0) == 0,
+                    label .. " TAKE BACK stopped at the first blocked type")
+                  press("take")
+                  local all = 0
+                  for _, id in ipairs(rec.exports.balls or {}) do
+                    all = all + (game.save.inventory[id] or 0)
+                  end
+                  check(all == ballsBefore,
+                    ("%s blocked-type TAKE BACK lost balls: %d of %d")
+                      :format(label, all, ballsBefore))
+                else
+                  check(false, label .. " blocked-type test needs two ball types stocked")
+                end
+
                 -- COUNT, not just contents.  checkMessage returns early
                 -- on a nil message, so if a press ever stopped setting
                 -- one the width check would pass by inspecting nothing.
