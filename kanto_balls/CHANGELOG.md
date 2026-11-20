@@ -10,6 +10,20 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
+## 0.8.15
+
+**Updating from 0.8.8?** The Ball Case and the Crystal Ball's keep-or-release
+screen now look like the game's own menus (0.8.12), releasing a Crystal Ball
+catch gives back what it was holding (0.8.13), TAKE BACK returns every kind
+of ball that fits (0.8.14), and a full ball pocket no longer costs you a free
+ball (below). Kurt's full-ball-pocket handover fix (0.8.9) is included: talk
+to him again if he previously withheld the case after Slowpoke Well.
+
+**New in 0.8.15:** when your ball pocket is full, the free balls go to your
+PC instead of being lost. That covers the PREMIER BALL a Mart throws in when
+you buy 10 or more balls, and the CHERISH BALL Kurt gives you with the BALL
+CASE. One short line tells you: "No room. It went / to your PC."
+
 ## 0.8.14
 
 **Updating from 0.8.8?** The Ball Case and the Crystal Ball's keep-or-release

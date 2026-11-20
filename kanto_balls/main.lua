@@ -78,8 +78,13 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.8.14"
+  local VERSION = "0.8.15"
   mod.exports.version = VERSION
+  -- 0.8.15 (REQUESTS 1039): item overflow goes to the PC (decision
+  -- exchange/decisions/2026-11-19-item-overflow-goes-to-the-pc.md). The
+  -- Checker's master, byte for byte; never edit lib/item_overflow.lua.
+  local Overflow = assert(load(assert(mod:read("lib/item_overflow.lua")),
+    "@kanto_balls/lib/item_overflow"))()
 
   -- Which generation THIS boot is -- fixed for the whole run, the same
   -- call the loader itself uses (src/mods/Loader.lua:242).  Registries
@@ -681,6 +686,7 @@ return function(mod)
   -- listener that assigns it: a `local` declared after its first use
   -- compiles that use as a GLOBAL, which is nil at runtime and silent.
   local premierAward = 0
+  local premierToPc = false -- 0.8.15: the bonus went to the PC (REQUESTS 1039)
 
   local function restoreBoughtText(game)
     if boughtText.swapped and game and game.data and game.data.text then
@@ -726,11 +732,16 @@ return function(mod)
     local save = p.save or (game and game.save)
     local data = p.data or (game and game.data)
     if not (save and data) then return end
-    if not Bag.add(save, "PREMIER_BALL", award, data) then
-      mod.log:warn("bag full -- PREMIER BALL award skipped")
+    -- 0.8.15 (REQUESTS 1039): a full BALL pocket sends the bonus to the
+    -- PC with one line, instead of skipping it.
+    local where = Overflow.give(mod, "PREMIER_BALL", award)
+    if not where then
+      Runtime.reportError("kanto_balls",
+        "PREMIER BALL bonus: PACK and PC both full, not paid")
       return
     end
     premierAward = award
+    premierToPc = where == "pc"
 
     -- clerk line, GB text box: max 2 rows, max 18 chars per row
     if not GEN2 and game and game.data and game.data.text then
@@ -743,6 +754,8 @@ return function(mod)
       else
         line = ("I'll throw in %d\nPREMIER BALLS too!"):format(award)
       end
+      -- \f is a new page (TextBox markers), so the PC line is its own box.
+      if premierToPc then line = line .. "\f" .. Overflow.LINE end
       game.data.text["_PokemartBoughtItemText"] = line
       boughtText.swapped = true
     end
@@ -782,6 +795,7 @@ return function(mod)
 
     MartMenu.completePurchase = function(self, total)
       premierAward = 0
+      premierToPc = false
       vanillaComplete(self, total)
       -- vanilla returns early on "not enough money" and "pack full"
       -- without ever ringing the till, so premierAward stays 0 there.
@@ -798,8 +812,13 @@ return function(mod)
       local pages = {}
       for _, p in ipairs(message.pages) do pages[#pages + 1] = p end
       pages[#pages + 1] = line
+      if premierToPc then
+        local a, b = Overflow.LINE:match("^(.-)\n(.*)$")
+        pages[#pages + 1] = { a, b }
+      end
       message.pages = pages
       premierAward = 0
+      premierToPc = false
     end
   end
 
@@ -3211,10 +3230,16 @@ return function(mod)
       mod.save:set("caseGiven", true)
 
       -- A commemorative extra, only after the CASE itself is safely in
-      -- hand.  Failure is intentionally non-fatal: a full BALL pocket must
-      -- never undo or block the KEY ITEM handover.  We do not retry, so a
-      -- repeat conversation cannot duplicate a successful gift.
-      Bag.add(save, "CHERISH_BALL", 1, game.data)
+      -- hand.  Never blocks or undoes the KEY ITEM handover, and is tried
+      -- once (caseGiven is already set), so a repeat conversation cannot
+      -- duplicate it.  0.8.15 (REQUESTS 1039, overflow decision
+      -- 2026-11-19): a full BALL pocket sends it to the PC with one line
+      -- after his coda, where 0.8.14 dropped it.
+      local cherishWhere = Overflow.give(mod, "CHERISH_BALL", 1)
+      if not cherishWhere then
+        Runtime.reportError("kanto_balls",
+          "CHERISH BALL: PACK and PC both full, not given")
+      end
 
       -- His coda, DEFERRED until the world is quiet -- see the drain in
       -- the Game2.update wrap above.  Queued rather than spoken here
@@ -3230,10 +3255,12 @@ return function(mod)
       -- other half of what "too fast" looked like.  `\n` is the second
       -- line of a box; each row below is one box the player dismisses.
       pendingCoda = function()
-        mod.world:queueScript({
+        local rows = {
           { "text", "APRICORNS aren't\njust for my seven." },
           { "text", "Take this CASE and\nmix your own." },
-        })
+        }
+        if cherishWhere == "pc" then rows[#rows + 1] = { "text", Overflow.LINE } end
+        mod.world:queueScript(rows)
       end
     end)
   end

@@ -47,6 +47,12 @@ local function engineStubs(generation, versionId, engineLine)
     capacity = function(_, pocket) return pocket == "BALL" and 12 or 20 end,
     slots = function() return 0 end,
     pocketOf = function() return "ITEM" end,
+    -- The PC half of lib/item_overflow.lua (0.8.15): save.pcItems.
+    pcAdd = function(save, id, qty)
+      save.pcItems = save.pcItems or {}
+      save.pcItems[id] = (save.pcItems[id] or 0) + (qty or 1)
+      return true
+    end,
   }
   local pushed = {}
   return {
@@ -231,6 +237,12 @@ local function makeModApi(options, foundMods)
       warn = function(_, ...) rec.logged[#rec.logged + 1] = { ... } end,
     },
     find = function(id) return foundMods and foundMods[id] or nil end,
+    -- mod:read (0.8.15 loads lib/item_overflow.lua through it).
+    read = function(_, path)
+      local f = assert(io.open(path, "rb"))
+      local s = f:read("*a"); f:close()
+      return s
+    end,
     -- Real storage: the once-only guard on Kurt's handover is only
     -- meaningful if get/set actually round-trip.
     save = {
@@ -550,6 +562,10 @@ for _, gen in ipairs({ 1, 2 }) do
         for _, fn in ipairs(rec.events["game.ready"] or {}) do
           pcall(fn, { game = g2 })
         end
+        -- mod.game is the live game in the engine; 0.8.15's overflow
+        -- helper reads the save from it.
+        local priorModGame = rec.modGame
+        rec.modGame = g2
         local Bag_ = rec.stubs["src.inventory.Bag"]
         local Sound_ = rec.stubs["src.core.Sound"]
         local before = g2.save.inventory.PREMIER_BALL or 0
@@ -568,6 +584,28 @@ for _, gen in ipairs({ 1, 2 }) do
         pcheck(label .. " till on sell", Sound_.play, g2.data, "Purchase")
         check((g2.save.inventory.PREMIER_BALL or 0) == was,
           label .. " a SELL awarded a PREMIER BALL")
+
+        -- 0.8.15 (REQUESTS 1039): a full BALL pocket sends the bonus to
+        -- the PC instead of skipping it, and the clerk says so.
+        local liveAdd = Bag_.add
+        Bag_.add = function(save, id, qty, data)
+          if id == "PREMIER_BALL" then return false end
+          return liveAdd(save, id, qty, data)
+        end
+        local pcBefore = (g2.save.pcItems or {}).PREMIER_BALL or 0
+        local bagBefore = g2.save.inventory.PREMIER_BALL or 0
+        Bag_.add(g2.save, "POKE_BALL", 10, g2.data)
+        pcheck(label .. " till rings (full pocket)", Sound_.play, g2.data, "Purchase")
+        Bag_.add = liveAdd
+        check(((g2.save.pcItems or {}).PREMIER_BALL or 0) == pcBefore + 1
+            and (g2.save.inventory.PREMIER_BALL or 0) == bagBefore,
+          label .. " full pocket: PREMIER bonus did not go to the PC")
+        if gen == 1 then
+          local t = g2.data.text and g2.data.text["_PokemartBoughtItemText"]
+          check(type(t) == "string" and t:find("to your PC.", 1, true),
+            label .. " full pocket: the clerk did not say it went to the PC")
+        end
+        rec.modGame = priorModGame
       end
 
       -- every Gen 1 ball's attempt(), including the ones that replace
@@ -1008,6 +1046,42 @@ for _, gen in ipairs({ 1, 2 }) do
           label .. " KURT DID NOT GIVE THE CASE ON HIS RETURN")
         check(rescue.save.inventory.CHERISH_BALL == 1,
           label .. " KURT DID NOT GIVE ONE CHERISH BALL WITH THE CASE")
+
+        -- 0.8.15 (REQUESTS 1039): a full BALL pocket sends the CHERISH
+        -- BALL to the PC (0.8.14 dropped it). FRESH load: `rec` has
+        -- already given its case.
+        do
+          local okC, errC, recC = loadMod(2, { cheap_balls = cheap,
+            canon_balls = true })
+          check(okC, label .. " cherish-overflow load: " .. tostring(errC))
+          if okC then
+            local g = fakeGame()
+            recC.modGame = g
+            for _, fn in ipairs(recC.events["game.ready"] or {}) do
+              pcheck(label .. " cherish-overflow ready", fn, { game = g })
+            end
+            local BagC = recC.stubs["src.inventory.Bag"]
+            local liveAddC = BagC.add
+            BagC.add = function(save, id, qty, data)
+              if id == "CHERISH_BALL" then return false end
+              return liveAddC(save, id, qty, data)
+            end
+            for _, fn in ipairs(recC.events["script.started"] or {}) do
+              pcheck(label .. " kurt start (full)", fn, { ctx = { scriptKey = KEY } })
+            end
+            g.save.inventory.LURE_BALL = (g.save.inventory.LURE_BALL or 0) + 1
+            for _, fn in ipairs(recC.events["script.ended"] or {}) do
+              pcheck(label .. " kurt end (full)", fn,
+                { ctx = { scriptKey = KEY }, completed = true })
+            end
+            BagC.add = liveAddC
+            check(g.save.inventory.BALL_CASE == 1,
+              label .. " full BALL pocket: no CASE")
+            check(g.save.inventory.CHERISH_BALL == nil
+                and (g.save.pcItems or {}).CHERISH_BALL == 1,
+              label .. " full BALL pocket: CHERISH BALL did not go to the PC")
+          end
+        end
 
         -- A NESTED SCRIPT DURING HIS CONVERSATION must not discard the
         -- bag snapshot. KURTS_HOUSE carries a MAPCALLBACK_OBJECTS in both
