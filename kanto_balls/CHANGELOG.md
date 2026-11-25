@@ -10,6 +10,50 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
+## 0.9.0
+
+**Updating from 0.8.8?** Seventeen new balls on Gold, Silver and Crystal
+(below). Also since 0.8.8: the Ball Case and the Crystal Ball's
+keep-or-release screen look like the game's own menus (0.8.12), releasing a
+Crystal Ball catch gives back what it was holding (0.8.13), TAKE BACK returns
+every kind of ball that fits (0.8.14), and free balls go to your PC when the
+ball pocket is full (0.8.15). Kurt's full-ball-pocket handover fix (0.8.9) is
+included: talk to him again if he previously withheld the case after Slowpoke
+Well.
+
+**New in 0.9.0: seventeen balls.**
+
+Made in the BALL CASE, Hisui-style. Each step up uses the ball below it:
+- **FEATHER BALL** (BLU x2): 2x on Flying types and very fast Pokemon
+  (base Speed 100 or more).
+- **WING BALL** (FEATHER + WHT): 3x on the same.
+- **JET BALL** (WING + BLU + YLW): 4x on the same.
+- **LEADEN BALL** (BLK + GRN): 2x on a Pokemon that hasn't made a move yet
+  this battle, or is asleep.
+- **GIGATON BALL** (LEADEN + BLK + GRN): 3x on one that hasn't moved; 4x if
+  it's asleep.
+
+In shops (Great Ball and Ultra Ball counters):
+- **BOOST BALL**: a rocket-powered ball, 1.5x on anything.
+- **BOOMERANG**: comes back to your bag if it misses.
+- **BOMB-BOMB**: if it misses it bursts, taking 1/8 of the wild Pokemon's HP
+  (it never knocks it out).
+- **CHASE BALL**: 3x on Pokemon that run away (Abra and the ones that flee),
+  and a miss stops one from running that turn. On Raikou and Entei it only
+  stops the run; their catch odds stay as hard as ever.
+- **STONE BALL**: 3x on Rock types, but too heavy to help on the first turn.
+- **MAGMA BALL / MAGMA GREAT**: 2.5x / 3.5x on Fire, Ground and Rock.
+- **AQUA BALL / AQUA GREAT**: 2.5x / 3.5x on Water and Ice.
+- **PLASMA BALL**: 2.5x on Electric and Steel.
+
+And two with their own counters:
+- **SNEAK BALL** (Goldenrod Underground herb shop): plain odds, but if it
+  misses you still take the wild Pokemon's held item.
+- **FISHING BALL** (Mahogany Town's shop, 500): a Poke Ball with a fish drawn
+  on it. That's all it is.
+
+The bag has room for all of them on top of what it held before.
+
 ## 0.8.15
 
 **Updating from 0.8.8?** The Ball Case and the Crystal Ball's keep-or-release

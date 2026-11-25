@@ -154,10 +154,31 @@ local function engineStubs(generation, versionId, engineLine)
       _pushed = pushed,
     },
     -- Gold's battle screen: the mod wraps ballPalette on it
+    -- 0.9.0 ROUND 2: the useItem wrap (after-miss lines) lives on the same
+    -- screen module.  This stub's useItem plays the real ball arm's ORDER:
+    -- Catching.attempt (which emits battle.ball_thrown) runs BEFORE the
+    -- queue is cleared and "ball-result" pushed (src/ui/gen2/BattleState.lua
+    -- useItem), which is the whole reason the notes are inserted after.
     ["src.ui.gen2.BattleState"] = {
       ballPalette = function() return "PAL_BATTLE_OB_GRAY" end,
+      useItem = function(self, itemId)
+        if self._attempt then self._attempt(itemId) end
+        self.queue = { { kind = "ball-result" }, { kind = "move" } }
+      end,
     },
     ["src.world.gen2.World"] = { useFieldItem = function() return nil end },
+    -- 0.9.0: CHASE BALL's one-turn hold wraps tryEnemyFlee; the stub flees
+    -- every runner, like ALWAYS_FLEE does for a roamer.
+    ["src.battle.gen2.Battle"] = {
+      tryEnemyFlee = function(self) return true end,
+    },
+    -- The real lists' shape (src/core/gen2/Roamers.lua): plain sets, with
+    -- ALWAYS_FLEE a lookup by species name.
+    ["src.core.gen2.Roamers"] = {
+      ALWAYS_FLEE = { RAIKOU = true, ENTEI = true },
+      OFTEN_FLEE = { CUBONE = true, ARTICUNO = true },
+      SOMETIMES_FLEE = { EEVEE = true, DRATINI = true },
+    },
     -- Kurt's handover reads the badge through the engine's own helper
     ["src.world.gen2.FieldMoves"] = {
       hasBadge = function(save, badge)
@@ -888,7 +909,9 @@ for _, gen in ipairs({ 1, 2 }) do
         local base = (gen == 2) and 12 or 20
         -- gen 1: seven shelf balls + PREMIER. Gold adds LUXURY, CHERISH,
         -- the craft tier and the seven canon balls.
-        local want = (gen == 2) and 20 or 8
+        -- 0.9.0: + the 17 ROUND 2 balls on Gen 2 (all obtainable: a shelf
+        -- or the BALL CASE).
+        local want = (gen == 2) and 37 or 8
         if cheap then want = want + 6 end -- GS, BEAST and four artifacts
         local got = Bag_.capacity({}, pocket)
         check(got == base + want,
@@ -1432,19 +1455,23 @@ for _, gen in ipairs({ 1, 2 }) do
                 check(sawStow and sawTake and sawCancel,
                   label .. " case is missing STOW/TAKE/CANCEL rows")
 
-                -- EVERY ROW MUST FIT INSIDE THE BOX, and this assertion
-                -- has now caught the same class of bug twice.
-                -- Font.drawBox borders at ty + th - 1
-                -- (src/render/Font.lua:549), so a 12-tall box at y=0 has
-                -- interior rows 1..10 -- NOT 1..11.  Rows start at y=2
-                -- with stride 1, so the last row is 2 + (n - 1) and it
-                -- must be <= 10, i.e. at most NINE rows.
-                local CASE_FIRST_ROW, CASE_LAST_INTERIOR = 2, 10
-                check(CASE_FIRST_ROW + (rowCount - 1) <= CASE_LAST_INTERIOR,
-                  ("%s %d rows overflow the case box (last y=%d, max %d)")
-                    :format(label, rowCount,
-                            CASE_FIRST_ROW + (rowCount - 1),
-                            CASE_LAST_INTERIOR))
+                -- EVERY ROW MUST BE REACHABLE ON SCREEN.  Until 0.8.12 the
+                -- case drew every row at once and could hold nine; since
+                -- REQUESTS 740 it shows FOUR rows at y 3,5,7,9 and scrolls
+                -- (Case:rows clamps `scroll`).  0.9.0 took the list to 13
+                -- rows, past the old nine-row ceiling this assertion used
+                -- to pin, so it now pins the thing that matters instead:
+                -- whichever row is lit sits inside the four-row window.
+                for i = 1, rowCount do
+                  s.index = i
+                  s.message, s.confirm = nil, nil
+                  s:rows()
+                  local slot = i - (s.scroll or 0)
+                  check(slot >= 1 and slot <= 4,
+                    ("%s row %d of %d is off screen (scroll %s)")
+                      :format(label, i, rowCount, tostring(s.scroll)))
+                  pcheck(label .. " draw row " .. i, s.draw, s)
+                end
 
                 ------------------------------------------ STOW / TAKE
                 local function rowIndex(kind)
@@ -1923,7 +1950,7 @@ for _, version in ipairs({
       label .. " GS BALL shelf ownership is wrong")
 
     local cap = rec.stubs["src.inventory.Bag"].capacity({}, "BALL")
-    local expected = version.id == "crystal" and 37 or 38
+    local expected = version.id == "crystal" and 54 or 55 -- +17 ROUND 2
     check(cap == expected,
       ("%s dev headroom is %s, expected %d")
         :format(label, tostring(cap), expected))
@@ -1972,9 +1999,279 @@ for _, mode in ipairs({ "option-off", "custom-pokeballs" }) do
     end
 
     local cap = rec.stubs["src.inventory.Bag"].capacity({}, "BALL")
-    check(cap == 25,
-      ("%s headroom is %s, expected 25 (12 + 13)")
+    check(cap == 42,
+      ("%s headroom is %s, expected 42 (12 + 13 + 17 ROUND 2)")
         :format(label, tostring(cap)))
+  end
+end
+
+------------------------------------------------------------------- ROUND 2
+-- 0.9.0: the 17 developer-approved balls that need no other mod.  Every
+-- assertion is on an OUTCOME -- the rate byte the engine reads, the bag,
+-- the foe's HP, the flee answer, the queued line -- never "it ran".
+do
+  local label = "round2 crystal"
+  local ok, err, rec = loadMod(2, { cheap_balls = false, canon_balls = true },
+    nil, "crystal", "crystal")
+  check(ok, label .. " entry chunk -> " .. tostring(err))
+  if ok then
+    local ROUND2 = {
+      "FEATHER_BALL", "WING_BALL", "JET_BALL", "LEADEN_BALL", "GIGATON_BALL",
+      "SNEAK_BALL", "FISHING_BALL", "BOOST_BALL", "BOOMERANG_BALL",
+      "BOMB_BOMB_BALL", "CHASE_BALL", "STONE_BALL", "MAGMA_BALL",
+      "MAGMA_GREAT_BALL", "AQUA_BALL", "AQUA_GREAT_BALL", "PLASMA_BALL",
+    }
+    local items = rec.registries.items or {}
+    for _, id in ipairs(ROUND2) do
+      local r = items[id]
+      check(r ~= nil, label .. " did not register " .. id)
+      if r then
+        -- PACK prints names at x 8 of 20 (PackMenu LIST_X): 12 columns.
+        check(#r.name <= 12,
+          ("%s %s name is %d cols (max 12)"):format(label, id, #r.name))
+        local n = 0
+        for line in tostring(r.description):gmatch("[^\n]+") do
+          n = n + 1
+          check(#line <= 18, ("%s %s desc line %d cols"):format(label, id, #line))
+        end
+        check(n == 2, label .. " " .. id .. " description is not two lines")
+      end
+    end
+
+    -- Shelves: GREAT/ULTRA shops get the ordinary ones, the herb shop gets
+    -- SNEAK, Mahogany (both lists) gets FISHING, nobody sells a craft ball.
+    local game = fakeGame()
+    game.data.gen2Marts.lists = {
+      { "POKE_BALL", "GREAT_BALL", "ULTRA_BALL" },
+      { "ENERGYPOWDER", "ENERGY_ROOT", "HEAL_POWDER", "REVIVAL_HERB" },
+      { "TINYMUSHROOM", "SLOWPOKETAIL", "POKE_BALL", "POTION" },
+      { "RAGECANDYBAR", "GREAT_BALL", "SUPER_POTION" },
+      { "POTION", "ANTIDOTE" },
+    }
+    rec.modGame = game
+    for id in pairs(items) do game.data.items[id] = { id = id, price = 1,
+      name = items[id].name } end
+    for _, fn in ipairs(rec.events["game.ready"] or {}) do
+      pcheck(label .. " game.ready", fn, { game = game })
+    end
+    local function stocked(i)
+      local s = {}
+      for _, id in ipairs(game.data.gen2Marts.lists[i]) do s[id] = true end
+      return s
+    end
+    local great, herb, mah1, mah2, early =
+      stocked(1), stocked(2), stocked(3), stocked(4), stocked(5)
+    for _, id in ipairs({ "BOOST_BALL", "BOOMERANG_BALL", "BOMB_BOMB_BALL",
+        "CHASE_BALL", "STONE_BALL", "MAGMA_BALL", "MAGMA_GREAT_BALL",
+        "AQUA_BALL", "AQUA_GREAT_BALL", "PLASMA_BALL" }) do
+      check(great[id], label .. " GREAT shelf lacks " .. id)
+      check(not early[id], label .. " early mart sells " .. id)
+    end
+    check(herb.SNEAK_BALL and not great.SNEAK_BALL,
+      label .. " SNEAK BALL is not the herb shop's alone")
+    check(mah1.FISHING_BALL and mah2.FISHING_BALL and not great.FISHING_BALL,
+      label .. " FISHING BALL is not Mahogany's alone")
+    for _, id in ipairs({ "FEATHER_BALL", "WING_BALL", "JET_BALL",
+        "LEADEN_BALL", "GIGATON_BALL" }) do
+      for i = 1, 5 do
+        check(not stocked(i)[id], label .. " a shelf sells craft ball " .. id)
+      end
+      check(game.data.items[id].pocket == "BALL", label .. " " .. id .. " pocket")
+    end
+    -- Gold throw palette: each has its own row, body on pal2.
+    for _, id in ipairs(ROUND2) do
+      local pal = rec.stubs["src.ui.gen2.BattleState"].ballPalette({}, id)
+      check(type(pal) == "string" and pal:find("^PAL_KB_"),
+        label .. " " .. id .. " throws grey: " .. tostring(pal))
+    end
+
+    -- Catch multipliers, on the rate byte.
+    local hook = rec.hooks["catch.rate"]
+    local BASE = 40
+    local function rate(ball, def, extra)
+      local o = { catchRate = BASE, species = "MAGIKARP",
+                  battle = { turn = 2 }, mon = { volatile = { turnsTaken = 1 } } }
+      for k, v in pairs(extra or {}) do o[k] = v end
+      if o.battle == false then o.battle = nil end
+      if o.mon == false then o.mon = nil end
+      o.def = def or { types = { "NORMAL" }, baseStats = { speed = 50 } }
+      hook(function() return false, o.catchRate end, ball, o.mon, o.def, o)
+      return o.catchRate
+    end
+    local flier = { types = { "NORMAL", "FLYING" }, baseStats = { speed = 56 } }
+    local fast = { types = { "GROUND" }, baseStats = { speed = 120 } }
+    local slow = { types = { "GROUND" }, baseStats = { speed = 95 } }
+    for ball, m in pairs({ FEATHER_BALL = 2, WING_BALL = 3, JET_BALL = 4 }) do
+      check(rate(ball, flier) == BASE * m, label .. " " .. ball .. " missed a FLYING type")
+      check(rate(ball, fast) == BASE * m, label .. " " .. ball .. " missed speed 120")
+      check(rate(ball, slow) == BASE, label .. " " .. ball .. " boosted speed 95")
+      check(rate(ball, { types = { "GROUND" } }) == BASE,
+        label .. " " .. ball .. " boosted with no base stats")
+    end
+    local fresh = { mon = { volatile = {} } }
+    check(rate("LEADEN_BALL", nil, fresh) == 80, label .. " LEADEN missed an unmoved foe")
+    check(rate("LEADEN_BALL", nil, { mon = {} }) == 80,
+      label .. " LEADEN missed a foe with no volatile yet")
+    check(rate("LEADEN_BALL") == BASE, label .. " LEADEN boosted a foe that moved")
+    check(rate("LEADEN_BALL", nil, { status = "sleep" }) == 80,
+      label .. " LEADEN missed a sleeping foe")
+    check(rate("LEADEN_BALL", nil, { mon = false }) == BASE,
+      label .. " LEADEN boosted with no live mon")
+    check(rate("GIGATON_BALL", nil, fresh) == 120, label .. " GIGATON unmoved not 3x")
+    check(rate("GIGATON_BALL", nil, { status = "sleep" }) == 160,
+      label .. " GIGATON asleep not 4x")
+    check(rate("GIGATON_BALL") == BASE, label .. " GIGATON boosted a moved foe")
+    check(rate("BOOST_BALL") == 60, label .. " BOOST not 1.5x")
+    for _, b in ipairs({ "SNEAK_BALL", "FISHING_BALL", "BOOMERANG_BALL", "BOMB_BOMB_BALL" }) do
+      check(rate(b) == BASE, label .. " " .. b .. " is not plain odds")
+    end
+    check(rate("CHASE_BALL", nil, { species = "EEVEE" }) == 120,
+      label .. " CHASE missed a runner")
+    check(rate("CHASE_BALL", nil, { species = "ABRA" }) == 120,
+      label .. " CHASE missed ABRA")
+    check(rate("CHASE_BALL", nil, { species = "PIDGEY" }) == BASE,
+      label .. " CHASE boosted a non-runner")
+    check(rate("CHASE_BALL", nil, { species = "RAIKOU", catchRate = 3 }) == 3,
+      label .. " CHASE raised a legendary's catch rate above 3")
+    local rock = { types = { "ROCK", "GROUND" } }
+    check(rate("STONE_BALL", rock) == 120, label .. " STONE not 3x on ROCK")
+    check(rate("STONE_BALL", rock, { battle = { turn = 0 } }) == BASE,
+      label .. " STONE boosted on the first turn")
+    check(rate("STONE_BALL", rock, { battle = false }) == BASE,
+      label .. " STONE boosted with no battle (must fail closed)")
+    check(rate("STONE_BALL") == BASE, label .. " STONE boosted a non-ROCK")
+    local function typed(t) return { types = { t } } end
+    for ball, case in pairs({
+      MAGMA_BALL = { { "FIRE", "GROUND", "ROCK" }, 100 },
+      MAGMA_GREAT_BALL = { { "FIRE", "GROUND", "ROCK" }, 140 },
+      AQUA_BALL = { { "WATER", "ICE" }, 100 },
+      AQUA_GREAT_BALL = { { "WATER", "ICE" }, 140 },
+      PLASMA_BALL = { { "ELECTRIC", "STEEL" }, 100 },
+    }) do
+      for _, t in ipairs(case[1]) do
+        check(rate(ball, typed(t)) == case[2],
+          ("%s %s on %s is %s, want %d"):format(label, ball, t,
+            tostring(rate(ball, typed(t))), case[2]))
+      end
+      check(rate(ball, typed("NORMAL")) == BASE, label .. " " .. ball .. " boosted NORMAL")
+    end
+
+    -- After a miss: the useItem wrap + battle.ball_thrown, end to end.
+    local Screen = rec.stubs["src.ui.gen2.BattleState"]
+    local Battle2 = rec.stubs["src.battle.gen2.Battle"]
+    local function throw(ball, foe, caught)
+      local battle = { enemy = foe }
+      local screen = { _attempt = function()
+        for _, fn in ipairs(rec.events["battle.ball_thrown"] or {}) do
+          fn({ ball = ball, battle = battle, caught = caught, mon = foe })
+        end
+      end }
+      Screen.useItem(screen, ball)
+      return screen, battle
+    end
+    local function lines(screen)
+      local out = {}
+      for i, ev in ipairs(screen.queue) do
+        out[i] = ev
+        if ev.text then
+          local n = 0
+          for line in ev.text:gmatch("[^\n]+") do
+            n = n + 1
+            check(#line <= 18, label .. " after-miss line too wide: " .. line)
+          end
+          check(n <= 2, label .. " after-miss text is over two lines")
+        end
+      end
+      return out
+    end
+
+    game.save.inventory.BOOMERANG_BALL = 3
+    local s1 = throw("BOOMERANG_BALL", { hp = 10, maxHp = 20 }, false)
+    local q1 = lines(s1)
+    check(game.save.inventory.BOOMERANG_BALL == 4,
+      label .. " BOOMERANG was not given back on a miss")
+    check(q1[1].kind == "ball-result" and q1[2].kind == "message",
+      label .. " BOOMERANG line is not right after the ball result")
+    throw("BOOMERANG_BALL", { hp = 10, maxHp = 20 }, true)
+    check(game.save.inventory.BOOMERANG_BALL == 4,
+      label .. " BOOMERANG came back on a CATCH")
+
+    local foe = { hp = 40, maxHp = 80, item = "BERRY" }
+    game.data.items.BERRY = { id = "BERRY", name = "BERRY" }
+    local s2 = throw("SNEAK_BALL", foe, false)
+    check(foe.item == nil and (game.save.inventory.BERRY or 0) == 1,
+      label .. " SNEAK did not take the held item")
+    local q2 = lines(s2)
+    check(q2[2] and q2[2].text and q2[2].text:find("BERRY", 1, true),
+      label .. " SNEAK line does not name the item")
+    local s2b = throw("SNEAK_BALL", { hp = 40, maxHp = 80 }, false)
+    check(#s2b.queue == 2, label .. " SNEAK spoke with no item to take")
+
+    local bomb = { hp = 40, maxHp = 80 }
+    local s3 = throw("BOMB_BOMB_BALL", bomb, false)
+    check(bomb.hp == 30, label .. " BOMB-BOMB did not take 1/8 max HP (40 -> 30)")
+    local q3 = lines(s3)
+    check(q3[2] and q3[2].kind == "damage" and q3[2].side == "enemy"
+        and q3[2].hp == 30, label .. " BOMB-BOMB queued no HP-bar damage event")
+    local low = { hp = 3, maxHp = 80 }
+    throw("BOMB_BOMB_BALL", low, false)
+    check(low.hp == 1, label .. " BOMB-BOMB went below 1 HP or did nothing")
+    throw("BOMB_BOMB_BALL", low, false)
+    check(low.hp == 1, label .. " BOMB-BOMB knocked out a 1 HP foe")
+
+    local _, chased = throw("CHASE_BALL", { species = "RAIKOU", hp = 1, maxHp = 1 }, false)
+    check(Battle2.tryEnemyFlee(chased) == false,
+      label .. " CHASE did not stop the roamer fleeing that turn")
+    check(Battle2.tryEnemyFlee(chased) == true,
+      label .. " CHASE hold lasted past one turn")
+    local _, chased2 = throw("CHASE_BALL", { species = "RAIKOU" }, false)
+    for _, fn in ipairs(rec.events["battle.turn_ended"] or {}) do
+      fn({ battle = chased2 })
+    end
+    check(Battle2.tryEnemyFlee(chased2) == true,
+      label .. " CHASE hold survived turn_ended")
+    local _, plain = throw("CHASE_BALL", { species = "PIDGEY" }, false)
+    check(Battle2.tryEnemyFlee(plain) == true,
+      label .. " CHASE pinned a non-runner (should not touch it)")
+
+    -- Ordinary balls through the same wrap: no lines added.
+    local s5 = throw("POKE_BALL", { hp = 1, maxHp = 1 }, false)
+    check(#s5.queue == 2, label .. " a vanilla ball got an after-miss line")
+
+    -- The BALL CASE ladder: WING needs a FEATHER, says so when short, and
+    -- consumes it when made.
+    local caseFactory = rec.registries.screens and rec.registries.screens.KbBallCase
+    local newFn = caseFactory and (caseFactory.new or caseFactory)
+    check(type(newFn) == "function", label .. " no BALL CASE screen")
+    if type(newFn) == "function" then
+      local g = fakeGame()
+      for id in pairs(items) do g.data.items[id] = { id = id, name = items[id].name } end
+      for _, c in ipairs({ "WHT", "BLU", "YLW", "BLK", "GRN" }) do
+        g.save.inventory[c .. "_APRICORN"] = 5
+      end
+      local s = newFn(g)
+      local wing
+      for i, r in ipairs(s:rows()) do
+        if r.recipe and r.recipe.id == "WING_BALL" then wing = i end
+      end
+      check(wing ~= nil, label .. " WING BALL recipe missing from the case")
+      if wing then
+        s.index = wing
+        pcheck(label .. " draw WING row", s.draw, s)
+        s:make(s:rows()[wing].recipe)
+        check(s.message and s.message[2] == "FEATHER BALL.",
+          label .. " WING short of a FEATHER did not name it: "
+            .. tostring(s.message and s.message[2]))
+        check((g.save.inventory.WING_BALL or 0) == 0,
+          label .. " WING was made without a FEATHER")
+        g.save.inventory.FEATHER_BALL = 1
+        s.message = nil
+        s:make(s:rows()[wing].recipe)
+        check(g.save.inventory.WING_BALL == 1 and g.save.inventory.FEATHER_BALL == nil
+            and g.save.inventory.WHT_APRICORN == 4,
+          label .. " WING did not consume FEATHER + WHT")
+      end
+    end
   end
 end
 

@@ -78,7 +78,9 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.8.15"
+  local VERSION = "0.9.0"
+  -- 0.9.0: ROUND 2, the first batch of the developer-approved new balls
+  -- (17, all Gen 2): the ROUND2 table beside BALL_IDS.
   mod.exports.version = VERSION
   -- 0.8.15 (REQUESTS 1039): item overflow goes to the PC (decision
   -- exchange/decisions/2026-11-19-item-overflow-goes-to-the-pc.md). The
@@ -255,6 +257,95 @@ return function(mod)
     BALL_IDS[#BALL_IDS + 1] = "GS_BALL"
   end
   BALL_IDS[#BALL_IDS + 1] = "BEAST_BALL"
+
+  ----------------------------------------------------------------------
+  -- ROUND 2 (0.9.0): the developer-approved balls that need no other mod
+  -- (exchange/outbox/too-many-balls/drafts-2026-11-24/BALL_DRAFTS.md,
+  -- sections A-D; colours from balls.json in that folder).  ONE TABLE,
+  -- read by every block that needs a ball's facts -- ids, names, prices,
+  -- descriptions, colours, shelves -- so a ball is one row.
+  --
+  -- IDS ARE PERMANENT from the first build that leaves the repo: they go
+  -- into save bags and mon.caughtBall.  BOMB-BOMB's id is BOMB_BOMB_BALL.
+  --
+  -- GEN 2 ONLY.  Every effect here is built on Gold/Crystal seams (the
+  -- catch.rate opts, Battle:tryEnemyFlee, the battle screen's queue) and
+  -- every acquisition route is a Johto shelf or the BALL CASE, so on Red
+  -- they are not registered at all -- the same choice as the canon set.
+  --
+  -- NAMES ARE AT MOST 12 COLUMNS: the PACK prints an item name at x 8 of a
+  -- 20-wide screen (engine src/ui/gen2/PackMenu.lua LIST_X), so a 13th
+  -- column runs into the frame.  Four drafted names do not fit and are
+  -- shortened by dropping "BALL" (BOOMERANG, BOMB-BOMB, MAGMA GREAT, AQUA
+  -- GREAT) -- a display choice only, asked at the TMC Question Desk;
+  -- changing a name later never touches the id.
+  --
+  -- `shelf`: "craft" = BALL CASE only; "mart" = the GREAT/ULTRA shelves
+  -- every other ball here uses; "underground" = the Goldenrod Underground
+  -- herb shop; "mahogany" = Mahogany Town's shop (both of its lists).
+  -- [DEV] CHEAP BALLS sells every non-craft one on every shelf.
+  ----------------------------------------------------------------------
+  local ROUND2 = {
+    -- A. Hisuian, crafted in the BALL CASE (recipes further down).
+    { id = "FEATHER_BALL", name = "FEATHER BALL", price = 300, shelf = "craft",
+      desc = "Good on fliers and\nfast POKeMON.",
+      body = { 168, 200, 232 }, accent = { 120,  96,  72 } },
+    { id = "WING_BALL", name = "WING BALL", price = 600, shelf = "craft",
+      desc = "Better on fliers\nand fast POKeMON.",
+      body = {  80, 104, 184 }, accent = { 248, 232, 160 } },
+    { id = "JET_BALL", name = "JET BALL", price = 1000, shelf = "craft",
+      desc = "Best on fliers and\nfast POKeMON.",
+      body = { 240, 128,  32 }, accent = {  64,  64,  80 } },
+    { id = "LEADEN_BALL", name = "LEADEN BALL", price = 300, shelf = "craft",
+      desc = "Good if it hasn't\nmoved or sleeps.",
+      body = { 120, 128, 140 }, accent = { 200, 176, 120 } },
+    { id = "GIGATON_BALL", name = "GIGATON BALL", price = 800, shelf = "craft",
+      desc = "Great if unmoved;\nbest if asleep.",
+      body = {  80,  72,  64 }, accent = { 176, 120,  64 } },
+    -- B/C. Movies and anime.
+    { id = "SNEAK_BALL", name = "SNEAK BALL", price = 1000, shelf = "underground",
+      desc = "A miss still takes\nits held item.",
+      body = {  96,  64, 144 }, accent = { 248, 136,  64 } },
+    { id = "FISHING_BALL", name = "FISHING BALL", price = 500, shelf = "mahogany",
+      desc = "A plain ball with\na fish drawn on.",
+      body = { 208,  48,  48 }, accent = { 248, 248, 248 } },
+    { id = "BOOST_BALL", name = "BOOST BALL", price = 1000, shelf = "mart",
+      desc = "Rocket-powered.\nA bit better odds.",
+      body = { 248,  96,  48 }, accent = { 208, 216, 224 } },
+    { id = "BOOMERANG_BALL", name = "BOOMERANG", price = 1500, shelf = "mart",
+      desc = "Comes back to you\nif it misses.",
+      body = { 176, 200,  64 }, accent = {  96,  64,  40 } },
+    { id = "BOMB_BOMB_BALL", name = "BOMB-BOMB", price = 800, shelf = "mart",
+      desc = "Bursts on a miss\nand hurts the foe.",
+      body = { 232,  72,  40 }, accent = { 248, 224,  96 } },
+    { id = "CHASE_BALL", name = "CHASE BALL", price = 1200, shelf = "mart",
+      desc = "Good on runners.\nA miss pins them.",
+      body = { 176,  48, 112 }, accent = { 120, 120, 128 } },
+    { id = "STONE_BALL", name = "STONE BALL", price = 1000, shelf = "mart",
+      desc = "Good on ROCK types\nbut slow to start.",
+      body = { 152, 144, 128 }, accent = { 216, 208, 192 } },
+    -- D. Card game.
+    { id = "MAGMA_BALL", name = "MAGMA BALL", price = 1000, shelf = "mart",
+      desc = "Good on FIRE,\nGROUND and ROCK.",
+      body = { 120,  40,  32 }, accent = { 232,  96,  32 } },
+    { id = "MAGMA_GREAT_BALL", name = "MAGMA GREAT", price = 1500, shelf = "mart",
+      desc = "Better on FIRE,\nGROUND and ROCK.",
+      body = { 120,  40,  32 }, accent = { 248, 216,  80 } },
+    { id = "AQUA_BALL", name = "AQUA BALL", price = 1000, shelf = "mart",
+      desc = "Good on WATER and\nICE-type POKeMON.",
+      body = {  24,  80, 160 }, accent = { 232, 240, 248 } },
+    { id = "AQUA_GREAT_BALL", name = "AQUA GREAT", price = 1500, shelf = "mart",
+      desc = "Better on WATER\nand ICE types.",
+      body = {  24,  80, 160 }, accent = { 120, 232, 200 } },
+    { id = "PLASMA_BALL", name = "PLASMA BALL", price = 1000, shelf = "mart",
+      desc = "Good on ELECTRIC\nand STEEL types.",
+      body = { 128, 192, 232 }, accent = {  32,  40,  72 } },
+  }
+  local ROUND2_BY_ID = {}
+  for _, row in ipairs(ROUND2) do ROUND2_BY_ID[row.id] = row end
+  if GEN2 then
+    for _, row in ipairs(ROUND2) do BALL_IDS[#BALL_IDS + 1] = row.id end
+  end
   -- Declared HERE, not down beside the Ball Case block that uses it most:
   -- the game.ready pocket stamp below runs earlier in the file, and a
   -- `local` declared after its use compiles that use as a GLOBAL -- nil at
@@ -481,6 +572,7 @@ return function(mod)
     STRANGE_BALL = "Its catch strength\nvaries each throw.",
     ORIGIN_BALL  = "Made for a single\nfateful encounter.",
   }
+  for _, row in ipairs(ROUND2) do BALL_DESC[row.id] = row.desc end
 
   ----------------------------------------------------------------------
   -- shared helper: every registration a ball needs, per generation.
@@ -1343,6 +1435,15 @@ return function(mod)
     end,
   })
 
+  -- ROUND 2 balls (table near BALL_IDS): items records only, Gen 2 only.
+  -- Their behaviour is the ROUND 2 arm of the catch.rate wrap and the
+  -- after-throw block beside it.
+  if GEN2 then
+    for _, row in ipairs(ROUND2) do
+      registerBall(row.id, row.name, row.price, {})
+    end
+  end
+
   ----------------------------------------------------------------------
   -- STORY / ARTIFACT BALLS -- registered everywhere, obtainable only
   -- from a quest or the [DEV] shelf.  Their ids are intentionally plain
@@ -1649,6 +1750,265 @@ return function(mod)
         or env == "CAVE" or env == "DUNGEON"
     end
 
+    --------------------------------------------------------------------
+    -- ROUND 2 catch multipliers (0.9.0).  Each reads only fields verified
+    -- against ./engine v0.4.0, and each FAILS CLOSED: a missing field means
+    -- "condition not met", never a boost.
+    --
+    --   def.baseStats.speed  Crystal's species record carries baseStats
+    --                        (checked in the imported data/generated/
+    --                        pokemon.lua; PIDGEY speed=56, 33 species >= 100).
+    --                        The opts themselves still have no base stats;
+    --                        `def` is BattleState:catchOptions' enemyDef.
+    --   mon.volatile.turnsTaken  Battle:useMove counts every move the mon
+    --                        actually used (src/battle/gen2/Battle.lua, the
+    --                        `state.turnsTaken + 1` beside usedMoves).  nil
+    --                        on a mon that has not moved yet.
+    --   battle.turn          completed turns: runTurn adds 1 at its head, so
+    --                        a throw as your first action reads 0.
+    --   Roamers lists        src/core/gen2/Roamers.lua ALWAYS_FLEE (Raikou
+    --                        and Entei on Crystal, + Suicune on G/S),
+    --                        OFTEN_FLEE, SOMETIMES_FLEE -- exactly the set
+    --                        Battle:tryEnemyFlee lets run.  ABRA is added by
+    --                        name: it leaves by TELEPORT, not by fleeing.
+    --------------------------------------------------------------------
+    local Roamers = nil
+    do
+      local ok, mod_ = pcall(require, "src.core.gen2.Roamers")
+      if ok and type(mod_) == "table" then Roamers = mod_ end
+    end
+
+    local function isRunner(species)
+      if type(species) ~= "string" then return false end
+      if species == "ABRA" then return true end
+      if not Roamers then return false end
+      local ok, hit = pcall(function()
+        return (Roamers.ALWAYS_FLEE and Roamers.ALWAYS_FLEE[species])
+          or (Roamers.OFTEN_FLEE and Roamers.OFTEN_FLEE[species])
+          or (Roamers.SOMETIMES_FLEE and Roamers.SOMETIMES_FLEE[species])
+      end)
+      return ok and hit and true or false
+    end
+
+    -- FLYING type, or base Speed 100+ (the same threshold as FAST BALL).
+    local function isFlierOrFast(targetDef)
+      if hasType(targetDef, "FLYING") then return true end
+      local base = targetDef and targetDef.baseStats
+      local speed = base and base.speed
+      return type(speed) == "number" and speed >= FAST_THRESHOLD
+    end
+
+    -- "Has not moved yet this battle".  Needs the live mon: no mon, no boost.
+    local function hasNotMoved(o)
+      local m = o.mon
+      if type(m) ~= "table" then return false end
+      local taken = type(m.volatile) == "table" and m.volatile.turnsTaken or 0
+      return (tonumber(taken) or 0) == 0
+    end
+
+    local function hasAnyType(targetDef, list)
+      for _, t in ipairs(list) do
+        if hasType(targetDef, t) then return true end
+      end
+      return false
+    end
+
+    -- Returns the multiplier for a ROUND 2 ball (1 when its condition is
+    -- not met).  Pure: no state is changed here.
+    local function round2Mult(ball, o, targetDef)
+      if ball == "FEATHER_BALL" then
+        return isFlierOrFast(targetDef) and 2 or 1
+      elseif ball == "WING_BALL" then
+        return isFlierOrFast(targetDef) and 3 or 1
+      elseif ball == "JET_BALL" then
+        return isFlierOrFast(targetDef) and 4 or 1
+      elseif ball == "LEADEN_BALL" then
+        return (isAsleep(o.status) or hasNotMoved(o)) and 2 or 1
+      elseif ball == "GIGATON_BALL" then
+        if isAsleep(o.status) then return 4 end
+        return hasNotMoved(o) and 3 or 1
+      elseif ball == "BOOST_BALL" then
+        return 1.5
+      elseif ball == "CHASE_BALL" then
+        -- 3x on a runner -- but never on a legendary (catch rate <= 3).
+        -- No written "legendary catch-rate rule" exists in the portfolio
+        -- (searched briefs/ and exchange/ 2026-11-24); the draft's caution
+        -- is honoured the conservative way: Raikou and Entei keep their
+        -- own rate of 3, and get only the one-turn hold below.
+        local rate = o.catchRate or 255
+        if rate <= LEGENDARY_RATE then return 1 end
+        return isRunner(o.species) and 3 or 1
+      elseif ball == "STONE_BALL" then
+        if not hasType(targetDef, "ROCK") then return 1 end
+        local turn = o.battle and o.battle.turn
+        -- Too heavy on the first turn: 1x when turn is 0, and 1x when the
+        -- turn is UNKNOWN (fail closed, as QUICK BALL does).
+        if type(turn) ~= "number" or turn < 1 then return 1 end
+        return 3
+      elseif ball == "MAGMA_BALL" then
+        return hasAnyType(targetDef, { "FIRE", "GROUND", "ROCK" }) and 2.5 or 1
+      elseif ball == "MAGMA_GREAT_BALL" then
+        return hasAnyType(targetDef, { "FIRE", "GROUND", "ROCK" }) and 3.5 or 1
+      elseif ball == "AQUA_BALL" then
+        return hasAnyType(targetDef, { "WATER", "ICE" }) and 2.5 or 1
+      elseif ball == "AQUA_GREAT_BALL" then
+        return hasAnyType(targetDef, { "WATER", "ICE" }) and 3.5 or 1
+      elseif ball == "PLASMA_BALL" then
+        return hasAnyType(targetDef, { "ELECTRIC", "STEEL" }) and 2.5 or 1
+      end
+      -- SNEAK, FISHING, BOOMERANG, BOMB-BOMB: plain odds; their effect is
+      -- what happens AFTER a miss.
+      return 1
+    end
+    mod.exports._round2Mult = round2Mult  -- read by tests/hook_harness.lua
+
+    --------------------------------------------------------------------
+    -- AFTER A MISS: SNEAK, BOOMERANG, BOMB-BOMB, CHASE.
+    --
+    -- THE SEAM.  battle.ball_thrown fires INSIDE Catching.attempt
+    -- (src/battle/gen2/Catching.lua:431), i.e. inside BattleState:useItem
+    -- BEFORE it spends the ball (consumeItem), clears its queue, pushes the
+    -- "ball-result" line and runs the turn (src/ui/gen2/BattleState.lua
+    -- useItem, the `pocket == "BALL"` arm).  So:
+    --   * the state change happens in the listener (an HP drop, an item
+    --     moved, a ball given back, a flee pinned), before the enemy acts;
+    --   * the LINE the player reads cannot be pushed there -- useItem's
+    --     `self.queue = {}` would wipe it -- so it is parked and a useItem
+    --     wrap inserts it right after the "ball-result" line, where the
+    --     cart would print a follow-up.  A `damage` event re-arms the HP-bar
+    --     chase (BattleState:advanceQueue's damage/heal branch), which is
+    --     how BOMB-BOMB's drop shows on the bar at the moment its line does.
+    -- Lines are two rows of at most 18 columns.
+    --------------------------------------------------------------------
+    local throwNotes = nil
+    local chaseHold = setmetatable({}, { __mode = "k" })
+
+    local function itemName(data, id)
+      local d = data and data.items and data.items[id]
+      local n = (d and d.name) or tostring(id):gsub("_", " ")
+      return n
+    end
+
+    local function afterMiss(p)
+      local ball = p.ball
+      local battle = p.battle
+      local foe = p.mon
+      local game = mod.game
+      local data = game and game.data
+      local notes = {}
+
+      if ball == "BOOMERANG_BALL" then
+        -- Given back BEFORE useItem spends the thrown one, so the count
+        -- the player sees afterwards is unchanged.  Overflow puts it in
+        -- the PC only if the stack is already at 99.
+        suppressPurchaseTracking = true
+        local ok, where = pcall(Overflow.give, mod, "BOOMERANG_BALL", 1)
+        suppressPurchaseTracking = false
+        if ok and where == "bag" then
+          notes[#notes + 1] = { kind = "message",
+            text = "The ball came\nback to you!" }
+        elseif ok and where == "pc" then
+          notes[#notes + 1] = { kind = "message",
+            text = "The ball came back\nto your PC." }
+        end
+
+      elseif ball == "SNEAK_BALL" and type(foe) == "table" then
+        local held = foe.item
+        if type(held) == "string" and held ~= "" and held ~= "NO_ITEM" then
+          suppressPurchaseTracking = true
+          local ok, where = pcall(Overflow.give, mod, held, 1)
+          suppressPurchaseTracking = false
+          if ok and where then
+            foe.item = nil
+            local name = itemName(data, held)
+            notes[#notes + 1] = { kind = "message",
+              text = "Snuck off with\nits " .. name .. "!" }
+            if where == "pc" then
+              notes[#notes + 1] = { kind = "message", text = Overflow.LINE }
+            end
+          end
+        end
+
+      elseif ball == "BOMB_BOMB_BALL" and type(foe) == "table" then
+        local hp = tonumber(foe.hp) or 0
+        local maxHp = tonumber(foe.maxHp or (foe.stats and foe.stats.hp)) or 0
+        if hp > 1 and maxHp > 0 then
+          local newHp = math.max(1, hp - math.max(1, math.floor(maxHp / 8)))
+          foe.hp = newHp
+          notes[#notes + 1] = { kind = "damage", side = "enemy", hp = newHp,
+            text = "The ball burst\nand hurt it!" }
+        end
+
+      elseif ball == "CHASE_BALL" and battle and type(foe) == "table"
+          and isRunner(foe.species) then
+        -- Battle:tryEnemyFlee is wrapped below to answer "no" once.
+        chaseHold[battle] = true
+        notes[#notes + 1] = { kind = "message",
+          text = "It can't get away\nthis turn!" }
+      end
+
+      if #notes > 0 then throwNotes = notes end
+    end
+
+    mod.events:on("battle.ball_thrown", function(p)
+      if not (p and ROUND2_BY_ID[p.ball]) or p.caught then return end
+      local ok, err = pcall(afterMiss, p)
+      if not ok then
+        Runtime.reportError("kanto_balls", "THROW " .. tostring(err))
+      end
+    end)
+
+    -- The hold lasts one turn: closeTurn emits battle.turn_ended after the
+    -- enemy's half, where tryEnemyFlee ran (or was skipped by a faint).
+    mod.events:on("battle.turn_ended", function(p)
+      if p and p.battle then chaseHold[p.battle] = nil end
+    end)
+    mod.events:on("battle.ended", function(p)
+      if p and p.battle then chaseHold[p.battle] = nil end
+    end)
+
+    -- Stash-originals under our own key on each module.
+    do
+      local Battle2 = require("src.battle.gen2.Battle")
+      Battle2._kbRound2Originals = Battle2._kbRound2Originals
+        or { tryEnemyFlee = Battle2.tryEnemyFlee }
+      local vanillaFlee = Battle2._kbRound2Originals.tryEnemyFlee
+      Battle2.tryEnemyFlee = function(self, ...)
+        if chaseHold[self] then
+          chaseHold[self] = nil
+          return false
+        end
+        return vanillaFlee(self, ...)
+      end
+
+      local Screen2 = require("src.ui.gen2.BattleState")
+      Screen2._kbRound2Originals = Screen2._kbRound2Originals
+        or { useItem = Screen2.useItem }
+      local vanillaUseItem = Screen2._kbRound2Originals.useItem
+      Screen2.useItem = function(self, itemId, ...)
+        throwNotes = nil
+        local a, b = vanillaUseItem(self, itemId, ...)
+        local notes = throwNotes
+        throwNotes = nil
+        if notes and type(self.queue) == "table" then
+          -- After "ball-result" when it is still queued; at the head when
+          -- the queue already drained it (no ball animation).
+          local at = 1
+          for i, ev in ipairs(self.queue) do
+            if type(ev) == "table" and ev.kind == "ball-result" then
+              at = i + 1
+              break
+            end
+          end
+          for _, ev in ipairs(notes) do
+            table.insert(self.queue, at, ev)
+            at = at + 1
+          end
+        end
+        return a, b
+      end
+    end
+
     mod.hooks:wrap("catch.rate", function(next_, ball, mon, def, o)
       if type(o) ~= "table" or not OWNED[ball] then
         return next_(ball, mon, def, o)
@@ -1775,6 +2135,10 @@ return function(mod)
         -- engine gives GREAT_BALL, and the same constant Gen 1's
         -- attempt() uses, so the two generations cannot disagree.
         boostFlat(o, KECLEON_MULT)
+
+      elseif ROUND2_BY_ID[ball] then
+        local mult = round2Mult(ball, o, o.def or def)
+        if mult ~= 1 then boostFlat(o, mult) end
       end
 
       -- PREMIER, HEAL, LUXURY, CHERISH, CRYSTAL, GS: plain odds.
@@ -2146,6 +2510,21 @@ return function(mod)
     end
   end
 
+  -- ROUND 2 (0.9.0): the ordinary shop balls join the same GREAT/ULTRA
+  -- shelves.  SNEAK and FISHING have shops of their own (game.ready block
+  -- below); under [DEV] CHEAP BALLS they ride every shelf too.  The craft
+  -- balls are never sold.  TODO/CONFIRM with the developer: the drafts
+  -- put BOOST/BOOMERANG/BOMB-BOMB/CHASE with a ball-smith NPC and FISHING
+  -- with a shady angler; neither person exists yet, so these shelves are
+  -- the phone-first stand-in (asked at the TMC Question Desk).
+  if GEN2 then
+    for _, row in ipairs(ROUND2) do
+      if row.shelf == "mart" or (CHEAP and row.shelf ~= "craft") then
+        SHELF[#SHELF + 1] = row.id
+      end
+    end
+  end
+
   -- [DEV] CHEAP BALLS exposes the development and quest-artifact balls.
   -- They remain registered with the flag off, but no ordinary shelf,
   -- recipe or gift can produce them.
@@ -2281,6 +2660,47 @@ return function(mod)
       end
       if not stocked then
         Runtime.reportError("kanto_balls", "GEN2: no ball shelf found")
+      end
+
+      -- ROUND 2 special shops, found by CONTENT like everything above (the
+      -- numeric mart ids are not in the manifest to verify).  Read off the
+      -- imported Crystal data/generated/marts.lua, 2026-11-24:
+      --   Goldenrod Underground herb shop  ENERGYPOWDER, ENERGY_ROOT,
+      --                                    HEAL_POWDER, REVIVAL_HERB
+      --   Mahogany Town, before and after the hideout
+      --                                    TINYMUSHROOM + SLOWPOKETAIL /
+      --                                    RAGECANDYBAR
+      -- TODO/CONFIRM the herb shop's opening days on Crystal: whatever
+      -- they are, the SNEAK BALL is sold when it is open.
+      local special = {
+        { shelf = "underground", has = { "REVIVAL_HERB" } },
+        { shelf = "mahogany", has = { "SLOWPOKETAIL", "RAGECANDYBAR" } },
+      }
+      for _, sp in ipairs(special) do
+        local found = false
+        for _, list in ipairs(lists) do
+          if type(list) == "table" then
+            local has = {}
+            for _, id in ipairs(list) do has[id] = true end
+            local match = false
+            for _, want in ipairs(sp.has) do
+              if has[want] then match = true end
+            end
+            if match then
+              found = true
+              for _, row in ipairs(ROUND2) do
+                if row.shelf == sp.shelf and not has[row.id] then
+                  list[#list + 1] = row.id
+                  has[row.id] = true
+                end
+              end
+            end
+          end
+        end
+        if not found then
+          Runtime.reportError("kanto_balls",
+            "GEN2: no " .. sp.shelf .. " shop found")
+        end
       end
     end)
   end
@@ -2466,7 +2886,52 @@ return function(mod)
       blurb = "Best on a target",
       blurb2 = "still at full HP.",
     },
+    -- ROUND 2 (0.9.0): the Hisuian balls.  A ladder: each step up takes
+    -- the ball below it as an INGREDIENT, which craft() already handles
+    -- (inputs are plain item ids; Bag.remove takes a ball like an
+    -- apricorn).  Recipes follow the drafts' suggestions except where one
+    -- would have been identical to an existing row: FEATHER was WHT+BLU
+    -- (= ACE) and is BLU x2; LEADEN was BLK x2 (= SNARE) and is BLK+GRN.
+    -- Order matters for nothing but the list; it is the ladder order.
+    {
+      id = "FEATHER_BALL",
+      label = "FEATHER BALL",
+      inputs = { BLU_APRICORN = 2 },
+    },
+    {
+      id = "WING_BALL",
+      label = "WING BALL",
+      inputs = { FEATHER_BALL = 1, WHT_APRICORN = 1 },
+    },
+    {
+      id = "JET_BALL",
+      label = "JET BALL",
+      inputs = { WING_BALL = 1, BLU_APRICORN = 1, YLW_APRICORN = 1 },
+    },
+    {
+      id = "LEADEN_BALL",
+      label = "LEADEN BALL",
+      inputs = { BLK_APRICORN = 1, GRN_APRICORN = 1 },
+    },
+    {
+      id = "GIGATON_BALL",
+      label = "GIGATON BALL",
+      inputs = { LEADEN_BALL = 1, BLK_APRICORN = 1, GRN_APRICORN = 1 },
+    },
   }
+
+  -- The non-apricorn ingredients of a recipe (the ball a ladder step
+  -- upgrades), sorted so the case draws them in a stable order.
+  local function ballInputs(recipe)
+    local out = {}
+    for id, need in pairs((recipe and recipe.inputs) or {}) do
+      if not id:find("_APRICORN$") then
+        out[#out + 1] = { id = id, need = need }
+      end
+    end
+    table.sort(out, function(a, b) return a.id < b.id end)
+    return out
+  end
 
   -- How many of `id` the bag holds.  save.inventory is a flat id->count
   -- map on both generations.
@@ -2741,7 +3206,19 @@ return function(mod)
       elseif reason == "pack full" then
         self.message = { "No room for it." }
       else
-        self.message = { "Not enough", "APRICORNS." }
+        -- A ladder step short of its ball names the ball (0.9.0); short
+        -- of apricorns it says what it always said.
+        local missing
+        for _, b in ipairs(ballInputs(recipe)) do
+          if held(self.save, b.id) < b.need then missing = b.id break end
+        end
+        if missing then
+          local def = self.data and self.data.items and self.data.items[missing]
+          local name = (def and def.name) or (missing:gsub("_", " "))
+          self.message = { "You need a", name .. "." }
+        else
+          self.message = { "Not enough", "APRICORNS." }
+        end
       end
     end
 
@@ -2868,7 +3345,25 @@ return function(mod)
           end
         end
         -- Two to a row; a four-apricorn ball (CRADLE) takes rows 10-11.
-        local top = 11 - math.floor((#needs - 1) / 2)
+        -- 0.9.0: a ladder step's ball ingredient gets a whole row of its
+        -- own ABOVE the apricorns ("FEATHER BALL 0/1" is 16 columns), so
+        -- the apricorns still end on row 11.  With no ball ingredient this
+        -- is exactly the old layout: 12 - ceil(n/2) == 11 - floor((n-1)/2).
+        local balls = ballInputs(recipe)
+        local top = 12 - math.ceil(#needs / 2) - #balls
+        for n, b in ipairs(balls) do
+          local have = held(self.save, b.id)
+          local def = self.data and self.data.items and self.data.items[b.id]
+          local name = (def and def.name) or (b.id:gsub("_", " "))
+          local text = name .. " " .. tostring(math.min(have, 99)) .. "/"
+            .. tostring(b.need)
+          if have < b.need then
+            Chrome.printThrough(text, 1, top + n - 1, Case.short)
+          else
+            Chrome.print(text, 1, top + n - 1)
+          end
+        end
+        top = top + #balls
         for n, item in ipairs(needs) do
           local x, y = 1 + ((n - 1) % 2) * 9, top + math.floor((n - 1) / 2)
           if item[2] then
@@ -3537,6 +4032,18 @@ return function(mod)
       { {255,255,255}, {244,216, 72}, { 16, 24, 56}, {24,24,24} }
     if not NATIVE_GS_BALL then BALL_PALETTES.GS_BALL = "PAL_KB_GS" end
     BALL_PALETTES.BEAST_BALL = "PAL_KB_BEAST"
+  end
+  -- ROUND 2 (0.9.0): body and accent are the drafts' balls.json pair, as
+  -- recoloured on the real sprite in drafts-sheet.png.  Row shape as every
+  -- row above: pal2 (third) is the body tone, pal1 the accent.  First pass,
+  -- TODO/CONFIRM each on a real Crystal throw.  Gen 2 only, with the balls.
+  if GEN2 then
+    for _, row in ipairs(ROUND2) do
+      local pal = "PAL_KB_" .. row.id:gsub("_BALL$", "")
+      COLORS[row.id] = { body = row.body, accent = row.accent }
+      BALL_PALETTE_ROWS[pal] = { {255,255,255}, row.accent, row.body, {24,24,24} }
+      BALL_PALETTES[row.id] = pal
+    end
   end
 
   if GEN2 then
