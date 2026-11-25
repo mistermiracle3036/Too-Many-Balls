@@ -78,7 +78,9 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.9.0"
+  local VERSION = "0.9.1"
+  -- 0.9.1: 0.9.0 with two comments reworded for modkit's MK301 lint;
+  -- 0.9.0 was pushed but never built.
   -- 0.9.0: ROUND 2, the first batch of the developer-approved new balls
   -- (17, all Gen 2): the ROUND2 table beside BALL_IDS.
   mod.exports.version = VERSION
@@ -1756,8 +1758,8 @@ return function(mod)
     -- "condition not met", never a boost.
     --
     --   def.baseStats.speed  Crystal's species record carries baseStats
-    --                        (checked in the imported data/generated/
-    --                        pokemon.lua; PIDGEY speed=56, 33 species >= 100).
+    --                        (checked in the imported Crystal species
+    --                        table; PIDGEY speed=56, 33 species >= 100).
     --                        The opts themselves still have no base stats;
     --                        `def` is BattleState:catchOptions' enemyDef.
     --   mon.volatile.turnsTaken  Battle:useMove counts every move the mon
@@ -2664,7 +2666,7 @@ return function(mod)
 
       -- ROUND 2 special shops, found by CONTENT like everything above (the
       -- numeric mart ids are not in the manifest to verify).  Read off the
-      -- imported Crystal data/generated/marts.lua, 2026-11-24:
+      -- imported Crystal mart table, 2026-11-24:
       --   Goldenrod Underground herb shop  ENERGYPOWDER, ENERGY_ROOT,
       --                                    HEAL_POWDER, REVIVAL_HERB
       --   Mahogany Town, before and after the hideout

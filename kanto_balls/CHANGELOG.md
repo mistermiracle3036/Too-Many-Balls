@@ -10,7 +10,9 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
-## 0.9.0
+## 0.9.1
+
+(0.9.0 was never built; 0.9.1 is the same balls.)
 
 **Updating from 0.8.8?** Seventeen new balls on Gold, Silver and Crystal
 (below). Also since 0.8.8: the Ball Case and the Crystal Ball's
@@ -21,7 +23,7 @@ ball pocket is full (0.8.15). Kurt's full-ball-pocket handover fix (0.8.9) is
 included: talk to him again if he previously withheld the case after Slowpoke
 Well.
 
-**New in 0.9.0: seventeen balls.**
+**New in 0.9.1: seventeen balls.**
 
 Made in the BALL CASE, Hisui-style. Each step up uses the ball below it:
 - **FEATHER BALL** (BLU x2): 2x on Flying types and very fast Pokemon
