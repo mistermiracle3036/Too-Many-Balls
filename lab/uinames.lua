@@ -12,8 +12,10 @@ return function(game)
  local IDS={'BOOMERANG_BALL','BOMB_BOMB_BALL','MAGMA_GREAT_BALL','AQUA_GREAT_BALL'}
  for _,id in ipairs(IDS) do Bag.add(game.save,id,5,game.data) end
  local SETS={
-  {'BOOMRANGBALL','BOMBOMB BALL','MAGMA G.BALL','AQUA G.BALL'},
-  {'BOOMER BALL','BOMB BALL','GR.MAGMABALL','GR.AQUA BALL'},
+  -- Round 2 (Desk, 2026-11-24 "not the magma aqua names"): new MAGMA/AQUA
+  -- approaches; BOOMERANG/BOMB-BOMB asked again beside them.
+  {'BOOMRANGBALL','BOMBOMB BALL','GREAT MAGMA','GREAT AQUA'},
+  {'BOOMER BALL','BOMB BALL','MAGMABALL II','AQUA BALL II'},
  }
  local Screens=require('src.ui.Screens')
  for n,set in ipairs(SETS) do
