@@ -78,7 +78,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.9.1"
+  local VERSION = "0.9.2"
   -- 0.9.1: 0.9.0 with two comments reworded for modkit's MK301 lint;
   -- 0.9.0 was pushed but never built.
   -- 0.9.0: ROUND 2, the first batch of the developer-approved new balls
@@ -277,10 +277,11 @@ return function(mod)
   --
   -- NAMES ARE AT MOST 12 COLUMNS: the PACK prints an item name at x 8 of a
   -- 20-wide screen (engine src/ui/gen2/PackMenu.lua LIST_X), so a 13th
-  -- column runs into the frame.  Four drafted names do not fit and are
-  -- shortened by dropping "BALL" (BOOMERANG, BOMB-BOMB, MAGMA GREAT, AQUA
-  -- GREAT) -- a display choice only, asked at the TMC Question Desk;
-  -- changing a name later never touches the id.
+  -- column runs into the frame.  BOOMERANG and BOMB-BOMB are squeezed to
+  -- BOOMRANGBALL / BOMBOMB BALL (developer's pick at the TMC Question Desk,
+  -- 2026-11-24); changing a name later never touches the id.
+  -- MAGMA GREAT and AQUA GREAT were removed at 0.9.2 (developer: "don't need
+  -- great versions"); they were only ever on the 0.9.1 test build.
   --
   -- `shelf`: "craft" = BALL CASE only; "mart" = the GREAT/ULTRA shelves
   -- every other ball here uses; "underground" = the Goldenrod Underground
@@ -314,10 +315,10 @@ return function(mod)
     { id = "BOOST_BALL", name = "BOOST BALL", price = 1000, shelf = "mart",
       desc = "Rocket-powered.\nA bit better odds.",
       body = { 248,  96,  48 }, accent = { 208, 216, 224 } },
-    { id = "BOOMERANG_BALL", name = "BOOMERANG", price = 1500, shelf = "mart",
+    { id = "BOOMERANG_BALL", name = "BOOMRANGBALL", price = 1500, shelf = "mart",
       desc = "Comes back to you\nif it misses.",
       body = { 176, 200,  64 }, accent = {  96,  64,  40 } },
-    { id = "BOMB_BOMB_BALL", name = "BOMB-BOMB", price = 800, shelf = "mart",
+    { id = "BOMB_BOMB_BALL", name = "BOMBOMB BALL", price = 800, shelf = "mart",
       desc = "Bursts on a miss\nand hurts the foe.",
       body = { 232,  72,  40 }, accent = { 248, 224,  96 } },
     { id = "CHASE_BALL", name = "CHASE BALL", price = 1200, shelf = "mart",
@@ -330,15 +331,9 @@ return function(mod)
     { id = "MAGMA_BALL", name = "MAGMA BALL", price = 1000, shelf = "mart",
       desc = "Good on FIRE,\nGROUND and ROCK.",
       body = { 120,  40,  32 }, accent = { 232,  96,  32 } },
-    { id = "MAGMA_GREAT_BALL", name = "MAGMA GREAT", price = 1500, shelf = "mart",
-      desc = "Better on FIRE,\nGROUND and ROCK.",
-      body = { 120,  40,  32 }, accent = { 248, 216,  80 } },
     { id = "AQUA_BALL", name = "AQUA BALL", price = 1000, shelf = "mart",
       desc = "Good on WATER and\nICE-type POKeMON.",
       body = {  24,  80, 160 }, accent = { 232, 240, 248 } },
-    { id = "AQUA_GREAT_BALL", name = "AQUA GREAT", price = 1500, shelf = "mart",
-      desc = "Better on WATER\nand ICE types.",
-      body = {  24,  80, 160 }, accent = { 120, 232, 200 } },
     { id = "PLASMA_BALL", name = "PLASMA BALL", price = 1000, shelf = "mart",
       desc = "Good on ELECTRIC\nand STEEL types.",
       body = { 128, 192, 232 }, accent = {  32,  40,  72 } },
@@ -1849,12 +1844,8 @@ return function(mod)
         return 3
       elseif ball == "MAGMA_BALL" then
         return hasAnyType(targetDef, { "FIRE", "GROUND", "ROCK" }) and 2.5 or 1
-      elseif ball == "MAGMA_GREAT_BALL" then
-        return hasAnyType(targetDef, { "FIRE", "GROUND", "ROCK" }) and 3.5 or 1
       elseif ball == "AQUA_BALL" then
         return hasAnyType(targetDef, { "WATER", "ICE" }) and 2.5 or 1
-      elseif ball == "AQUA_GREAT_BALL" then
-        return hasAnyType(targetDef, { "WATER", "ICE" }) and 3.5 or 1
       elseif ball == "PLASMA_BALL" then
         return hasAnyType(targetDef, { "ELECTRIC", "STEEL" }) and 2.5 or 1
       end

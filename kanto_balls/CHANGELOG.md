@@ -10,6 +10,25 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
+## 0.9.2
+
+**Updating from 0.8.8?** Fifteen new balls on Gold, Silver and Crystal: the
+five Hisuian balls made in the BALL CASE (FEATHER, WING, JET, LEADEN,
+GIGATON), SNEAK BALL, FISHING BALL, BOOST BALL, BOOMRANGBALL, BOMBOMB BALL,
+CHASE BALL, STONE BALL, MAGMA BALL, AQUA BALL and PLASMA BALL -- what each
+one does is listed under 0.9.1 below. Also since 0.8.8: the Ball Case and the
+Crystal Ball's keep-or-release screen look like the game's own menus, a
+released Crystal Ball catch gives back what it was holding, TAKE BACK returns
+every kind of ball that fits, free balls go to your PC when the ball pocket is
+full, and Kurt hands over the case even with a full ball pocket.
+
+**New in 0.9.2:**
+- BOOMERANG is now called **BOOMRANGBALL** and BOMB-BOMB **BOMBOMB BALL**,
+  so they read as balls in the PACK. Same balls, same effects.
+- MAGMA GREAT and AQUA GREAT are gone; MAGMA BALL and AQUA BALL stay as they
+  were. (Only on the 0.9.1 test build. If your test save holds some, they show
+  in the ITEM pocket by their raw name and can be tossed.)
+
 ## 0.9.1
 
 (0.9.0 was never built; 0.9.1 is the same balls.)

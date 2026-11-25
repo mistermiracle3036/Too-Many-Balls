@@ -910,8 +910,8 @@ for _, gen in ipairs({ 1, 2 }) do
         -- gen 1: seven shelf balls + PREMIER. Gold adds LUXURY, CHERISH,
         -- the craft tier and the seven canon balls.
         -- 0.9.0: + the 17 ROUND 2 balls on Gen 2 (all obtainable: a shelf
-        -- or the BALL CASE).
-        local want = (gen == 2) and 37 or 8
+        -- or the BALL CASE).  0.9.2: 15 -- MAGMA/AQUA GREAT removed.
+        local want = (gen == 2) and 35 or 8
         if cheap then want = want + 6 end -- GS, BEAST and four artifacts
         local got = Bag_.capacity({}, pocket)
         check(got == base + want,
@@ -1950,7 +1950,7 @@ for _, version in ipairs({
       label .. " GS BALL shelf ownership is wrong")
 
     local cap = rec.stubs["src.inventory.Bag"].capacity({}, "BALL")
-    local expected = version.id == "crystal" and 54 or 55 -- +17 ROUND 2
+    local expected = version.id == "crystal" and 52 or 53 -- +15 ROUND 2
     check(cap == expected,
       ("%s dev headroom is %s, expected %d")
         :format(label, tostring(cap), expected))
@@ -1999,8 +1999,8 @@ for _, mode in ipairs({ "option-off", "custom-pokeballs" }) do
     end
 
     local cap = rec.stubs["src.inventory.Bag"].capacity({}, "BALL")
-    check(cap == 42,
-      ("%s headroom is %s, expected 42 (12 + 13 + 17 ROUND 2)")
+    check(cap == 40,
+      ("%s headroom is %s, expected 40 (12 + 13 + 15 ROUND 2)")
         :format(label, tostring(cap)))
   end
 end
@@ -2019,8 +2019,17 @@ do
       "FEATHER_BALL", "WING_BALL", "JET_BALL", "LEADEN_BALL", "GIGATON_BALL",
       "SNEAK_BALL", "FISHING_BALL", "BOOST_BALL", "BOOMERANG_BALL",
       "BOMB_BOMB_BALL", "CHASE_BALL", "STONE_BALL", "MAGMA_BALL",
-      "MAGMA_GREAT_BALL", "AQUA_BALL", "AQUA_GREAT_BALL", "PLASMA_BALL",
+      "AQUA_BALL", "PLASMA_BALL",
     }
+    -- 0.9.2: removed by the developer; must never register again by accident.
+    for _, gone in ipairs({ "MAGMA_GREAT_BALL", "AQUA_GREAT_BALL" }) do
+      check((rec.registries.items or {})[gone] == nil,
+        label .. " still registers removed " .. gone)
+    end
+    check(((rec.registries.items or {}).BOOMERANG_BALL or {}).name == "BOOMRANGBALL",
+      label .. " BOOMERANG_BALL name is not BOOMRANGBALL")
+    check(((rec.registries.items or {}).BOMB_BOMB_BALL or {}).name == "BOMBOMB BALL",
+      label .. " BOMB_BOMB_BALL name is not BOMBOMB BALL")
     local items = rec.registries.items or {}
     for _, id in ipairs(ROUND2) do
       local r = items[id]
@@ -2062,8 +2071,8 @@ do
     local great, herb, mah1, mah2, early =
       stocked(1), stocked(2), stocked(3), stocked(4), stocked(5)
     for _, id in ipairs({ "BOOST_BALL", "BOOMERANG_BALL", "BOMB_BOMB_BALL",
-        "CHASE_BALL", "STONE_BALL", "MAGMA_BALL", "MAGMA_GREAT_BALL",
-        "AQUA_BALL", "AQUA_GREAT_BALL", "PLASMA_BALL" }) do
+        "CHASE_BALL", "STONE_BALL", "MAGMA_BALL",
+        "AQUA_BALL", "PLASMA_BALL" }) do
       check(great[id], label .. " GREAT shelf lacks " .. id)
       check(not early[id], label .. " early mart sells " .. id)
     end
@@ -2143,9 +2152,7 @@ do
     local function typed(t) return { types = { t } } end
     for ball, case in pairs({
       MAGMA_BALL = { { "FIRE", "GROUND", "ROCK" }, 100 },
-      MAGMA_GREAT_BALL = { { "FIRE", "GROUND", "ROCK" }, 140 },
       AQUA_BALL = { { "WATER", "ICE" }, 100 },
-      AQUA_GREAT_BALL = { { "WATER", "ICE" }, 140 },
       PLASMA_BALL = { { "ELECTRIC", "STEEL" }, 100 },
     }) do
       for _, t in ipairs(case[1]) do
