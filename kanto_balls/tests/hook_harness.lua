@@ -37,6 +37,9 @@ end
 local function engineStubs(generation, versionId, engineLine)
   local Bag = {
     add = function(save, id, qty)
+      -- 99 per stack, as the real Bag.addTo refuses (0.9.3: the BOOMERANG
+      -- refund-order test needs the refusal to be real).
+      if (save.inventory[id] or 0) + (qty or 1) > 99 then return false end
       save.inventory[id] = (save.inventory[id] or 0) + (qty or 1)
       return true
     end,
@@ -163,6 +166,13 @@ local function engineStubs(generation, versionId, engineLine)
       ballPalette = function() return "PAL_BATTLE_OB_GRAY" end,
       useItem = function(self, itemId)
         if self._attempt then self._attempt(itemId) end
+        -- 0.9.3: and consumeItem spends the thrown ball AFTER the attempt,
+        -- as the real arm does -- the order the BOOMERANG refund depends on.
+        local inv = self._save and self._save.inventory
+        if inv and (inv[itemId] or 0) > 0 then
+          inv[itemId] = inv[itemId] - 1
+          if inv[itemId] == 0 then inv[itemId] = nil end
+        end
         self.queue = { { kind = "ball-result" }, { kind = "move" } }
       end,
     },
@@ -492,6 +502,12 @@ for _, gen in ipairs({ 1, 2 }) do
           check(def.pocket == want,
             ("%s %s pocket=%s want %s")
               :format(label, id, tostring(def.pocket), want))
+        end
+        -- 0.9.3 (REQUESTS 1220): Gen 2's PACK and mart read canToss, not
+        -- the registration's `tossable`.
+        if game.data.items.BALL_CASE then
+          check(game.data.items.BALL_CASE.canToss == false,
+            label .. " BALL CASE can be tossed or sold (canToss not false)")
         end
         local stock = {}
         for _, id in ipairs(game.data.gen2Marts.lists[1]) do stock[id] = true end
@@ -1574,6 +1590,32 @@ for _, gen in ipairs({ 1, 2 }) do
                   check(false, label .. " blocked-type test needs two ball types stocked")
                 end
 
+                -- 0.9.3 (REQUESTS 1220): TAKE BACK walks what is STOWED.
+                -- A ball stowed under a bigger BALL_IDS (CANON BALL SET on,
+                -- or a test build's id) comes back while SOME mod registers
+                -- it, and one nobody registers stays in the case, not lost.
+                do
+                  game.data.items.KB_TEST_FOREIGN = { id = "KB_TEST_FOREIGN", name = "FOREIGN" }
+                  local stow = rec.saveStore.stowed or {}
+                  stow.KB_TEST_FOREIGN = 2
+                  stow.KB_TEST_UNREGISTERED = 3
+                  rec.saveStore.stowed = stow
+                  local before = game.save.inventory.KB_TEST_FOREIGN or 0
+                  -- canReturn asks mod.game.data, as on device.
+                  local priorModGame = rec.modGame
+                  rec.modGame = game
+                  press("take")
+                  rec.modGame = priorModGame
+                  check((game.save.inventory.KB_TEST_FOREIGN or 0) == before + 2,
+                    label .. " TAKE BACK skipped a stowed id outside BALL_IDS")
+                  check(game.save.inventory.KB_TEST_UNREGISTERED == nil
+                      and (rec.saveStore.stowed or {}).KB_TEST_UNREGISTERED == 3,
+                    label .. " TAKE BACK dropped or misplaced an unregistered stowed id")
+                  game.save.inventory.KB_TEST_FOREIGN = nil
+                  rec.saveStore.stowed.KB_TEST_UNREGISTERED = nil
+                  game.data.items.KB_TEST_FOREIGN = nil
+                end
+
                 -- COUNT, not just contents.  checkMessage returns early
                 -- on a nil message, so if a press ever stopped setting
                 -- one the width check would pass by inspecting nothing.
@@ -2168,7 +2210,7 @@ do
     local Battle2 = rec.stubs["src.battle.gen2.Battle"]
     local function throw(ball, foe, caught)
       local battle = { enemy = foe }
-      local screen = { _attempt = function()
+      local screen = { _save = game.save, _attempt = function()
         for _, fn in ipairs(rec.events["battle.ball_thrown"] or {}) do
           fn({ ball = ball, battle = battle, caught = caught, mon = foe })
         end
@@ -2195,13 +2237,25 @@ do
     game.save.inventory.BOOMERANG_BALL = 3
     local s1 = throw("BOOMERANG_BALL", { hp = 10, maxHp = 20 }, false)
     local q1 = lines(s1)
-    check(game.save.inventory.BOOMERANG_BALL == 4,
+    check(game.save.inventory.BOOMERANG_BALL == 3,
       label .. " BOOMERANG was not given back on a miss")
     check(q1[1].kind == "ball-result" and q1[2].kind == "message",
       label .. " BOOMERANG line is not right after the ball result")
     throw("BOOMERANG_BALL", { hp = 10, maxHp = 20 }, true)
-    check(game.save.inventory.BOOMERANG_BALL == 4,
+    check(game.save.inventory.BOOMERANG_BALL == 2,
       label .. " BOOMERANG came back on a CATCH")
+    -- 0.9.3 (REQUESTS 1220): a miss from a full stack of 99 stays 99 in the
+    -- PACK and sends nothing to the PC -- refunded AFTER the spend.
+    game.save.inventory.BOOMERANG_BALL = 99
+    game.save.pcItems = game.save.pcItems or {}
+    local pcBoom = game.save.pcItems.BOOMERANG_BALL or 0
+    local s99 = throw("BOOMERANG_BALL", { hp = 10, maxHp = 20 }, false)
+    check(game.save.inventory.BOOMERANG_BALL == 99
+        and (game.save.pcItems.BOOMERANG_BALL or 0) == pcBoom,
+      label .. " BOOMERANG at 99 went to the PC or was lost")
+    check(s99.queue[2] and s99.queue[2].text == "The ball came\nback to you!",
+      label .. " BOOMERANG at 99 said the wrong line")
+    game.save.inventory.BOOMERANG_BALL = 2
 
     local foe = { hp = 40, maxHp = 80, item = "BERRY" }
     game.data.items.BERRY = { id = "BERRY", name = "BERRY" }

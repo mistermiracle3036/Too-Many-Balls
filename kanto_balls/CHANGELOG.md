@@ -10,6 +10,27 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
+## 0.9.3
+
+**Updating from 0.8.8?** Fifteen new balls on Gold, Silver and Crystal:
+the five Hisuian balls made in the BALL CASE (FEATHER, WING, JET, LEADEN,
+GIGATON), SNEAK BALL, FISHING BALL, BOOST BALL, BOOMRANGBALL, BOMBOMB BALL,
+CHASE BALL, STONE BALL, MAGMA BALL, AQUA BALL and PLASMA BALL -- what each
+one does is listed under 0.9.1 below. Also since 0.8.8: the Ball Case and the
+Crystal Ball's keep-or-release screen look like the game's own menus, a
+released Crystal Ball catch gives back what it was holding, TAKE BACK returns
+every kind of ball that fits, free balls go to your PC when the ball pocket is
+full, and Kurt hands over the case even with a full ball pocket.
+
+**New in 0.9.3** (fixes from a full code review):
+- The BALL CASE can no longer be tossed or sold on Gold, Silver or Crystal.
+  It is your only one, so losing it lost the case's stored balls too.
+- A missed BOOMRANGBALL thrown from a full stack of 99 now comes back to
+  your PACK. Before, it went to your PC, or was lost if the PC was full too.
+- TAKE BACK now returns balls you stowed while CANON BALL SET was on, even
+  after you turn that option off, as long as some mod still provides that
+  ball.
+
 ## 0.9.2
 
 **Updating from 0.8.8?** Fifteen new balls on Gold, Silver and Crystal: the

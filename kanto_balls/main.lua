@@ -78,7 +78,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.9.2"
+  local VERSION = "0.9.3"
   -- 0.9.1: 0.9.0 with two comments reworded for modkit's MK301 lint;
   -- 0.9.0 was pushed but never built.
   -- 0.9.0: ROUND 2, the first batch of the developer-approved new balls
@@ -1874,6 +1874,8 @@ return function(mod)
     -- Lines are two rows of at most 18 columns.
     --------------------------------------------------------------------
     local throwNotes = nil
+    -- Set by a missed BOOMERANG BALL, paid after the throw is spent.
+    local boomerangOwed = false
     local chaseHold = setmetatable({}, { __mode = "k" })
 
     local function itemName(data, id)
@@ -1891,19 +1893,13 @@ return function(mod)
       local notes = {}
 
       if ball == "BOOMERANG_BALL" then
-        -- Given back BEFORE useItem spends the thrown one, so the count
-        -- the player sees afterwards is unchanged.  Overflow puts it in
-        -- the PC only if the stack is already at 99.
-        suppressPurchaseTracking = true
-        local ok, where = pcall(Overflow.give, mod, "BOOMERANG_BALL", 1)
-        suppressPurchaseTracking = false
-        if ok and where == "bag" then
-          notes[#notes + 1] = { kind = "message",
-            text = "The ball came\nback to you!" }
-        elseif ok and where == "pc" then
-          notes[#notes + 1] = { kind = "message",
-            text = "The ball came back\nto your PC." }
-        end
+        -- 0.9.3 (REQUESTS 1220): the refund is OWED here and paid in the
+        -- useItem wrap below, AFTER vanilla useItem has spent the thrown
+        -- one.  battle.ball_thrown fires inside Catching.attempt, before
+        -- BattleState:useItem's consumeItem, so refunding here meant a
+        -- stack of 99 sent the ball to the PC -- or, with the PC full too,
+        -- lost it.  Paid after the spend, the slot it left is always free.
+        boomerangOwed = true
 
       elseif ball == "SNEAK_BALL" and type(foe) == "table" then
         local held = foe.item
@@ -1980,9 +1976,27 @@ return function(mod)
       local vanillaUseItem = Screen2._kbRound2Originals.useItem
       Screen2.useItem = function(self, itemId, ...)
         throwNotes = nil
+        boomerangOwed = false
         local a, b = vanillaUseItem(self, itemId, ...)
         local notes = throwNotes
         throwNotes = nil
+        if boomerangOwed then
+          boomerangOwed = false
+          suppressPurchaseTracking = true
+          local ok, where = pcall(Overflow.give, mod, "BOOMERANG_BALL", 1)
+          suppressPurchaseTracking = false
+          local line
+          if ok and where == "bag" then
+            line = "The ball came\nback to you!"
+          elseif ok and where == "pc" then
+            line = "The ball came back\nto your PC."
+          end
+          if line then
+            notes = notes or {}
+            -- First, as before: the return is the throw's own result.
+            table.insert(notes, 1, { kind = "message", text = line })
+          end
+        end
         if notes and type(self.queue) == "table" then
           -- After "ball-result" when it is still queued; at the head when
           -- the queue already drained it (no ball animation).
@@ -2622,6 +2636,14 @@ return function(mod)
       if caseDef and caseDef.pocket == nil then
         caseDef.pocket = "KEY_ITEM"
       end
+      -- 0.9.3 (REQUESTS 1220): `tossable = false` at registration is NOT
+      -- what Gen 2 reads.  On API 2 the items schema stores `tossable` as
+      -- written (Schemas.lua items fields); only API 3's UnifiedContent maps
+      -- it to `canToss` (UnifiedContent.lua:837-839).  The PACK's TOSS row
+      -- (PackMenu:submenuRows) and the mart's sell gate
+      -- (MartMenu:offerToSell) both read `canToss`, so the only case could
+      -- be tossed or sold.  Stamp the field the cart's attributes use.
+      if caseDef then caseDef.canToss = false end
 
       local marts = data.gen2Marts
       local lists = marts and (marts.lists or marts)
@@ -3004,12 +3026,37 @@ return function(mod)
     return value
   end
 
+  -- 0.9.3 (REQUESTS 1220, both outside reviewers): walk what is STOWED, not
+  -- this boot's BALL_IDS.  BALL_IDS shrinks when CANON BALL SET is turned
+  -- off or Custom Poke Balls loads, and a ball stowed under the bigger set
+  -- went invisible and could not be taken back.  An id is returned only
+  -- while SOME mod registers it (else it would land in the ITEM pocket
+  -- under its raw name); one nobody registers stays in the case, still
+  -- saved, and comes back when its owner does.
+  local BALL_SET = {}
+  for _, id in ipairs(BALL_IDS) do BALL_SET[id] = true end
+
+  local function canReturn(id)
+    if BALL_SET[id] then return true end
+    local data = mod.game and mod.game.data
+    return type(id) == "string" and data ~= nil and data.items ~= nil
+      and data.items[id] ~= nil
+  end
+
+  local function stowedIds(stowed)
+    local ids = {}
+    for id, n in pairs(stowed or {}) do
+      if type(n) == "number" and n > 0 and canReturn(id) then
+        ids[#ids + 1] = id
+      end
+    end
+    table.sort(ids)
+    return ids
+  end
+
   local function countStored(stowed)
     local total = 0
-    for _, id in ipairs(BALL_IDS) do
-      local n = stowed and stowed[id]
-      if type(n) == "number" and n > 0 then total = total + n end
-    end
+    for _, id in ipairs(stowedIds(stowed)) do total = total + stowed[id] end
     return total
   end
 
@@ -3051,9 +3098,8 @@ return function(mod)
     -- in the case.  Each type has its own stack, so a refusal for one says
     -- nothing about the next.
     local moved = 0
-    for _, id in ipairs(BALL_IDS) do
+    for _, id in ipairs(stowedIds(stowed)) do
       local n = stowed[id]
-      if type(n) ~= "number" or n < 1 then n = 0 end
       -- ONE AT A TIME, deliberately.  Bag.add refuses a whole quantity
       -- when the pocket is full or the stack would pass 99, so asking
       -- for the lot would return nothing when only some fit.  This
