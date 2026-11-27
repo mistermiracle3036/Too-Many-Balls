@@ -10,7 +10,7 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
-## 0.9.4
+## 0.9.5
 
 **Updating from 0.8.8?** Fifteen new balls on Gold, Silver and Crystal:
 the five Hisuian balls made in the BALL CASE (FEATHER, WING, JET, LEADEN,
@@ -20,8 +20,20 @@ one does is listed under 0.9.1 below. Also since 0.8.8: the Ball Case and the
 Crystal Ball's keep-or-release screen look like the game's own menus, a
 released Crystal Ball catch gives back what it was holding, TAKE BACK returns
 every kind of ball that fits, free balls go to your PC when the ball pocket is
-full, Kurt hands over the case even with a full ball pocket, and the fixes in
-0.9.3 and 0.9.4 below.
+full, Kurt hands over the case even with a full ball pocket, your item PC has
+no limit (below), and the fixes in 0.9.3 and 0.9.4.
+
+**New in 0.9.5:** on Gold, Silver and Crystal your item PC now holds
+everything: any number of kinds, and any number of each. A full PC no longer
+happens, so a free ball that does not fit in your PACK always lands there.
+Turn on VANILLA BAG LIMITS to go back to the game's 50-kind PC along with its
+PACK limits. Red and Blue keep their 50.
+- One thing to know: the launcher can't turn your save back into a
+  cartridge .sav file while the PC holds more than 50 kinds, or more than 99
+  of one item. It says so and writes nothing; withdraw some and try again.
+  Playing and saving in the game are not affected.
+
+## 0.9.4
 
 **New in 0.9.4:** five balls now do exactly what their descriptions say.
 - QUICK BALL: the bonus is for your FIRST action only (it also worked on the

@@ -177,6 +177,10 @@ local function engineStubs(generation, versionId, engineLine)
       end,
     },
     ["src.world.gen2.World"] = { useFieldItem = function() return nil end },
+    -- 0.9.5: lib/pc_nolimit.lua wraps the PC's own deposit.  The real one is
+    -- tested against the engine in tests/pc_nolimit_engine_test.lua; this
+    -- stub only refuses everything, so the wrap's own add is what lands.
+    ["src.ui.gen2.ItemPcMenu"] = { pcAdd = function() return false end },
     -- 0.9.0: CHASE BALL's one-turn hold wraps tryEnemyFlee; the stub flees
     -- every runner, like ALWAYS_FLEE does for a roamer.
     ["src.battle.gen2.Battle"] = {

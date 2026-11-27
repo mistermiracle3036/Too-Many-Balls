@@ -78,7 +78,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.9.4"
+  local VERSION = "0.9.5"
   -- 0.9.1: 0.9.0 with two comments reworded for modkit's MK301 lint;
   -- 0.9.0 was pushed but never built.
   -- 0.9.0: ROUND 2, the first batch of the developer-approved new balls
@@ -485,6 +485,17 @@ return function(mod)
       end
     end
   end
+
+  -- 0.9.5 (REQUESTS 1220, developer via the Desk: "No limit, Too Many Balls
+  -- owns it"): the item PC holds everything on Gold, Silver and Crystal,
+  -- off with VANILLA BAG LIMITS like the PACK headroom above.  Red keeps
+  -- its 50 -- see lib/pc_nolimit.lua for why.
+  if GEN2 then
+    local PcNoLimit = assert(load(assert(mod:read("lib/pc_nolimit.lua")),
+      "@kanto_balls/lib/pc_nolimit"))()
+    PcNoLimit.install(mod.options:get("vanilla_bag_limits") ~= true)
+  end
+  mod.exports.owns.pcItemCapacity = GEN2
 
   -- Other ball mods claim their own headroom here instead of installing
   -- a SECOND wrap on Bag.capacity -- same reason as registerBallPalette:
