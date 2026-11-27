@@ -181,6 +181,9 @@ local function engineStubs(generation, versionId, engineLine)
     -- every runner, like ALWAYS_FLEE does for a roamer.
     ["src.battle.gen2.Battle"] = {
       tryEnemyFlee = function(self) return true end,
+      -- 0.9.4: a move that returns before turnsTaken++ (Mirror Move with
+      -- nothing to copy, Battle.lua useMove) -- does nothing at all here.
+      useMove = function() end,
     },
     -- The real lists' shape (src/core/gen2/Roamers.lua): plain sets, with
     -- ALWAYS_FLEE a lookup by species name.
@@ -683,6 +686,20 @@ for _, gen in ipairs({ 1, 2 }) do
         check(sawGen1Kecleon,
           label .. " KECLEON registered no gen1 attempt -- the buff is gone")
         local balls = rec.registries.balls or {}
+        -- 0.9.4 (REQUESTS 1220): Gen 1 keeps the dex weight under
+        -- dexEntry (RomExtractor extractPokemon).  PIDGEY is 1.8 lb = 18.
+        if balls.DRIFT_BALL and balls.DRIFT_BALL.attempt then
+          local dctx = {
+            targetMon = { level = 10, species = "PIDGEY", hp = 5 },
+            targetDef = { catchRate = BASE_RATE, dexEntry = { weight = 18 } },
+            battle = { player = { mon = { species = "PIDGEY" } } },
+            rng = function() return 1 end,
+            vanillaAttempt = function() return false, 1 end,
+          }
+          pcheck(label .. " attempt DRIFT dexEntry", balls.DRIFT_BALL.attempt, dctx)
+          check(dctx.rateOverride ~= nil and dctx.rateOverride > BASE_RATE,
+            label .. " DRIFT gave no light-target bonus on a Gen 1 dexEntry weight")
+        end
         local cageBattle = {}
         local function cageAttempt()
           local ctx = {
@@ -791,8 +808,12 @@ for _, gen in ipairs({ 1, 2 }) do
           return o.catchRate
         end
 
-        check(rateFor("QUICK_BALL", { battle = { turn = 1 } }) == 180,
-          label .. " QUICK BALL did not reach 4x on turn 1")
+        -- 0.9.4 (REQUESTS 1220): the FIRST action reads turn 0 (runTurn
+        -- increments after the throw), so only turn 0 is boosted.
+        check(rateFor("QUICK_BALL", { battle = { turn = 0 } }) == 180,
+          label .. " QUICK BALL did not reach 4x on the first action")
+        check(rateFor("QUICK_BALL", { battle = { turn = 1 } }) == BASE_RATE,
+          label .. " QUICK BALL boosted the second action")
         check(rateFor("QUICK_BALL", { battle = { turn = 2 } }) == BASE_RATE,
           label .. " QUICK BALL stayed boosted after turn 1")
         -- NO BATTLE AT ALL must not boost. The obvious spelling,
@@ -832,6 +853,17 @@ for _, gen in ipairs({ 1, 2 }) do
         rec.worldLive.map.def.environment = "ROUTE"
         check(rateFor("DUSK_BALL") == BASE_RATE,
           label .. " DUSK BALL boosted a daytime route")
+        -- 0.9.4 (REQUESTS 1220): the clock (tod) decides, not the palette.
+        rec.worldLive.tod = "NITE"
+        rec.worldLive.daytime = "DAY"     -- a map pinned to day colours
+        check(rateFor("DUSK_BALL") == 135,
+          label .. " DUSK BALL missed night on a day-pinned map")
+        rec.worldLive.tod = "DAY"
+        rec.worldLive.daytime = "NITE"    -- a palette hook painting night
+        check(rateFor("DUSK_BALL") == BASE_RATE,
+          label .. " DUSK BALL boosted a night palette in the daytime")
+        rec.worldLive.tod = nil
+        rec.worldLive.daytime = "DAY"
         rec.modWorld = {}
         check(rateFor("DUSK_BALL") == BASE_RATE,
           label .. " DUSK BALL failed with no live world")
@@ -859,6 +891,16 @@ for _, gen in ipairs({ 1, 2 }) do
         game.save.playerState = "walk"
         check(rateFor("DIVE_BALL") == BASE_RATE,
           label .. " DIVE BALL boosted on land")
+        -- 0.9.4 (REQUESTS 1220): the live world wins over the save snapshot.
+        rec.worldLive.playerState = "surf"
+        check(rateFor("DIVE_BALL") == 135,
+          label .. " DIVE BALL missed surfing before a save")
+        rec.worldLive.playerState = "walk"
+        game.save.playerState = "surf"
+        check(rateFor("DIVE_BALL") == BASE_RATE,
+          label .. " DIVE BALL stayed on after landing")
+        rec.worldLive.playerState = nil
+        game.save.playerState = "walk"
 
         check(rateFor("LUXURY_BALL") == BASE_RATE,
           label .. " LUXURY BALL changed catch odds")
@@ -2172,6 +2214,16 @@ do
     check(rate("GIGATON_BALL", nil, { status = "sleep" }) == 160,
       label .. " GIGATON asleep not 4x")
     check(rate("GIGATON_BALL") == BASE, label .. " GIGATON boosted a moved foe")
+    -- 0.9.4 (REQUESTS 1220): a move that never reached turnsTaken++ still
+    -- counts as having moved.
+    do
+      local foeMon = { volatile = {} }
+      rec.stubs["src.battle.gen2.Battle"].useMove({}, foeMon, {}, "MIRROR_MOVE")
+      check(rate("LEADEN_BALL", nil, { mon = foeMon }) == BASE,
+        label .. " LEADEN boosted after a failed Mirror Move")
+      check(rate("GIGATON_BALL", nil, { mon = foeMon }) == BASE,
+        label .. " GIGATON boosted after a failed Mirror Move")
+    end
     check(rate("BOOST_BALL") == 60, label .. " BOOST not 1.5x")
     for _, b in ipairs({ "SNEAK_BALL", "FISHING_BALL", "BOOMERANG_BALL", "BOMB_BOMB_BALL" }) do
       check(rate(b) == BASE, label .. " " .. b .. " is not plain odds")

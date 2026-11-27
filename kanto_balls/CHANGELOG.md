@@ -10,7 +10,7 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
-## 0.9.3
+## 0.9.4
 
 **Updating from 0.8.8?** Fifteen new balls on Gold, Silver and Crystal:
 the five Hisuian balls made in the BALL CASE (FEATHER, WING, JET, LEADEN,
@@ -20,7 +20,21 @@ one does is listed under 0.9.1 below. Also since 0.8.8: the Ball Case and the
 Crystal Ball's keep-or-release screen look like the game's own menus, a
 released Crystal Ball catch gives back what it was holding, TAKE BACK returns
 every kind of ball that fits, free balls go to your PC when the ball pocket is
-full, and Kurt hands over the case even with a full ball pocket.
+full, Kurt hands over the case even with a full ball pocket, and the fixes in
+0.9.3 and 0.9.4 below.
+
+**New in 0.9.4:** five balls now do exactly what their descriptions say.
+- QUICK BALL: the bonus is for your FIRST action only (it also worked on the
+  second).
+- DIVE BALL: works the moment you start surfing and stops when you land (it
+  used to go by where you were when you last saved).
+- DUSK BALL: goes by the clock, so it works at night indoors too, and a map
+  that only looks dark does not count as night.
+- LEADEN and GIGATON BALL: a Pokemon that tried a move counts as having moved,
+  even when the move did nothing.
+- DRIFT BALL on Red/Blue: its light-Pokemon bonus now works.
+
+## 0.9.3
 
 **New in 0.9.3** (fixes from a full code review):
 - The BALL CASE can no longer be tossed or sold on Gold, Silver or Crystal.

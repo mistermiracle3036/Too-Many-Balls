@@ -78,7 +78,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.9.3"
+  local VERSION = "0.9.4"
   -- 0.9.1: 0.9.0 with two comments reworded for modkit's MK301 lint;
   -- 0.9.0 was pushed but never built.
   -- 0.9.0: ROUND 2, the first batch of the developer-approved new balls
@@ -1378,7 +1378,13 @@ return function(mod)
 
   registerBall("DRIFT_BALL", "DRIFT BALL", 1000, {
     attempt = function(ctx)
-      local mult = driftMultiplier(ctx.targetDef and ctx.targetDef.weight)
+      -- 0.9.4 (REQUESTS 1220): Gen 1's species record keeps the dex weight
+      -- under dexEntry (RomExtractor extractPokemon, `dexEntry.weight`,
+      -- tenths of a pound like Gold's); a top-level weight still wins.
+      local td = ctx.targetDef
+      local w = td and (td.weight
+        or (type(td.dexEntry) == "table" and td.dexEntry.weight))
+      local mult = driftMultiplier(w)
       if mult > 1 then boost(ctx, mult) end
       return ctx.vanillaAttempt()
     end,
@@ -1743,8 +1749,18 @@ return function(mod)
       end
       local env = world and world.map and world.map.def
         and world.map.def.environment
-      return (world and world.daytime == "NITE")
-        or env == "CAVE" or env == "DUNGEON"
+      -- 0.9.4 (REQUESTS 1220): night is the CLOCK's answer, world.tod
+      -- (World:applyPalettes, from World:timeOfDay), not world.daytime --
+      -- daytime is the palette, which a map header can pin (an indoor map
+      -- stays DAY-coloured at night) or a map.palette hook can change.
+      -- daytime stays only as the fallback when tod is absent.
+      local night
+      if world and world.tod ~= nil then
+        night = world.tod == "NITE"
+      else
+        night = world and world.daytime == "NITE"
+      end
+      return night or env == "CAVE" or env == "DUNGEON"
     end
 
     --------------------------------------------------------------------
@@ -1799,8 +1815,12 @@ return function(mod)
     local function hasNotMoved(o)
       local m = o.mon
       if type(m) ~= "table" then return false end
-      local taken = type(m.volatile) == "table" and m.volatile.turnsTaken or 0
-      return (tonumber(taken) or 0) == 0
+      local v = type(m.volatile) == "table" and m.volatile or nil
+      local taken = v and v.turnsTaken or 0
+      -- 0.9.4 (REQUESTS 1220): kbActed is set by the useMove wrap below
+      -- on EVERY move call.  turnsTaken alone missed a Mirror Move with
+      -- nothing to copy, which returns before the increment.
+      return (tonumber(taken) or 0) == 0 and not (v and v.kbActed)
     end
 
     local function hasAnyType(targetDef, list)
@@ -1962,6 +1982,21 @@ return function(mod)
       Battle2._kbRound2Originals = Battle2._kbRound2Originals
         or { tryEnemyFlee = Battle2.tryEnemyFlee }
       local vanillaFlee = Battle2._kbRound2Originals.tryEnemyFlee
+
+      -- 0.9.4: "has moved" for LEADEN/GIGATON.  Its own stash key, so a
+      -- reload over a 0.9.3 module table still captures the original.
+      Battle2._kbActedOriginals = Battle2._kbActedOriginals
+        or { useMove = Battle2.useMove }
+      local vanillaUseMove = Battle2._kbActedOriginals.useMove
+      if vanillaUseMove then
+        Battle2.useMove = function(self, attacker, ...)
+          if type(attacker) == "table" then
+            attacker.volatile = attacker.volatile or {}
+            attacker.volatile.kbActed = true
+          end
+          return vanillaUseMove(self, attacker, ...)
+        end
+      end
       Battle2.tryEnemyFlee = function(self, ...)
         if chaseHold[self] then
           chaseHold[self] = nil
@@ -2077,7 +2112,11 @@ return function(mod)
 
         local turn = o.battle and o.battle.turn
 
-        if turn and turn <= 1 then boostFlat(o, 4) end
+        -- 0.9.4 (REQUESTS 1220, developer: "Fix all five"): FIRST action
+        -- only.  Battle.turn starts at 0 (Battle.lua Battle.new) and runTurn
+        -- increments it AFTER the ball arm has thrown, so the first throw
+        -- reads 0 and the second reads 1 -- `<= 1` boosted both.
+        if turn and turn == 0 then boostFlat(o, 4) end
 
       elseif ball == "TIMER_BALL" then
         local turn = (o.battle and o.battle.turn) or 0
@@ -2101,8 +2140,20 @@ return function(mod)
         if isAsleep(o.status) then boostFlat(o, 4) end
 
       elseif ball == "DIVE_BALL" then
-        local save = mod.game and mod.game.save
-        local surfing = save and FieldMoves.isSurfing(save.playerState)
+        -- 0.9.4 (REQUESTS 1220): the LIVE world's playerState.
+        -- save.playerState is only the save-time snapshot (Game2.lua
+        -- snapshotSave), so it lagged boarding and landing until the next
+        -- save.  The save copy stays as the fallback when no world answers.
+        local world = mod.world
+        if world and world.overworld then
+          world = world:overworld() or world
+        end
+        local state = world and world.playerState
+        if state == nil then
+          local save = mod.game and mod.game.save
+          state = save and save.playerState
+        end
+        local surfing = state ~= nil and FieldMoves.isSurfing(state)
         if o.fishing or surfing then boostFlat(o, 3) end
 
       elseif ball == "CATALYST_BALL" then
