@@ -10,7 +10,10 @@ zips on one release is what broke the in-launcher updater, because the
 engine caches release assets per REPO and could not tell them apart. Shop
 Events was folded in; there is one mod and one zip now.
 
-## 0.9.5
+## 0.9.6
+
+(0.9.5 was built but never published: its zip carried a test file. 0.9.6 is
+the same change without it.)
 
 **Updating from 0.8.8?** Fifteen new balls on Gold, Silver and Crystal:
 the five Hisuian balls made in the BALL CASE (FEATHER, WING, JET, LEADEN,
@@ -23,7 +26,7 @@ every kind of ball that fits, free balls go to your PC when the ball pocket is
 full, Kurt hands over the case even with a full ball pocket, your item PC has
 no limit (below), and the fixes in 0.9.3 and 0.9.4.
 
-**New in 0.9.5:** on Gold, Silver and Crystal your item PC now holds
+**New in 0.9.6:** on Gold, Silver and Crystal your item PC now holds
 everything: any number of kinds, and any number of each. A full PC no longer
 happens, so a free ball that does not fit in your PACK always lands there.
 Turn on VANILLA BAG LIMITS to go back to the game's 50-kind PC along with its

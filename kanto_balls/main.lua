@@ -78,7 +78,7 @@
 -- versioning with shop_events.)
 
 return function(mod)
-  local VERSION = "0.9.5"
+  local VERSION = "0.9.6"
   -- 0.9.1: 0.9.0 with two comments reworded for modkit's MK301 lint;
   -- 0.9.0 was pushed but never built.
   -- 0.9.0: ROUND 2, the first batch of the developer-approved new balls

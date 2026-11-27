@@ -12,3 +12,4 @@
 # silently matches nothing, which is how this file spent its first
 # revision doing exactly nothing.  Name each file.
 tests/hook_harness.lua
+tests/pc_nolimit_engine_test.lua
